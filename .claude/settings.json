@@ -5,9 +5,28 @@
         "source": "github",
         "repo": "nextlevelbuilder/ui-ux-pro-max-skill"
       }
+    },
+    "anthropic-frontend-design": {
+      "source": {
+        "source": "settings",
+        "name": "anthropic-frontend-design",
+        "plugins": [
+          {
+            "name": "frontend-design",
+            "description": "Anthropic's official frontend-design skill: guidance for building good-looking, usable web UIs.",
+            "source": {
+              "source": "git-subdir",
+              "url": "anthropics/skills",
+              "path": "skills"
+            },
+            "skills": ["./frontend-design"]
+          }
+        ]
+      }
     }
   },
   "enabledPlugins": {
-    "ui-ux-pro-max@ui-ux-pro-max-skill": true
+    "ui-ux-pro-max@ui-ux-pro-max-skill": true,
+    "frontend-design@anthropic-frontend-design": true
   }
 }

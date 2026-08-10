@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nofler — Reservierungen Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --olive:#4A5A32; --olive-dark:#2C3620; --olive-light:#6B7A4E;
+  --cream:#FAF7EE; --paper:#F1ECDA; --paper2:#E7DFC5;
+  --ink:#2B2A20; --slate:#6B6656; --slate-dim:#9B9584;
+  --sage:#5C7A3F; --sage-bg:#E8EEDD;
+  --amber:#B8863A; --amber-bg:#F5E9D2;
+  --rust:#9C5433; --rust-bg:#F2E3D8;
+  --line:rgba(43,42,32,.1);
+  --ff-display:'Fraunces',serif; --ff-body:'Inter',sans-serif; --ff-mono:'IBM Plex Mono',monospace;
+}
+body{font-family:var(--ff-body);background:var(--cream);color:var(--ink);min-height:100vh}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}.sidebar{display:none}}
+
+/* SIDEBAR */
+.sidebar{background:var(--olive-dark);color:var(--cream);padding:26px 20px;display:flex;flex-direction:column}
+.sb-logo{font-family:var(--ff-display);font-size:20px;font-weight:600;margin-bottom:4px}
+.sb-sub{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.08em;color:rgba(250,246,238,.5);margin-bottom:38px}
+.sb-nav{display:flex;flex-direction:column;gap:3px}
+.sb-divider{height:1px;background:rgba(250,246,238,.12);margin:10px 0}
+.privacy-btn{background:none;border:none;width:100%;text-align:left;font-family:inherit;cursor:pointer;color:var(--amber)}
+.privacy-btn:hover{background:rgba(250,246,238,.06)}
+.privacy-btn svg{stroke:var(--amber)}
+.sb-link{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:6px;font-size:13.5px;font-weight:500;color:rgba(250,246,238,.7);transition:all .2s}
+.sb-link svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.sb-link.is-active{background:rgba(250,246,238,.12);color:var(--cream)}
+.sb-link:hover:not(.is-active){background:rgba(250,246,238,.06)}
+.sb-foot{margin-top:0;padding-top:20px;border-top:1px solid rgba(250,246,238,.12);font-size:11.5px;color:rgba(250,246,238,.45);line-height:1.6}
+.sb-foot b{color:rgba(250,246,238,.75)}
+.chef-toggle{margin-top:auto;padding-top:20px;display:flex;align-items:center;gap:12px;font-size:11.5px;color:rgba(250,246,238,.6)}
+.chef-toggle b{color:rgba(250,246,238,.85);font-size:12.5px}
+.chef-switch{position:relative;display:inline-block;width:38px;height:21px;flex-shrink:0}
+.chef-switch input{opacity:0;width:0;height:0}
+.chef-slider{position:absolute;cursor:pointer;inset:0;background:rgba(250,246,238,.18);border-radius:999px;transition:.25s}
+.chef-slider::before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s}
+.chef-switch input:checked + .chef-slider{background:var(--amber)}
+.chef-switch input:checked + .chef-slider::before{transform:translateX(17px)}
+
+/* CHEF-MODE DELETE */
+.entry{position:relative}
+.entry-delete{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:var(--rust-bg);color:var(--rust);border:none;font-size:14px;align-items:center;justify-content:center;z-index:2}
+body.chef-mode .entry{padding-right:52px}
+body.chef-mode .entry-delete{display:flex}
+body.chef-mode .col-status{opacity:.5}
+.detail-delete-row{display:none;margin-bottom:14px}
+body.chef-mode .detail-delete-row{display:block}
+.dbtn.danger{background:var(--rust);color:#fff;width:100%;border-color:transparent}
+.dbtn.danger:hover{background:#7a3222}
+
+/* MONTH HISTORY */
+.month-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:22px 24px}
+@media(max-width:900px){.month-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:600px){.month-grid{grid-template-columns:repeat(3,1fr)}}
+.month-card{border:1px solid var(--line);border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.month-card:hover{border-color:var(--olive)}
+.month-card.is-active{border-color:var(--olive);background:var(--paper)}
+.month-card .mname{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;color:var(--slate)}
+.month-card .mnum{font-family:var(--ff-display);font-size:1.25rem;font-weight:600;margin:4px 0 2px}
+.month-card .mlabel{font-size:10px;color:var(--olive);font-weight:600}
+.month-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:22px 24px}
+@media(max-width:700px){.month-summary{grid-template-columns:1fr 1fr}}
+.month-summary .m-stat{background:var(--paper);border-radius:8px;padding:18px}
+.month-summary .m-stat .n{font-family:var(--ff-display);font-size:1.7rem;font-weight:600;color:var(--olive)}
+.month-summary .m-stat .l{font-family:var(--ff-mono);font-size:10.5px;text-transform:uppercase;color:var(--slate);margin-top:4px}
+
+/* MINI MODALS (PIN / confirm) */
+.mini-modal{position:fixed;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.mini-modal.is-open{opacity:1;pointer-events:auto}
+.mini-modal-bg{position:absolute;inset:0;background:rgba(43,42,32,.6);backdrop-filter:blur(3px)}
+.mini-modal-card{position:relative;background:#fff;max-width:340px;width:100%;border-radius:12px;padding:30px 28px;text-align:center;transform:translateY(14px) scale(.97);transition:transform .25s}
+.mini-modal.is-open .mini-modal-card{transform:translateY(0) scale(1)}
+.mini-modal-ico{font-size:30px;margin-bottom:10px}
+.mini-modal-card h3{font-family:var(--ff-display);font-size:1.3rem;font-weight:600;margin-bottom:8px}
+.mini-modal-card p{font-size:13px;color:var(--slate);margin-bottom:18px}
+#pinInput{width:100%;text-align:center;font-size:24px;letter-spacing:8px;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:var(--ff-mono);outline:none;margin-bottom:8px}
+#pinInput:focus{border-color:var(--olive)}
+.pin-error{display:none;color:var(--rust)!important;font-size:12px!important;margin-bottom:10px!important}
+.pin-error.is-shown{display:block}
+.mini-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.pin-forgot-link{background:none;border:none;color:var(--slate);font-size:12px;text-decoration:underline;margin-top:14px;cursor:pointer}
+.pin-forgot-link:hover{color:var(--olive)}
+
+/* PRIVACY SCREEN */
+.privacy-screen{position:fixed;inset:0;z-index:2000;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .4s ease;touch-action:none;cursor:grab}
+.privacy-screen.is-active{opacity:1;pointer-events:auto}
+.privacy-screen.is-dragging{transition:none}
+.privacy-bg{position:absolute;inset:-4% -4% -4% -4%;background-size:cover;background-position:center;filter:brightness(.5) saturate(1.05)}
+.privacy-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,20,15,.35) 0%,rgba(20,20,15,.15) 40%,rgba(20,20,15,.7) 100%)}
+.privacy-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:40px}
+.privacy-logo{font-family:var(--ff-display);font-size:1.6rem;font-weight:600;letter-spacing:.02em;margin-bottom:6px;text-shadow:0 2px 20px rgba(0,0,0,.4)}
+.privacy-sub{font-family:var(--ff-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:50px}
+.privacy-clock{font-family:var(--ff-display);font-size:clamp(3.2rem,10vw,6rem);font-weight:600;line-height:1;text-shadow:0 4px 30px rgba(0,0,0,.4)}
+.privacy-date{font-size:14.5px;color:rgba(255,255,255,.85);margin-top:10px}
+.privacy-hint{position:absolute;bottom:48px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:10px;color:rgba(255,255,255,.8)}
+.privacy-hint svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;animation:privacyBounce 1.6s ease-in-out infinite}
+@keyframes privacyBounce{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(-10px);opacity:1}}
+.privacy-hint span{font-family:var(--ff-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+/* MAIN */
+.main{padding:34px 40px 60px}
+@media(max-width:640px){.main{padding:22px 18px 50px}}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;flex-wrap:wrap;gap:16px}
+.topbar h1{font-family:var(--ff-display);font-size:1.9rem;font-weight:600}
+.topbar p{color:var(--slate);font-size:13.5px;margin-top:4px}
+.live-pill{display:flex;align-items:center;gap:8px;background:var(--sage-bg);color:var(--sage);padding:9px 16px;border-radius:999px;font-family:var(--ff-mono);font-size:11.5px;font-weight:600;letter-spacing:.04em}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);animation:pulseDot 1.6s infinite}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:34px}
+@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}}
+.stat-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:20px 22px}
+.stat-card .n{font-family:var(--ff-display);font-size:2rem;font-weight:600;color:var(--olive)}
+.stat-card .l{font-family:var(--ff-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-top:4px}
+.stat-card .delta{font-size:11.5px;margin-top:8px;color:var(--sage);font-weight:600}
+.stat-card .delta.neg{color:var(--rust)}
+
+/* FEED */
+.panel{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:28px}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line)}
+.panel-head h2{font-family:var(--ff-display);font-size:1.25rem;font-weight:600}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--ff-mono);font-size:11px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);color:var(--slate);cursor:pointer;transition:all .2s;background:none}
+.chip.is-active{background:var(--olive);border-color:var(--olive);color:#fff}
+
+.feed{display:flex;flex-direction:column}
+.entry{display:grid;grid-template-columns:52px 1fr auto auto;gap:16px;align-items:center;padding:16px 24px;border-bottom:1px solid var(--line);transition:background .3s}
+.entry:last-child{border-bottom:none}
+.entry.is-new{animation:entryIn .6s ease-out}
+@keyframes entryIn{0%{background:var(--amber-bg);transform:translateX(-6px);opacity:0}60%{opacity:1}100%{background:transparent;transform:translateX(0)}}
+@media(max-width:700px){.entry{grid-template-columns:40px 1fr;grid-template-rows:auto auto}.entry .col-meta,.entry .col-status{grid-column:2}}
+.src-ico{width:38px;height:38px;border-radius:50%;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.src-ico.phone{background:var(--sage-bg)}
+.col-main .who{font-weight:600;font-size:14.5px}
+.col-main .what{font-size:12.5px;color:var(--slate);margin-top:2px}
+.col-meta{text-align:right;font-family:var(--ff-mono);font-size:12px;color:var(--slate)}
+.col-meta .time{color:var(--ink);font-weight:600}
+.status{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:6px 12px;border-radius:999px;white-space:nowrap;font-weight:600}
+.status.neu{background:var(--amber-bg);color:var(--amber)}
+.status.bestaetigt{background:var(--sage-bg);color:var(--sage)}
+.status.storniert{background:var(--rust-bg);color:var(--rust)}
+
+/* CALENDAR STRIP */
+.week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:22px 24px}
+@media(max-width:700px){.week-strip{grid-template-columns:repeat(7,minmax(70px,1fr));overflow-x:auto}}
+.day-card{border:1px solid var(--line);border-radius:8px;padding:14px 10px;text-align:center}
+.day-card.is-today{border-color:var(--olive);background:var(--paper)}
+.day-card .dow{font-family:var(--ff-mono);font-size:10px;color:var(--slate);text-transform:uppercase}
+.day-card .dnum{font-family:var(--ff-display);font-size:1.3rem;font-weight:600;margin:4px 0}
+.day-card .dcount{font-size:11px;color:var(--olive);font-weight:600}
+
+/* CLICKABLE STATES */
+.stat-card{cursor:pointer;transition:all .2s}
+.stat-card:hover{border-color:var(--olive);transform:translateY(-2px)}
+.stat-card.is-active{border-color:var(--olive);background:var(--paper)}
+.day-card{cursor:pointer;transition:all .2s}
+.day-card:hover{border-color:var(--olive)}
+.entry{cursor:pointer}
+.entry:hover{background:var(--paper)}
+
+/* DETAIL MODAL */
+.detail-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.detail-modal.is-open{opacity:1;pointer-events:auto}
+.detail-modal-bg{position:absolute;inset:0;background:rgba(43,42,32,.55);backdrop-filter:blur(3px)}
+.detail-modal-card{position:relative;background:#fff;max-width:520px;width:100%;border-radius:12px;padding:30px 30px 26px;max-height:88vh;overflow-y:auto;transform:translateY(16px) scale(.97);transition:transform .3s}
+.detail-modal.is-open .detail-modal-card{transform:translateY(0) scale(1)}
+.detail-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--paper);border:none;font-size:17px;color:var(--slate);display:flex;align-items:center;justify-content:center}
+.detail-top{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-right:30px}
+.detail-src-ico{width:46px;height:46px;border-radius:50%;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.detail-src-ico.phone{background:var(--sage-bg)}
+.detail-who{font-family:var(--ff-display);font-size:1.3rem;font-weight:600}
+.detail-type{font-family:var(--ff-mono);font-size:11px;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:22px;padding:16px 18px;background:var(--paper);border-radius:8px}
+.detail-grid div span{display:block;font-family:var(--ff-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.detail-grid div b{font-size:14px;font-weight:600}
+.detail-block{margin-bottom:20px}
+.detail-block h5{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--olive);margin-bottom:8px}
+.detail-block p{font-size:13.5px;color:var(--ink);line-height:1.6}
+.transcript-mini{background:var(--olive-dark);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.transcript-mini .tline{font-size:12.5px;line-height:1.5;padding:8px 12px;border-radius:8px;max-width:88%}
+.transcript-mini .tline.caller{background:rgba(250,247,238,.1);color:#fff;align-self:flex-start}
+.transcript-mini .tline.bot{background:var(--amber);color:#2B2A20;align-self:flex-end;font-weight:500}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+@media(max-width:460px){.detail-actions{grid-template-columns:1fr}}
+.dbtn{padding:11px 8px;border-radius:8px;border:1px solid var(--line);background:none;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.dbtn.confirm{background:var(--sage-bg);color:var(--sage);border-color:transparent}
+.dbtn.confirm:hover{background:var(--sage);color:#fff}
+.dbtn.cancel{background:var(--rust-bg);color:var(--rust);border-color:transparent}
+.dbtn.cancel:hover{background:var(--rust);color:#fff}
+.dbtn.neutral:hover{border-color:var(--olive)}
+.dbtn:disabled{opacity:.4;cursor:not-allowed}
+.detail-note{font-family:var(--ff-mono);font-size:10.5px;color:var(--slate-dim);text-align:center}
+
+/* SETTINGS */
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.settings-row:last-of-type{border-bottom:none}
+.settings-row span{color:var(--slate)}
+.settings-row b{font-weight:600}
+.settings-live{color:var(--sage)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo">Nofler</div>
+    <div class="sb-sub">MIJO AI &middot; LIVE-DASHBOARD</div>
+    <nav class="sb-nav">
+      <button type="button" class="sb-link privacy-btn" id="privacyBtn"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>Sichtschutz</button>
+      <div class="sb-divider"></div>
+      <a href="#" class="sb-link is-active" data-view="uebersicht"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Übersicht</a>
+      <a href="#" class="sb-link" data-view="reservierungen"><svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Reservierungen</a>
+      <a href="#" class="sb-link" data-view="bestellungen"><svg viewBox="0 0 24 24"><path d="M6 2l1 5h10l1-5M5 7h14l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7z"/></svg>Bestellungen</a>
+      <a href="#" class="sb-link" data-view="kalender"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Kalender</a>
+      <a href="#" class="sb-link" data-view="einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Einstellungen</a>
+    </nav>
+    <div class="chef-toggle">
+      <label class="chef-switch">
+        <input type="checkbox" id="chefModeToggle">
+        <span class="chef-slider"></span>
+      </label>
+      <div><b>Chef-Modus</b><br><span id="chefModeStatus">Aus</span></div>
+    </div>
+    <div class="sb-foot">Telefonassistent<br><b>Aktiv seit 07:00 Uhr</b><br>Angebunden via n8n &middot; Airtable</div>
+  </aside>
+
+  <main class="main">
+    <div id="view-uebersicht" class="view">
+      <div class="topbar">
+        <div>
+          <h1 id="greeting">Guten Tag!</h1>
+          <p id="liveDateTime">&nbsp;</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="live-pill"><span class="live-dot"></span>Telefonassistent aktiv</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card"><div class="n" id="statRes">0</div><div class="l">Reservierungen heute</div><div class="delta">+3 zur Vorwoche</div></div>
+        <div class="stat-card"><div class="n" id="statOrd">0</div><div class="l">Vorbestellungen</div><div class="delta">+1 zur Vorwoche</div></div>
+        <div class="stat-card"><div class="n" id="statCancel">0</div><div class="l">Stornierungen</div><div class="delta neg">automatisch erfasst</div></div>
+        <div class="stat-card"><div class="n">87%</div><div class="l">Tische heute ausgelastet</div><div class="delta">bis 21 Uhr</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2>Diese Woche</h2>
+        </div>
+        <div class="week-strip" id="weekStrip"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="feedHeading">Live-Verlauf</h2>
+          <div class="filter-chips" id="filterChips">
+            <button class="chip is-active" data-f="alle">Alle</button>
+            <button class="chip" data-f="reservierung">Reservierungen</button>
+            <button class="chip" data-f="bestellung">Vorbestellungen</button>
+            <button class="chip" data-f="storno">Stornierungen</button>
+          </div>
+        </div>
+        <div class="feed" id="feed"></div>
+      </div>
+    </div>
+
+    <div id="view-reservierungen" class="view" hidden>
+      <div class="topbar"><div><h1>Reservierungen</h1><p>Alle Tischreservierungen dieser Woche, neueste zuerst.</p></div></div>
+      <div class="panel"><div class="feed" id="feedReservierungen"></div></div>
+    </div>
+
+    <div id="view-bestellungen" class="view" hidden>
+      <div class="topbar"><div><h1>Vorbestellungen</h1><p>Alle telefonisch aufgenommenen Vorbestellungen dieser Woche.</p></div></div>
+      <div class="panel"><div class="feed" id="feedBestellungen"></div></div>
+    </div>
+
+    <div id="view-kalender" class="view" hidden>
+      <div class="topbar"><div><h1>Kalender</h1><p>Auf einen Tag klicken, um alle Vorgänge dieses Tages zu sehen.</p></div></div>
+      <div class="panel">
+        <div class="week-strip" id="weekStripCal"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2 id="calFeedHeading">Donnerstag, 6. August</h2></div>
+        <div class="feed" id="feedKalender"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Verlauf der letzten 12 Monate</h2></div>
+        <div class="month-grid" id="monthGrid"></div>
+      </div>
+      <div class="panel" id="monthDetailPanel" style="display:none">
+        <div class="panel-head"><h2 id="monthDetailHeading">Monat</h2></div>
+        <div class="month-summary" id="monthSummary"></div>
+        <div class="panel-head" style="border-top:1px solid var(--line)"><h2 style="font-size:1rem">Kunden diesen Monat</h2></div>
+        <div class="feed" id="monthCustomerFeed"></div>
+      </div>
+    </div>
+
+    <div id="view-einstellungen" class="view" hidden>
+      <div class="topbar"><div><h1>Einstellungen</h1><p>Grundangaben zu deinem Telefonassistenten.</p></div></div>
+      <div class="panel" style="padding:26px 28px">
+        <div class="settings-row"><span>Restaurant</span><b>Nofler, Feldkirch</b></div>
+        <div class="settings-row"><span>Telefonnummer</span><b>+43 5522 12345</b></div>
+        <div class="settings-row"><span>Telefonassistent</span><b class="settings-live">● Aktiv seit 07:00 Uhr</b></div>
+        <div class="settings-row"><span>Verbunden über</span><b>n8n &middot; Airtable</b></div>
+        <div class="settings-row"><span>Tischbestand</span><b>5&times; 2er &middot; 5&times; 4er &middot; 4&times; 6er</b></div>
+        <div class="settings-row"><span>Benachrichtigungen</span><b>Per E-Mail bei neuer Reservierung</b></div>
+        <p class="detail-note" style="margin-top:18px;text-align:left">Demo — Einstellungen sind hier nicht veränderbar.</p>
+      </div>
+      <div class="panel" style="padding:26px 28px">
+        <div class="panel-head" style="padding:0 0 16px;border:none"><h2 style="font-size:1.1rem">Chef-PIN ändern</h2></div>
+        <div id="pinChangeCard"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="privacy-screen" id="privacyScreen">
+  <div class="privacy-bg" id="privacyBg" style="background-image:url('https://images.unsplash.com/photo-1758243488328-148e39e5e6b1?q=80&amp;w=1600&amp;auto=format&amp;fit=crop')"></div>
+  <div class="privacy-scrim"></div>
+  <div class="privacy-content">
+    <div class="privacy-logo">Nofler</div>
+    <div class="privacy-sub">Reserviert &middot; Gedeckt &middot; Bereit für Sie</div>
+    <div class="privacy-clock" id="privacyClock">--:--</div>
+    <div class="privacy-date" id="privacyDate">&nbsp;</div>
+  </div>
+  <div class="privacy-hint">
+    <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    <span>Nach oben wischen oder tippen zum Entsperren</span>
+  </div>
+</div>
+
+<div class="detail-modal" id="detailModal">
+  <div class="detail-modal-bg" id="detailModalBg"></div>
+  <div class="detail-modal-card">
+    <button class="detail-close" id="detailClose">&times;</button>
+    <div class="detail-top">
+      <div class="detail-src-ico" id="dtIco"></div>
+      <div>
+        <div class="detail-who" id="dtWho"></div>
+        <div class="detail-type" id="dtType"></div>
+      </div>
+      <span class="status" id="dtStatus"></span>
+    </div>
+    <div class="detail-grid" id="dtGrid"></div>
+    <div class="detail-block" id="dtNotesBlock">
+      <h5>Notiz</h5>
+      <p id="dtNotes"></p>
+    </div>
+    <div class="detail-block" id="dtTranscriptBlock">
+      <h5>Aus dem Telefonat notiert</h5>
+      <div class="transcript-mini" id="dtTranscript"></div>
+    </div>
+    <div class="detail-actions">
+      <button type="button" class="dbtn confirm" id="dtConfirmBtn">✓ Bestätigen</button>
+      <button type="button" class="dbtn cancel" id="dtCancelBtn">✕ Stornieren</button>
+      <button type="button" class="dbtn neutral" id="dtCallBtn">📞 Zurückrufen</button>
+    </div>
+    <div class="detail-delete-row">
+      <button type="button" class="dbtn danger" id="dtDeleteBtn">🗑 Eintrag endgültig löschen (Chef-Funktion)</button>
+    </div>
+    <p class="detail-note">Demo — Änderungen werden nicht dauerhaft gespeichert.</p>
+  </div>
+</div>
+
+<div class="mini-modal" id="pinModal">
+  <div class="mini-modal-bg"></div>
+  <div class="mini-modal-card">
+    <div class="mini-modal-ico">🔒</div>
+    <h3>Chef-Modus</h3>
+    <p>Bitte PIN eingeben, um Löschrechte freizuschalten.</p>
+    <input type="password" inputmode="numeric" maxlength="6" id="pinInput" placeholder="••••••" autocomplete="off">
+    <p class="pin-error" id="pinError">Falsche PIN, bitte erneut versuchen.</p>
+    <div class="mini-modal-actions">
+      <button type="button" class="dbtn neutral" id="pinCancel">Abbrechen</button>
+      <button type="button" class="dbtn confirm" id="pinSubmit">Einloggen</button>
+    </div>
+    <button type="button" class="pin-forgot-link" id="pinForgotLink">PIN vergessen?</button>
+    <p class="detail-note" style="margin-top:10px">Demo-PIN: 123456</p>
+  </div>
+</div>
+
+<div class="mini-modal" id="resetPinModal">
+  <div class="mini-modal-bg"></div>
+  <div class="mini-modal-card">
+    <div class="mini-modal-ico">🆕</div>
+    <h3>Neue PIN erstellen</h3>
+    <p>In einem echten System würde das über einen verifizierten Kanal (SMS/E-Mail) laufen. In dieser Demo kannst du direkt eine neue 6-stellige PIN festlegen.</p>
+    <input type="password" inputmode="numeric" maxlength="6" id="newPinInput1" placeholder="Neue PIN (6-stellig)" autocomplete="off" style="margin-bottom:10px">
+    <input type="password" inputmode="numeric" maxlength="6" id="newPinInput2" placeholder="PIN bestätigen" autocomplete="off">
+    <p class="pin-error" id="resetPinError">PINs stimmen nicht überein oder sind nicht 6-stellig.</p>
+    <div class="mini-modal-actions">
+      <button type="button" class="dbtn neutral" id="resetPinCancel">Abbrechen</button>
+      <button type="button" class="dbtn confirm" id="resetPinSubmit">PIN speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="mini-modal" id="confirmDeleteModal">
+  <div class="mini-modal-bg"></div>
+  <div class="mini-modal-card">
+    <div class="mini-modal-ico">🗑</div>
+    <h3>Eintrag löschen?</h3>
+    <p id="confirmDeleteText">Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
+    <div class="mini-modal-actions">
+      <button type="button" class="dbtn neutral" id="confirmDeleteCancel">Abbrechen</button>
+      <button type="button" class="dbtn danger" id="confirmDeleteYes">Endgültig löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ENTRIES = []; // wird unten live von Airtable befuellt
+
+  var OTHER_DAYS = [
+    { id:101, day:0, type:'reservierung', who:'Herr Vögel', what:'Tisch für 2 Personen &middot; Tisch T1', time:'12:10', status:'bestaetigt', source:'phone', phone:'+43 664 101 2020', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:102, day:0, type:'bestellung', who:'Frau Amann', what:'Vorbestellung: Käsknöpfle, Abholung 18:00', time:'10:40', status:'bestaetigt', source:'phone', phone:'+43 676 303 4040', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:103, day:0, type:'reservierung', who:'Familie Kaufmann', what:'Tisch für 5 Personen &middot; Tisch T10', time:'09:55', status:'bestaetigt', source:'phone', phone:'+43 699 505 6060', guests:'5 Personen', table:'T10 (6er-Tisch)', notes:'—', transcript:null },
+    { id:104, day:0, type:'storno', who:'Herr Beck', what:'Reservierung für 2 Personen, ursprünglich 20:00 Uhr', time:'08:30', status:'storniert', source:'phone', phone:'+43 664 707 8080', guests:'2 Personen', table:'T3 (2er-Tisch)', notes:'—', transcript:null },
+
+    { id:111, day:1, type:'reservierung', who:'Frau Egger', what:'Tisch für 3 Personen &middot; Tisch T8', time:'13:05', status:'bestaetigt', source:'phone', phone:'+43 660 111 2233', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+    { id:112, day:1, type:'reservierung', who:'Herr Loacker', what:'Tisch für 2 Personen &middot; Tisch T2', time:'12:20', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'2 Personen', table:'T2 (2er-Tisch)', notes:'—', transcript:null },
+    { id:113, day:1, type:'bestellung', who:'Frau Blum', what:'Vorbestellung: Rindsgulasch, Abholung 12:30', time:'11:15', status:'bestaetigt', source:'phone', phone:'+43 676 222 3344', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:114, day:1, type:'reservierung', who:'Herr &amp; Frau Nardin', what:'Tisch für 2 Personen &middot; Tisch T4', time:'10:50', status:'bestaetigt', source:'phone', phone:'+43 699 333 4455', guests:'2 Personen', table:'T4 (2er-Tisch)', notes:'—', transcript:null },
+    { id:115, day:1, type:'reservierung', who:'Familie Dünser', what:'Tisch für 6 Personen &middot; Tisch T11', time:'09:40', status:'neu', source:'phone', phone:'+43 664 444 5566', guests:'6 Personen', table:'T11 (6er-Tisch)', notes:'Geburtstag, Kerze erwünscht.', transcript:null },
+    { id:116, day:1, type:'storno', who:'Herr Metzler', what:'Reservierung für 4 Personen, ursprünglich 18:30 Uhr', time:'08:20', status:'storniert', source:'phone', phone:'+43 676 555 6677', guests:'4 Personen', table:'T7 (4er-Tisch)', notes:'—', transcript:null },
+
+    { id:121, day:2, type:'reservierung', who:'Frau Hollenstein', what:'Tisch für 4 Personen &middot; Tisch T9', time:'12:45', status:'bestaetigt', source:'phone', phone:'+43 699 666 7788', guests:'4 Personen', table:'T9 (4er-Tisch)', notes:'—', transcript:null },
+    { id:122, day:2, type:'bestellung', who:'Herr Kopf', what:'Vorbestellung: Kässpätzle, Abholung 12:00', time:'11:00', status:'bestaetigt', source:'phone', phone:'+43 664 777 8899', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:123, day:2, type:'reservierung', who:'Familie Bertsch', what:'Tisch für 2 Personen &middot; Tisch T1', time:'10:15', status:'bestaetigt', source:'phone', phone:'+43 676 888 9900', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:124, day:2, type:'reservierung', who:'Herr Vonier', what:'Tisch für 3 Personen &middot; Tisch T8', time:'09:30', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+    { id:125, day:2, type:'reservierung', who:'Frau Feuerstein', what:'Tisch für 2 Personen &middot; Tisch T2', time:'08:50', status:'bestaetigt', source:'phone', phone:'+43 699 999 0011', guests:'2 Personen', table:'T2 (2er-Tisch)', notes:'—', transcript:null },
+
+    { id:131, day:4, type:'reservierung', who:'Familie Schoder', what:'Tisch für 4 Personen &middot; Tisch T7', time:'13:20', status:'bestaetigt', source:'phone', phone:'+43 664 010 1122', guests:'4 Personen', table:'T7 (4er-Tisch)', notes:'—', transcript:null },
+    { id:132, day:4, type:'reservierung', who:'Herr Tschabrun', what:'Tisch für 2 Personen &middot; Tisch T3', time:'12:35', status:'bestaetigt', source:'phone', phone:'+43 676 020 2233', guests:'2 Personen', table:'T3 (2er-Tisch)', notes:'—', transcript:null },
+    { id:133, day:4, type:'bestellung', who:'Frau Ess', what:'Vorbestellung: Wiener Schnitzel, Abholung 19:00', time:'11:50', status:'bestaetigt', source:'phone', phone:'+43 699 030 3344', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:134, day:4, type:'reservierung', who:'Familie Ludescher', what:'Tisch für 6 Personen &middot; Tisch T11', time:'10:40', status:'bestaetigt', source:'phone', phone:'+43 664 040 4455', guests:'6 Personen', table:'T11 (6er-Tisch)', notes:'Firmenessen.', transcript:null },
+    { id:135, day:4, type:'reservierung', who:'Herr Nachbaur', what:'Tisch für 2 Personen &middot; Tisch T1', time:'09:20', status:'neu', source:'phone', phone:'+43 676 050 5566', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:136, day:4, type:'storno', who:'Frau Giesinger', what:'Reservierung für 3 Personen, ursprünglich 19:30 Uhr', time:'08:10', status:'storniert', source:'phone', phone:'+43 699 060 6677', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+
+    { id:141, day:5, type:'reservierung', who:'Familie Türtscher', what:'Tisch für 4 Personen &middot; Tisch T9', time:'13:50', status:'bestaetigt', source:'phone', phone:'+43 664 070 7788', guests:'4 Personen', table:'T9 (4er-Tisch)', notes:'—', transcript:null },
+    { id:142, day:5, type:'reservierung', who:'Herr Wachter', what:'Tisch für 2 Personen &middot; Tisch T2', time:'12:55', status:'bestaetigt', source:'phone', phone:'+43 676 080 8899', guests:'2 Personen', table:'T2 (2er-Tisch)', notes:'—', transcript:null },
+    { id:143, day:5, type:'bestellung', who:'Frau Konzett', what:'Vorbestellung: Kaiserschmarrn, Abholung 15:00', time:'11:30', status:'bestaetigt', source:'phone', phone:'+43 699 090 9900', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:144, day:5, type:'reservierung', who:'Familie Burtscher', what:'Tisch für 6 Personen &middot; Tisch T11', time:'10:20', status:'bestaetigt', source:'phone', phone:'+43 664 011 2233', guests:'6 Personen', table:'T11 (6er-Tisch)', notes:'Familienfeier.', transcript:null },
+    { id:145, day:5, type:'reservierung', who:'Herr Zudrell', what:'Tisch für 3 Personen &middot; Tisch T8', time:'09:15', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+    { id:146, day:5, type:'reservierung', who:'Frau Matt', what:'Tisch für 2 Personen &middot; Tisch T3', time:'08:40', status:'neu', source:'phone', phone:'+43 676 021 3344', guests:'2 Personen', table:'T3 (2er-Tisch)', notes:'—', transcript:null },
+    { id:147, day:5, type:'storno', who:'Herr Getzner', what:'Reservierung für 4 Personen, ursprünglich 20:00 Uhr', time:'07:55', status:'storniert', source:'phone', phone:'+43 699 031 4455', guests:'4 Personen', table:'T7 (4er-Tisch)', notes:'—', transcript:null },
+
+    { id:151, day:6, type:'reservierung', who:'Familie Rein', what:'Tisch für 2 Personen &middot; Tisch T1', time:'12:30', status:'bestaetigt', source:'phone', phone:'+43 664 041 5566', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:152, day:6, type:'bestellung', who:'Herr Batlogg', what:'Vorbestellung: Käsknöpfle, Abholung 13:00', time:'11:10', status:'bestaetigt', source:'phone', phone:'+43 676 051 6677', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:153, day:6, type:'reservierung', who:'Frau Sohm', what:'Tisch für 4 Personen &middot; Tisch T9', time:'10:05', status:'bestaetigt', source:'phone', phone:'+43 699 061 7788', guests:'4 Personen', table:'T9 (4er-Tisch)', notes:'—', transcript:null },
+    { id:154, day:6, type:'reservierung', who:'Familie Hagen', what:'Tisch für 3 Personen &middot; Tisch T8', time:'09:00', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null }
+  ];
+
+  var ALL_ENTRIES = ENTRIES.concat(OTHER_DAYS);
+
+  function iconFor(source){
+    return source === 'phone' ? '📞' : '✍️';
+  }
+
+  function renderFeedInto(containerId, list){
+    var feed = document.getElementById(containerId);
+    feed.innerHTML = '';
+    if(list.length === 0){
+      feed.innerHTML = '<p style="padding:26px 24px;color:var(--slate);font-size:13.5px">Keine Einträge für diese Auswahl.</p>';
+      return;
+    }
+    list.forEach(function(e){
+      var row = document.createElement('div');
+      row.className = 'entry';
+      row.dataset.id = e.id;
+      row.innerHTML =
+        '<div class="src-ico ' + (e.source === 'phone' ? 'phone' : '') + '">' + iconFor(e.source) + '</div>' +
+        '<div class="col-main"><div class="who">' + e.who + '</div><div class="what">' + e.what + '</div></div>' +
+        '<div class="col-meta"><span class="time">' + e.time + '</span> Uhr</div>' +
+        '<div class="col-status"><span class="status ' + e.status + '">' + e.status + '</span></div>' +
+        '<button type="button" class="entry-delete" title="Eintrag löschen (Chef-Modus)">&times;</button>';
+      row.addEventListener('click', function(ev){
+        if(ev.target.classList.contains('entry-delete')){
+          ev.stopPropagation();
+          deleteEntry(e.id);
+          return;
+        }
+        openDetail(e.id);
+      });
+      feed.appendChild(row);
+    });
+  }
+
+  var pendingDeleteId = null;
+  var pendingDeleteFromModal = false;
+
+  function requestDelete(id, fromDetailModal){
+    if(!chefUnlocked) return;
+    pendingDeleteId = id;
+    pendingDeleteFromModal = !!fromDetailModal;
+    var entry = findEntry(id);
+    document.getElementById('confirmDeleteText').textContent = entry ? ('„' + entry.who.replace(/&amp;/g,'&') + '" wird endgültig aus dem System entfernt.') : 'Dieser Vorgang kann nicht rückgängig gemacht werden.';
+    document.getElementById('confirmDeleteModal').classList.add('is-open');
+  }
+
+  function performDelete(id){
+    ALL_ENTRIES = ALL_ENTRIES.filter(function(e){ return e.id !== id; });
+    ENTRIES = ENTRIES.filter(function(e){ return e.id !== id; });
+    if(id >= 2000 && typeof MONTH_CUSTOMERS !== 'undefined'){
+      var monthIndex = Math.floor((id - 2000) / 10);
+      var deletedEntry = MONTH_CUSTOMERS[monthIndex] ? MONTH_CUSTOMERS[monthIndex].filter(function(e){ return e.id === id; })[0] : null;
+      if(deletedEntry) decrementMonthStats(deletedEntry, monthIndex);
+    }
+    Object.keys(MONTH_CUSTOMERS).forEach(function(k){
+      MONTH_CUSTOMERS[k] = MONTH_CUSTOMERS[k].filter(function(e){ return e.id !== id; });
+    });
+  }
+
+  function decrementMonthStats(entry, monthIndex){
+    var m = MONTH_STATS[monthIndex];
+    if(!m) return;
+    m.customers = Math.max(0, m.customers - 1);
+    if(entry.type === 'reservierung') m.res = Math.max(0, m.res - 1);
+    if(entry.type === 'bestellung') m.orders = Math.max(0, m.orders - 1);
+    if(entry.type === 'storno') m.cancel = Math.max(0, m.cancel - 1);
+    var card = monthGrid && monthGrid.children[monthIndex];
+    if(card){
+      var numEl = card.querySelector('.mnum');
+      if(numEl) numEl.textContent = m.customers;
+    }
+    if(monthIndex === currentMonthIndex){
+      document.getElementById('monthSummary').innerHTML =
+        '<div class="m-stat"><div class="n">' + m.customers + '</div><div class="l">Kunden gesamt</div></div>' +
+        '<div class="m-stat"><div class="n">' + m.res + '</div><div class="l">Reservierungen</div></div>' +
+        '<div class="m-stat"><div class="n">' + m.orders + '</div><div class="l">Vorbestellungen</div></div>' +
+        '<div class="m-stat"><div class="n">' + m.cancel + '</div><div class="l">Stornierungen</div></div>';
+    }
+  }
+
+  document.getElementById('confirmDeleteCancel').addEventListener('click', function(){
+    document.getElementById('confirmDeleteModal').classList.remove('is-open');
+    pendingDeleteId = null;
+  });
+  document.getElementById('confirmDeleteYes').addEventListener('click', function(){
+    if(pendingDeleteId == null) return;
+    performDelete(pendingDeleteId);
+    document.getElementById('confirmDeleteModal').classList.remove('is-open');
+    if(pendingDeleteFromModal){ closeDetail(); }
+    refreshCurrentView();
+    pendingDeleteId = null;
+  });
+
+  function deleteEntry(id){
+    if(!chefUnlocked) return;
+    requestDelete(id, false);
+  }
+
+  function refreshCurrentView(){
+    var active = document.querySelector('.sb-link.is-active');
+    var view = active ? active.dataset.view : 'uebersicht';
+    if(view === 'uebersicht'){
+      renderFeed(document.querySelector('#filterChips .chip.is-active').dataset.f);
+      buildWeekStrip('weekStrip', weekStripHandlerOverview);
+      if(typeof updateOverviewStats === 'function') updateOverviewStats();
+    } else {
+      showView(view);
+    }
+    if(view === 'kalender' && typeof MONTH_CUSTOMERS !== 'undefined' && MONTH_CUSTOMERS[currentMonthIndex]){
+      renderFeedInto('monthCustomerFeed', MONTH_CUSTOMERS[currentMonthIndex]);
+    }
+  }
+
+  function renderFeed(filter){
+    var list = filter === 'alle' ? ENTRIES : ENTRIES.filter(function(e){ return e.type === filter; });
+    renderFeedInto('feed', list);
+  }
+
+  document.querySelectorAll('.chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-active'); });
+      chip.classList.add('is-active');
+      renderFeed(chip.dataset.f);
+    });
+  });
+
+  renderFeed('alle');
+
+  // animate stat counters
+  function animateCount(id, target){
+    var el = document.getElementById(id);
+    var start = performance.now(), dur = 600;
+    var from = parseInt(el.textContent, 10) || 0;
+    function tick(now){
+      var p = Math.min((now - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(from + (target - from) * eased);
+      if(p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  function updateOverviewStats(){
+    var todays = ENTRIES; // today's entries only (Donnerstag)
+    var resCount = todays.filter(function(e){ return e.type === 'reservierung'; }).length;
+    var ordCount = todays.filter(function(e){ return e.type === 'bestellung'; }).length;
+    var cancelCount = todays.filter(function(e){ return e.type === 'storno'; }).length;
+    animateCount('statRes', resCount);
+    animateCount('statOrd', ordCount);
+    animateCount('statCancel', cancelCount);
+  }
+  updateOverviewStats();
+
+  // week strip
+  var DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+  var DATES = [4,5,6,7,8,9,10];
+  var MONTHNAMES = ['4. August','5. August','6. August','7. August','8. August','9. August','10. August'];
+  var todayIdx = 3; // Donnerstag
+
+  function countForDay(i){ return ALL_ENTRIES.filter(function(e){ return e.day === i; }).length; }
+
+  function buildWeekStrip(containerId, onClick){
+    var strip = document.getElementById(containerId);
+    strip.innerHTML = '';
+    DAYS.forEach(function(d, i){
+      var card = document.createElement('div');
+      card.className = 'day-card' + (i === todayIdx ? ' is-today' : '');
+      card.dataset.day = i;
+      card.innerHTML = '<div class="dow">' + d + '</div><div class="dnum">' + DATES[i] + '</div><div class="dcount">' + countForDay(i) + ' Vorg.</div>';
+      card.addEventListener('click', function(){
+        strip.querySelectorAll('.day-card').forEach(function(c){ c.classList.remove('is-today'); });
+        card.classList.add('is-today');
+        onClick(i);
+      });
+      strip.appendChild(card);
+    });
+  }
+
+  function weekStripHandlerOverview(i){
+    document.getElementById('feedHeading').textContent = i === todayIdx ? 'Live-Verlauf' : 'Verlauf — ' + DAYS[i] + ', ' + MONTHNAMES[i];
+    document.querySelectorAll('#filterChips .chip').forEach(function(c){ c.classList.remove('is-active'); });
+    document.querySelector('#filterChips .chip[data-f="alle"]').classList.add('is-active');
+    renderFeedInto('feed', ALL_ENTRIES.filter(function(e){ return e.day === i; }));
+  }
+  buildWeekStrip('weekStrip', weekStripHandlerOverview);
+
+  buildWeekStrip('weekStripCal', function(i){
+    document.getElementById('calFeedHeading').textContent = DAYS[i] + ', ' + MONTHNAMES[i];
+    renderFeedInto('feedKalender', ALL_ENTRIES.filter(function(e){ return e.day === i; }));
+  });
+
+  // simulate a new live phone booking arriving
+  setTimeout(function(){
+    var activeFilter = document.querySelector('.chip.is-active').dataset.f;
+    var newEntry = { id:9, day:3, type:'reservierung', who:'Herr Sturn', what:'Tisch für 3 Personen &middot; Tisch T5', time:'Jetzt', status:'neu', source:'phone', phone:'+43 664 777 9900', guests:'3 Personen', table:'T5 (4er-Tisch)', notes:'Gerade eben eingegangen.', transcript:[
+      { who:'caller', text:'Hallo, haben Sie gleich noch einen Tisch für drei Personen frei?' },
+      { who:'bot', text:'Ja, Tisch 5 ist in 20 Minuten frei — soll ich den für Sie reservieren?' },
+      { who:'caller', text:'Ja, perfekt, danke!' }
+    ] };
+    ENTRIES.unshift(newEntry);
+    ALL_ENTRIES.unshift(newEntry);
+    if(activeFilter !== 'alle' && activeFilter !== 'reservierung') return;
+    var feed = document.getElementById('feed');
+    var row = document.createElement('div');
+    row.className = 'entry is-new';
+    row.dataset.id = newEntry.id;
+    row.innerHTML =
+      '<div class="src-ico phone">📞</div>' +
+      '<div class="col-main"><div class="who">' + newEntry.who + '</div><div class="what">' + newEntry.what + '</div></div>' +
+      '<div class="col-meta"><span class="time">Jetzt</span></div>' +
+      '<div class="col-status"><span class="status neu">neu</span></div>';
+    row.addEventListener('click', function(){ openDetail(newEntry.id); });
+    feed.insertBefore(row, feed.firstChild);
+  }, 3200);
+
+  /* ---------------- DETAIL MODAL ---------------- */
+  var detailModal = document.getElementById('detailModal');
+  var currentDetailId = null;
+
+  function findEntry(id){
+    for(var i=0;i<ALL_ENTRIES.length;i++){ if(ALL_ENTRIES[i].id === id) return ALL_ENTRIES[i]; }
+    return null;
+  }
+
+  function typeLabel(type){
+    return type === 'reservierung' ? 'Tischreservierung' : type === 'bestellung' ? 'Vorbestellung' : 'Stornierung';
+  }
+
+  function openDetail(id){
+    var e = findEntry(id);
+    if(!e) return;
+    currentDetailId = id;
+    document.getElementById('dtIco').className = 'detail-src-ico ' + (e.source === 'phone' ? 'phone' : '');
+    document.getElementById('dtIco').textContent = iconFor(e.source);
+    document.getElementById('dtWho').innerHTML = e.who;
+    document.getElementById('dtType').textContent = typeLabel(e.type) + ' · ' + (e.source === 'phone' ? 'Erfasst via Telefonassistent' : 'Manuell erfasst');
+    document.getElementById('dtStatus').className = 'status ' + e.status;
+    document.getElementById('dtStatus').textContent = e.status;
+    document.getElementById('dtGrid').innerHTML =
+      '<div><span>Uhrzeit</span><b>' + e.time + ' Uhr</b></div>' +
+      '<div><span>Telefon</span><b>' + e.phone + '</b></div>' +
+      '<div><span>Personen</span><b>' + e.guests + '</b></div>' +
+      '<div><span>Tisch</span><b>' + e.table + '</b></div>';
+    var notesBlock = document.getElementById('dtNotesBlock');
+    if(e.notes && e.notes !== '—'){
+      notesBlock.style.display = 'block';
+      document.getElementById('dtNotes').textContent = e.notes;
+    } else {
+      notesBlock.style.display = 'none';
+    }
+    var transcriptBlock = document.getElementById('dtTranscriptBlock');
+    if(e.transcript && Array.isArray(e.transcript)){
+      transcriptBlock.style.display = 'block';
+      document.getElementById('dtTranscript').innerHTML = e.transcript.map(function(t){
+        return '<div class="tline ' + t.who + '">' + t.text + '</div>';
+      }).join('');
+    } else if(e.transcript && typeof e.transcript === 'string'){
+      transcriptBlock.style.display = 'block';
+      var lines = e.transcript.split('\n').filter(function(l){ return l.trim(); });
+      document.getElementById('dtTranscript').innerHTML = lines.map(function(l){
+        var isAgent = /^Agent:/i.test(l);
+        var cls = isAgent ? 'bot' : 'caller';
+        var text = l.replace(/^(Agent|User):\s*/i, '');
+        return '<div class="tline ' + cls + '">' + text.replace(/</g,'&lt;') + '</div>';
+      }).join('');
+    } else {
+      transcriptBlock.style.display = 'none';
+    }
+    updateActionButtons(e);
+    detailModal.classList.add('is-open');
+  }
+
+  function updateActionButtons(e){
+    var confirmBtn = document.getElementById('dtConfirmBtn');
+    var cancelBtn = document.getElementById('dtCancelBtn');
+    confirmBtn.disabled = (e.status === 'bestaetigt');
+    cancelBtn.disabled = (e.status === 'storniert');
+  }
+
+  function closeDetail(){ detailModal.classList.remove('is-open'); }
+  document.getElementById('detailClose').addEventListener('click', closeDetail);
+  document.getElementById('detailModalBg').addEventListener('click', closeDetail);
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape') closeDetail(); });
+
+  document.getElementById('dtConfirmBtn').addEventListener('click', function(){
+    var e = findEntry(currentDetailId);
+    if(!e) return;
+    e.status = 'bestaetigt';
+    updateActionButtons(e);
+    document.getElementById('dtStatus').className = 'status bestaetigt';
+    document.getElementById('dtStatus').textContent = 'bestaetigt';
+    renderFeed(document.querySelector('.chip.is-active').dataset.f);
+  });
+  document.getElementById('dtCancelBtn').addEventListener('click', function(){
+    var e = findEntry(currentDetailId);
+    if(!e) return;
+    e.status = 'storniert';
+    e.type = 'storno';
+    updateActionButtons(e);
+    document.getElementById('dtStatus').className = 'status storniert';
+    document.getElementById('dtStatus').textContent = 'storniert';
+    renderFeed(document.querySelector('.chip.is-active').dataset.f);
+  });
+  document.getElementById('dtCallBtn').addEventListener('click', function(){
+    var btn = document.getElementById('dtCallBtn');
+    var original = btn.textContent;
+    btn.textContent = '📞 Wird angerufen ...';
+    setTimeout(function(){ btn.textContent = original; }, 1600);
+  });
+
+  /* ---------------- STAT CARD FILTERS ---------------- */
+  var statMap = { statRes:'reservierung', statOrd:'bestellung', statCancel:'storno' };
+  Object.keys(statMap).forEach(function(statId){
+    var card = document.getElementById(statId).closest('.stat-card');
+    card.addEventListener('click', function(){
+      var type = statMap[statId];
+      var chip = document.querySelector('.chip[data-f="' + type + '"]');
+      document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-active'); });
+      chip.classList.add('is-active');
+      renderFeed(type);
+      document.getElementById('feed').closest('.panel').scrollIntoView({ behavior:'smooth', block:'center' });
+    });
+  });
+
+  /* ---------------- SIDEBAR NAVIGATION ---------------- */
+  var VIEWS = ['uebersicht','reservierungen','bestellungen','kalender','einstellungen'];
+  function showView(view){
+    VIEWS.forEach(function(v){
+      document.getElementById('view-' + v).hidden = (v !== view);
+    });
+    document.querySelectorAll('.sb-link').forEach(function(l){
+      l.classList.toggle('is-active', l.dataset.view === view);
+    });
+    if(view === 'reservierungen'){
+      var all = ALL_ENTRIES.filter(function(e){ return e.type === 'reservierung'; })
+        .slice().sort(function(a,b){ return a.day - b.day; });
+      renderFeedInto('feedReservierungen', all);
+    }
+    if(view === 'bestellungen'){
+      var orders = ALL_ENTRIES.filter(function(e){ return e.type === 'bestellung'; })
+        .slice().sort(function(a,b){ return a.day - b.day; });
+      renderFeedInto('feedBestellungen', orders);
+    }
+    if(view === 'kalender'){
+      renderFeedInto('feedKalender', ALL_ENTRIES.filter(function(e){ return e.day === todayIdx; }));
+    }
+    if(view === 'einstellungen' && typeof renderSettingsPinCard === 'function'){
+      renderSettingsPinCard();
+    }
+  }
+  document.querySelectorAll('.sb-link').forEach(function(link){
+    link.addEventListener('click', function(ev){
+      ev.preventDefault();
+      showView(link.dataset.view);
+    });
+  });
+
+  /* ---------------- CHEF-MODE (PIN protected) ---------------- */
+  var CHEF_PIN = '123456';
+  var chefUnlocked = false;
+  var chefToggle = document.getElementById('chefModeToggle');
+  var pinModal = document.getElementById('pinModal');
+  var pinInput = document.getElementById('pinInput');
+  var pinError = document.getElementById('pinError');
+  var resetPinModal = document.getElementById('resetPinModal');
+
+  chefToggle.addEventListener('change', function(){
+    if(chefToggle.checked){
+      // require PIN before actually unlocking
+      chefToggle.checked = false;
+      pinError.classList.remove('is-shown');
+      pinInput.value = '';
+      pinModal.classList.add('is-open');
+      setTimeout(function(){ pinInput.focus(); }, 150);
+    } else {
+      chefUnlocked = false;
+      document.body.classList.remove('chef-mode');
+      document.getElementById('chefModeStatus').textContent = 'Aus';
+      if(typeof renderSettingsPinCard === 'function') renderSettingsPinCard();
+    }
+  });
+
+  function tryUnlockChef(){
+    if(pinInput.value === CHEF_PIN){
+      chefUnlocked = true;
+      chefToggle.checked = true;
+      document.body.classList.add('chef-mode');
+      document.getElementById('chefModeStatus').textContent = 'Aktiv — Löschen möglich';
+      pinModal.classList.remove('is-open');
+      renderSettingsPinCard();
+    } else {
+      pinError.classList.add('is-shown');
+      pinInput.value = '';
+      pinInput.focus();
+    }
+  }
+  document.getElementById('pinSubmit').addEventListener('click', tryUnlockChef);
+  pinInput.addEventListener('keydown', function(ev){ if(ev.key === 'Enter') tryUnlockChef(); });
+  document.getElementById('pinCancel').addEventListener('click', function(){
+    pinModal.classList.remove('is-open');
+    chefToggle.checked = false;
+  });
+  document.querySelector('#pinModal .mini-modal-bg').addEventListener('click', function(){
+    pinModal.classList.remove('is-open');
+    chefToggle.checked = false;
+  });
+
+  /* ---- PIN vergessen ---- */
+  document.getElementById('pinForgotLink').addEventListener('click', function(){
+    pinModal.classList.remove('is-open');
+    document.getElementById('newPinInput1').value = '';
+    document.getElementById('newPinInput2').value = '';
+    document.getElementById('resetPinError').classList.remove('is-shown');
+    resetPinModal.classList.add('is-open');
+  });
+  function closeResetPin(){
+    resetPinModal.classList.remove('is-open');
+    chefToggle.checked = false;
+  }
+  document.getElementById('resetPinCancel').addEventListener('click', closeResetPin);
+  document.querySelector('#resetPinModal .mini-modal-bg').addEventListener('click', closeResetPin);
+  document.getElementById('resetPinSubmit').addEventListener('click', function(){
+    var p1 = document.getElementById('newPinInput1').value;
+    var p2 = document.getElementById('newPinInput2').value;
+    var valid = /^\d{6}$/.test(p1) && p1 === p2;
+    if(!valid){
+      document.getElementById('resetPinError').classList.add('is-shown');
+      return;
+    }
+    CHEF_PIN = p1;
+    resetPinModal.classList.remove('is-open');
+    pinError.classList.remove('is-shown');
+    pinInput.value = '';
+    pinModal.classList.add('is-open');
+    setTimeout(function(){ pinInput.focus(); }, 150);
+  });
+
+  /* ---- PIN ändern (in Einstellungen, nur wenn eingeloggt) ---- */
+  function renderSettingsPinCard(){
+    var wrap = document.getElementById('pinChangeCard');
+    if(!wrap) return;
+    if(!chefUnlocked){
+      wrap.innerHTML = '<p style="color:var(--slate);font-size:13px">Aktiviere zuerst den Chef-Modus, um die PIN zu ändern.</p>';
+      return;
+    }
+    wrap.innerHTML =
+      '<div class="bk-form-cols" style="margin-bottom:12px">' +
+        '<div class="bk-form-row"><label>Neue PIN (6-stellig)</label><input type="password" inputmode="numeric" maxlength="6" id="chgPinInput1"></div>' +
+        '<div class="bk-form-row"><label>PIN bestätigen</label><input type="password" inputmode="numeric" maxlength="6" id="chgPinInput2"></div>' +
+      '</div>' +
+      '<p class="pin-error" id="chgPinError" style="text-align:left">PINs stimmen nicht überein oder sind nicht 6-stellig.</p>' +
+      '<p class="pin-error" id="chgPinSuccess" style="text-align:left;color:var(--sage)!important">PIN erfolgreich geändert.</p>' +
+      '<button type="button" class="btn btn-brass" id="chgPinSubmit" style="margin-top:6px">PIN speichern</button>';
+    document.getElementById('chgPinSubmit').addEventListener('click', function(){
+      var p1 = document.getElementById('chgPinInput1').value;
+      var p2 = document.getElementById('chgPinInput2').value;
+      var errEl = document.getElementById('chgPinError');
+      var okEl = document.getElementById('chgPinSuccess');
+      okEl.classList.remove('is-shown');
+      if(!/^\d{6}$/.test(p1) || p1 !== p2){
+        errEl.classList.add('is-shown');
+        return;
+      }
+      errEl.classList.remove('is-shown');
+      CHEF_PIN = p1;
+      okEl.classList.add('is-shown');
+      document.getElementById('chgPinInput1').value = '';
+      document.getElementById('chgPinInput2').value = '';
+    });
+  }
+
+  document.getElementById('dtDeleteBtn').addEventListener('click', function(){
+    if(!currentDetailId || !chefUnlocked) return;
+    requestDelete(currentDetailId, true);
+  });
+
+  /* ---------------- LIVE CLOCK & GREETING ---------------- */
+  var WEEKDAY_NAMES = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var MONTH_NAMES_FULL = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  function updateClock(){
+    var now = new Date();
+    var h = now.getHours();
+    var greetWord = h < 11 ? 'Guten Morgen' : h < 18 ? 'Guten Tag' : 'Guten Abend';
+    var emoji = h < 11 ? '☀️' : h < 18 ? '👋' : '🌙';
+    document.getElementById('greeting').textContent = greetWord + '! ' + emoji;
+    var dateStr = WEEKDAY_NAMES[now.getDay()] + ', ' + now.getDate() + '. ' + MONTH_NAMES_FULL[now.getMonth()] + ' ' + now.getFullYear();
+    var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('liveDateTime').textContent = dateStr + ' \u00b7 ' + timeStr + ' Uhr \u00b7 hier ist, was der Telefonassistent heute erledigt hat.';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ---------------- 12-MONTH HISTORY ---------------- */
+  var MONTH_LABELS = ['Sep','Okt','Nov','Dez','Jän','Feb','Mär','Apr','Mai','Jun','Jul','Aug'];
+  var monthGrid = document.getElementById('monthGrid');
+  var NAME_POOL = ['Herr Böhler','Frau Ritter','Familie Preg','Herr Hopfner','Frau Wachter','Familie Kalb','Herr Sohm','Frau Bertsch','Familie Dobler','Herr Zangerl','Frau Schmidinger','Familie Klien'];
+  var TABLE_POOL = ['T1 (2er-Tisch)','T2 (2er-Tisch)','T4 (2er-Tisch)','T7 (4er-Tisch)','T8 (4er-Tisch)','T9 (4er-Tisch)','T11 (6er-Tisch)'];
+  var TYPE_POOL = ['reservierung','reservierung','reservierung','bestellung','storno'];
+  var MONTH_CUSTOMERS = {};
+  for(var mi=0; mi<12; mi++){
+    var list = [];
+    for(var ci=0; ci<6; ci++){
+      var nameIdx = (mi * 3 + ci) % NAME_POOL.length;
+      var tableIdx = (mi + ci) % TABLE_POOL.length;
+      var type = TYPE_POOL[(mi + ci) % TYPE_POOL.length];
+      var day = 3 + ((mi + ci * 4) % 26);
+      var hour = 11 + ((mi + ci * 2) % 9);
+      var guests = 2 + ((mi + ci) % 5);
+      list.push({
+        id: 2000 + mi * 10 + ci,
+        type: type,
+        who: NAME_POOL[nameIdx],
+        what: type === 'bestellung' ? 'Vorbestellung zur Abholung' : 'Tisch für ' + guests + ' Personen &middot; ' + TABLE_POOL[tableIdx],
+        time: day + '.' + String(mi<4? mi+9 : mi-3).padStart(2,'0') + '. &middot; ' + String(hour).padStart(2,'0') + ':00',
+        status: type === 'storno' ? 'storniert' : 'bestaetigt',
+        source: ci % 3 === 0 ? 'manual' : 'phone',
+        phone: '+43 6' + (60+ci) + ' ' + (100+mi) + ' ' + (1000+ci*7),
+        guests: type === 'bestellung' ? '—' : guests + ' Personen',
+        table: type === 'bestellung' ? 'Abholung' : TABLE_POOL[tableIdx],
+        notes: '—',
+        transcript: null
+      });
+    }
+    MONTH_CUSTOMERS[mi] = list;
+  }
+
+  var MONTH_STATS = [
+    { label:'Sep 2025', customers:186, res:142, orders:38, cancel:12 },
+    { label:'Okt 2025', customers:204, res:158, orders:41, cancel:9 },
+    { label:'Nov 2025', customers:171, res:129, orders:35, cancel:14 },
+    { label:'Dez 2025', customers:298, res:221, orders:58, cancel:11 },
+    { label:'Jän 2026', customers:152, res:118, orders:29, cancel:8 },
+    { label:'Feb 2026', customers:167, res:131, orders:30, cancel:10 },
+    { label:'Mär 2026', customers:189, res:146, orders:33, cancel:7 },
+    { label:'Apr 2026', customers:201, res:154, orders:37, cancel:9 },
+    { label:'Mai 2026', customers:224, res:172, orders:40, cancel:8 },
+    { label:'Jun 2026', customers:246, res:189, orders:44, cancel:6 },
+    { label:'Jul 2026', customers:271, res:206, orders:49, cancel:10 },
+    { label:'Aug 2026', customers:214, res:163, orders:39, cancel:6 }
+  ];
+  var currentMonthIndex = 11;
+  MONTH_STATS.forEach(function(m, i){
+    var card = document.createElement('div');
+    card.className = 'month-card' + (i === 11 ? ' is-active' : '');
+    card.innerHTML = '<div class="mname">' + MONTH_LABELS[i] + '</div><div class="mnum">' + m.customers + '</div><div class="mlabel">Kunden</div>';
+    card.addEventListener('click', function(){
+      monthGrid.querySelectorAll('.month-card').forEach(function(c){ c.classList.remove('is-active'); });
+      card.classList.add('is-active');
+      currentMonthIndex = i;
+      showMonthDetail(m, i);
+    });
+    monthGrid.appendChild(card);
+  });
+  function showMonthDetail(m, i){
+    document.getElementById('monthDetailPanel').style.display = 'block';
+    document.getElementById('monthDetailHeading').textContent = m.label;
+    document.getElementById('monthSummary').innerHTML =
+      '<div class="m-stat"><div class="n">' + m.customers + '</div><div class="l">Kunden gesamt</div></div>' +
+      '<div class="m-stat"><div class="n">' + m.res + '</div><div class="l">Reservierungen</div></div>' +
+      '<div class="m-stat"><div class="n">' + m.orders + '</div><div class="l">Vorbestellungen</div></div>' +
+      '<div class="m-stat"><div class="n">' + m.cancel + '</div><div class="l">Stornierungen</div></div>';
+    renderFeedInto('monthCustomerFeed', MONTH_CUSTOMERS[i]);
+  }
+  showMonthDetail(MONTH_STATS[11], 11);
+
+  /* ---------------- PRIVACY SCREEN ---------------- */
+  (function privacyScreen(){
+    var screen = document.getElementById('privacyScreen');
+    var btn = document.getElementById('privacyBtn');
+    var clockEl = document.getElementById('privacyClock');
+    var dateEl = document.getElementById('privacyDate');
+    var clockTimer = null;
+
+    function updatePrivacyClock(){
+      var now = new Date();
+      clockEl.textContent = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      dateEl.textContent = WEEKDAY_NAMES[now.getDay()] + ', ' + now.getDate() + '. ' + MONTH_NAMES_FULL[now.getMonth()] + ' ' + now.getFullYear();
+    }
+
+    function openPrivacy(){
+      screen.classList.add('is-active');
+      updatePrivacyClock();
+      clockTimer = setInterval(updatePrivacyClock, 1000);
+    }
+    function closePrivacy(){
+      screen.classList.remove('is-active');
+      if(clockTimer){ clearInterval(clockTimer); clockTimer = null; }
+    }
+    btn.addEventListener('click', openPrivacy);
+
+    // swipe-up (or simple tap) to unlock — uses Pointer Events so it works for touch and mouse alike
+    var startY = null, startX = null, dragging = false;
+    screen.addEventListener('pointerdown', function(ev){
+      startY = ev.clientY; startX = ev.clientX; dragging = true;
+      screen.classList.add('is-dragging');
+      screen.setPointerCapture(ev.pointerId);
+    });
+    screen.addEventListener('pointermove', function(ev){
+      if(!dragging || startY == null) return;
+      var dy = startY - ev.clientY;
+      if(dy > 0){
+        screen.style.transform = 'translateY(-' + Math.min(dy, window.innerHeight) + 'px)';
+        screen.style.opacity = String(Math.max(1 - dy / (window.innerHeight * 0.7), 0.15));
+      }
+    });
+    function endDrag(ev){
+      if(!dragging) return;
+      dragging = false;
+      screen.classList.remove('is-dragging');
+      var dy = startY != null ? startY - ev.clientY : 0;
+      var dx = startX != null ? Math.abs(startX - ev.clientX) : 0;
+      screen.style.transform = '';
+      screen.style.opacity = '';
+      var isSwipeUp = dy > 60 && dx < 120;
+      var isSimpleTap = Math.abs(dy) < 8 && dx < 8;
+      if(isSwipeUp || isSimpleTap){
+        closePrivacy();
+      }
+      startY = null; startX = null;
+    }
+    screen.addEventListener('pointerup', endDrag);
+    screen.addEventListener('pointercancel', endDrag);
+
+    // keyboard fallback (Escape or Enter) for accessibility
+    document.addEventListener('keydown', function(ev){
+      if(!screen.classList.contains('is-active')) return;
+      if(ev.key === 'Escape' || ev.key === 'Enter' || ev.key === ' '){ closePrivacy(); }
+    });
+  })();
+
+  /* ---------------- LIVE DATEN VON AIRTABLE ---------------- */
+  (function loadLiveData(){
+    var LIVE_ENDPOINT = 'https://a4milan.app.n8n.cloud/webhook/nofler-dashboard-data';
+    fetch(LIVE_ENDPOINT)
+      .then(function(r){ return r.json(); })
+      .then(function(items){
+        if(!Array.isArray(items)) return;
+        var mapped = items.map(function(it){
+          return {
+            id: it.id,
+            day: todayIdx,
+            type: it.type,
+            who: it.who,
+            what: it.what || '',
+            time: it.time || '—',
+            status: it.status,
+            source: it.source,
+            phone: it.phone,
+            guests: it.guests,
+            table: it.table,
+            notes: it.notes,
+            transcript: it.transcript || null
+          };
+        });
+        ENTRIES = mapped;
+        ALL_ENTRIES = ENTRIES.concat(OTHER_DAYS);
+        refreshCurrentView();
+      })
+      .catch(function(err){ console.warn('Live-Daten konnten nicht geladen werden:', err); });
+    setInterval(function(){
+      fetch(LIVE_ENDPOINT)
+        .then(function(r){ return r.json(); })
+        .then(function(items){
+          if(!Array.isArray(items)) return;
+          var mapped = items.map(function(it){
+            return { id: it.id, day: todayIdx, type: it.type, who: it.who, what: it.what || '', time: it.time || '—', status: it.status, source: it.source, phone: it.phone, guests: it.guests, table: it.table, notes: it.notes, transcript: it.transcript || null };
+          });
+          ENTRIES = mapped;
+          ALL_ENTRIES = ENTRIES.concat(OTHER_DAYS);
+          refreshCurrentView();
+        })
+        .catch(function(){});
+    }, 15000);
+  })();
+})();
+</script>
+</body>
+</html>

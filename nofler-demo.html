@@ -1,0 +1,2823 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nofler — Reservierungen Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --olive:#2E4A32; --olive-dark:#15140E; --olive-light:#3F6244;
+  --cream:#FAF8F1; --paper:#FFFFFF; --paper2:#FFFFFF;
+  --ink:#221F18; --slate:#6E6858; --slate-dim:#9C9686;
+  --sage:#3B7A4A; --sage-bg:rgba(59,122,74,.09);
+  --amber:#B08A3B; --amber-bg:rgba(176,138,59,.11);
+  --rust:#A23B3B; --rust-bg:rgba(162,59,59,.09);
+  --line:rgba(34,31,24,.08);
+  --navy:#152238; --navy-text:#EDEFF5; --navy-muted:rgba(237,239,245,.55); --navy-line:rgba(237,239,245,.12);
+  --amber-bg-navy:rgba(217,178,90,.16);
+  --shadow-card:0 1px 2px rgba(30,26,14,.04),0 14px 32px rgba(30,26,14,.05);
+  --shadow-modal:0 24px 70px rgba(20,17,10,.18);
+  --ff-display:'Fraunces',serif; --ff-body:'Inter',sans-serif; --ff-mono:'IBM Plex Mono',monospace;
+}
+body{font-family:var(--ff-body);background:var(--cream);color:var(--ink);min-height:100vh}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+@media(max-width:860px){.app{grid-template-columns:1fr}.sidebar{display:none}}
+
+/* SIDEBAR */
+.sidebar{background:var(--navy);color:var(--navy-text);padding:26px 20px;display:flex;flex-direction:column}
+.sb-logo{font-family:var(--ff-display);font-size:20px;font-weight:600;margin-bottom:4px;color:var(--amber)}
+.sb-sub{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.08em;color:var(--amber);margin-bottom:38px;opacity:.75}
+.sb-nav{display:flex;flex-direction:column;gap:3px}
+.sb-divider{height:1px;background:var(--navy-line);margin:10px 0}
+.privacy-btn{background:none;border:none;width:100%;text-align:left;font-family:inherit;cursor:pointer;color:var(--amber)}
+.privacy-btn:hover{background:var(--amber-bg-navy)}
+.privacy-btn svg{stroke:var(--amber)}
+.sb-link{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:6px;font-size:13.5px;font-weight:500;color:var(--amber);transition:all .2s}
+.sb-link svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8;flex-shrink:0}
+.sb-link.is-active{background:var(--amber-bg-navy);color:var(--amber);font-weight:700;box-shadow:inset 3px 0 0 var(--amber)}
+.sb-link:hover:not(.is-active){background:var(--amber-bg-navy)}
+.sb-foot{margin-top:0;padding-top:20px;border-top:1px solid var(--navy-line);font-size:11.5px;color:var(--navy-muted);line-height:1.6}
+.sb-foot b{color:var(--navy-text)}
+.chef-toggle{margin-top:auto;padding-top:20px;display:flex;align-items:center;gap:12px;font-size:11.5px;color:var(--navy-muted)}
+.chef-toggle b{color:var(--navy-text);font-size:12.5px}
+.chef-switch{position:relative;display:inline-block;width:38px;height:21px;flex-shrink:0}
+.chef-switch input{opacity:0;width:0;height:0}
+.chef-slider{position:absolute;cursor:pointer;inset:0;background:rgba(237,239,245,.2);border-radius:999px;transition:.25s}
+.chef-slider::before{content:"";position:absolute;width:15px;height:15px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.25s}
+.chef-switch input:checked + .chef-slider{background:var(--amber)}
+.chef-switch input:checked + .chef-slider::before{transform:translateX(17px)}
+
+/* CHEF-MODE DELETE */
+.entry{position:relative}
+.entry-delete{display:none;position:absolute;right:14px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:var(--rust-bg);color:var(--rust);border:none;font-size:14px;align-items:center;justify-content:center;z-index:2}
+body.chef-mode .entry{padding-right:52px}
+body.chef-mode .entry-delete{display:flex}
+.entry.is-done .who,.entry.is-done .what{opacity:.42;text-decoration:line-through}
+.entry.is-cooking{box-shadow:inset 3px 0 0 var(--amber)}
+.status.zubereitung{background:var(--amber-bg);color:var(--amber)}
+.status.fertig{background:var(--sage-bg);color:var(--sage)}
+.order-status-options{display:flex;flex-direction:column;gap:10px;margin:18px 0}
+.order-status-btn{padding:12px 16px;border-radius:9px;border:1.5px solid var(--line);background:var(--paper);font-family:var(--ff-body);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;text-align:left}
+.order-status-btn.cooking{color:var(--amber)}
+.order-status-btn.cooking:hover{background:var(--amber-bg);border-color:var(--amber)}
+.order-status-btn.done{color:var(--sage)}
+.order-status-btn.done:hover{background:var(--sage-bg);border-color:var(--sage)}
+.order-status-btn.reset{color:var(--slate)}
+.order-status-btn.reset:hover{background:var(--cream);border-color:var(--slate)}
+.order-status-btn.reset[hidden]{display:none}
+body.chef-mode .col-status{opacity:.5}
+.detail-delete-row{display:none;margin-bottom:14px}
+body.chef-mode .detail-delete-row{display:block}
+.dbtn.danger{background:var(--rust);color:#fff;width:100%;border-color:transparent}
+.dbtn.free-table{background:var(--sage);color:#fff;width:100%;border-color:transparent}
+.dbtn.free-table:hover{opacity:.88}
+.dbtn.free-table:disabled{opacity:.5;cursor:default}
+.free-table-hint{text-align:center;color:var(--sage);font-size:12.5px;font-weight:600;margin-top:10px}
+.dbtn.danger:hover{background:#7a3222}
+
+/* MONTH HISTORY */
+.month-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:22px 24px}
+@media(max-width:900px){.month-grid{grid-template-columns:repeat(4,1fr)}}
+@media(max-width:600px){.month-grid{grid-template-columns:repeat(3,1fr)}}
+.month-card{border:1px solid var(--line);border-radius:8px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s}
+.month-card:hover{border-color:var(--amber)}
+.month-card.is-active{border-color:var(--amber);background:var(--paper2)}
+.month-card .mname{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;color:var(--slate)}
+.month-card .mnum{font-family:var(--ff-display);font-size:1.25rem;font-weight:600;margin:4px 0 2px}
+.month-card .mlabel{font-size:10px;color:var(--olive);font-weight:600}
+.month-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:22px 24px}
+#monthCustomerFeed{max-height:440px;overflow-y:auto;-webkit-overflow-scrolling:touch;border-top:1px solid var(--line)}
+#kuecheMonthOrderList{max-height:440px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media(max-width:700px){.month-summary{grid-template-columns:1fr 1fr}}
+.month-summary .m-stat{background:var(--paper);border-radius:8px;padding:18px}
+.month-summary .m-stat .n{font-family:var(--ff-display);font-size:1.7rem;font-weight:600;color:var(--olive)}
+.month-summary .m-stat .l{font-family:var(--ff-mono);font-size:10.5px;text-transform:uppercase;color:var(--slate);margin-top:4px}
+
+/* MINI MODALS (PIN / confirm) */
+.mini-modal{position:fixed;inset:0;z-index:1100;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s}
+.mini-modal.is-open{opacity:1;pointer-events:auto}
+.mini-modal-bg{position:absolute;inset:0;background:rgba(24,20,12,.42);backdrop-filter:blur(4px)}
+.mini-modal-card{position:relative;background:var(--paper2);border:1px solid var(--line);max-width:340px;width:100%;border-radius:14px;padding:30px 28px;text-align:center;transform:translateY(14px) scale(.97);transition:transform .25s;box-shadow:var(--shadow-modal)}
+.mini-modal.is-open .mini-modal-card{transform:translateY(0) scale(1)}
+.mini-modal-ico{font-size:30px;margin-bottom:10px}
+.mini-modal-card h3{font-family:var(--ff-display);font-size:1.3rem;font-weight:600;margin-bottom:8px}
+.mini-modal-card p{font-size:13px;color:var(--slate);margin-bottom:18px}
+#pinInput{width:100%;text-align:center;font-size:24px;letter-spacing:8px;padding:12px;border:1px solid var(--line);border-radius:8px;font-family:var(--ff-mono);outline:none;margin-bottom:8px;background:var(--cream);color:var(--ink)}
+#pinInput:focus{border-color:var(--amber)}
+#newPinInput1,#newPinInput2{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:8px;font-family:var(--ff-mono);font-size:14.5px;outline:none;background:var(--cream);color:var(--ink)}
+#newPinInput1:focus,#newPinInput2:focus{border-color:var(--amber)}
+#newPinInput1::placeholder,#newPinInput2::placeholder{color:var(--slate-dim)}
+.pin-error{display:none;color:var(--rust)!important;font-size:12px!important;margin-bottom:10px!important}
+.pin-error.is-shown{display:block}
+.mini-modal-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+.pin-forgot-link{background:none;border:none;color:var(--slate);font-size:12px;text-decoration:underline;margin-top:14px;cursor:pointer}
+.pin-forgot-link:hover{color:var(--amber)}
+
+/* PRIVACY SCREEN */
+.privacy-screen{position:fixed;inset:0;z-index:2000;overflow:hidden;opacity:0;pointer-events:none;transition:opacity .4s ease;touch-action:none;cursor:grab}
+.privacy-screen.is-active{opacity:1;pointer-events:auto}
+.privacy-screen.is-dragging{transition:none}
+.privacy-bg{position:absolute;inset:-4% -4% -4% -4%;background-size:cover;background-position:center;filter:brightness(.5) saturate(1.05)}
+.privacy-scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,20,15,.35) 0%,rgba(20,20,15,.15) 40%,rgba(20,20,15,.7) 100%)}
+.privacy-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;text-align:center;padding:40px}
+.privacy-logo{font-family:var(--ff-display);font-size:1.6rem;font-weight:600;letter-spacing:.02em;margin-bottom:6px;text-shadow:0 2px 20px rgba(0,0,0,.4)}
+.privacy-sub{font-family:var(--ff-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:50px}
+.privacy-clock{font-family:var(--ff-display);font-size:clamp(3.2rem,10vw,6rem);font-weight:600;line-height:1;text-shadow:0 4px 30px rgba(0,0,0,.4)}
+.privacy-date{font-size:14.5px;color:rgba(255,255,255,.85);margin-top:10px}
+.privacy-hint{position:absolute;bottom:48px;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:10px;color:rgba(255,255,255,.8)}
+.privacy-hint svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;animation:privacyBounce 1.6s ease-in-out infinite}
+@keyframes privacyBounce{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(-10px);opacity:1}}
+.privacy-hint span{font-family:var(--ff-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+/* MAIN */
+.main{padding:34px 40px 60px}
+@media(max-width:640px){.main{padding:22px 18px 50px}}
+.topbar{position:relative;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:32px;flex-wrap:wrap;gap:16px}
+.topbar::before{content:"";position:absolute;top:-50px;left:-60px;width:380px;height:240px;background:radial-gradient(ellipse at top left,rgba(176,138,59,.09),transparent 72%);filter:blur(4px);pointer-events:none;z-index:0}
+.topbar > *{position:relative;z-index:1}
+.topbar h1{font-family:var(--ff-display);font-size:1.9rem;font-weight:600;letter-spacing:-.01em}
+.topbar p{color:var(--slate);font-size:13.5px;margin-top:4px}
+.live-pill{display:flex;align-items:center;gap:8px;background:var(--sage-bg);color:var(--sage);padding:9px 16px;border-radius:999px;font-family:var(--ff-mono);font-size:11.5px;font-weight:600;letter-spacing:.04em}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--sage);animation:pulseDot 1.6s infinite}
+@keyframes pulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+
+/* STAT CARDS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:34px}
+.stats.stats-solo{grid-template-columns:minmax(180px,260px)}
+@media(max-width:760px){.stats{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px 22px;box-shadow:var(--shadow-card)}
+.tisch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;padding:18px 22px 22px}
+.tisch-card{border:1px solid var(--line);border-radius:12px;padding:16px 14px;background:var(--paper);display:flex;flex-direction:column;gap:8px;transition:box-shadow .2s}
+.tisch-card.is-besetzt{background:#fdf1ec;border-color:#e8b79a}
+.tisch-id{font-family:Georgia,serif;font-size:22px;font-weight:700;color:var(--navy)}
+.tisch-kap{font-size:12px;color:#8a8477;letter-spacing:.02em}
+.tisch-status-badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 9px;border-radius:20px;width:fit-content;text-transform:uppercase}
+.tisch-status-badge.frei{background:#e7f4ea;color:#2f7a43}
+.tisch-status-badge.besetzt{background:#f7ded1;color:#a4542a}
+.tisch-who{font-size:12px;color:#8a8477;margin-top:-4px}
+.tisch-toggle{display:flex;gap:6px;margin-top:4px}
+.tisch-toggle-btn{flex:1;border:1px solid var(--line);border-radius:8px;padding:8px 6px;font-size:12px;font-weight:600;cursor:pointer;background:#fff;color:#8a8477;transition:all .15s}
+.tisch-toggle-btn.is-active.frei{background:#2f7a43;border-color:#2f7a43;color:#fff}
+.tisch-toggle-btn.is-active.besetzt{background:#a4542a;border-color:#a4542a;color:#fff}
+.tisch-toggle-btn:disabled{opacity:.55;cursor:default}
+
+/* SPEISEKARTE / KÜCHE (Prototyp, nicht live verbunden) */
+.proto-badge{display:inline-block;font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;background:var(--amber-bg);color:var(--amber);padding:4px 10px;border-radius:999px;margin-bottom:14px}
+.table-picker{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:26px}
+.table-chip{background:none;border:1px solid var(--line);color:var(--slate);font-size:13px;padding:8px 16px;border-radius:999px;cursor:pointer;font-family:var(--ff-mono);font-weight:600;transition:all .15s}
+.table-chip:hover{border-color:var(--amber)}
+.table-chip.is-active{background:var(--amber);border-color:var(--amber);color:#fff}
+.order-layout{display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start}
+@media(max-width:900px){.order-layout{grid-template-columns:1fr}}
+.cat-block{margin-bottom:28px}
+.cat-title{font-family:var(--ff-display);color:var(--olive);font-size:1.2rem;font-weight:600;margin:0 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.menu-item{border:1px solid var(--line);border-radius:10px;padding:13px 15px;background:var(--paper);cursor:pointer;transition:all .15s;box-shadow:var(--shadow-card)}
+.menu-item:hover{border-color:var(--amber);transform:translateY(-1px)}
+.menu-item .name{font-weight:600;font-size:13.5px}
+.menu-item .price{font-family:var(--ff-mono);color:var(--slate);font-size:12px;margin-top:3px}
+.cart-panel{position:sticky;top:24px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--shadow-card)}
+.cart-panel h3{font-family:var(--ff-display);font-size:1.15rem;font-weight:600;margin-bottom:4px}
+.cart-table-label{font-family:var(--ff-mono);font-size:11.5px;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px}
+.cart-line{border-bottom:1px solid var(--line);padding:11px 0}
+.cart-line .cl-top{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:600}
+.cart-line .cl-qty{display:flex;align-items:center;gap:8px}
+.cart-line .cl-qty button{width:23px;height:23px;border:1px solid var(--line);background:var(--paper);border-radius:6px;cursor:pointer;font-size:13px;line-height:1;font-family:var(--ff-mono)}
+.cart-line .cl-qty button:hover{border-color:var(--amber);color:var(--amber)}
+.cart-line input.cl-note{width:100%;margin-top:7px;border:1px solid var(--line);border-radius:7px;padding:7px 9px;font-size:12.5px;font-family:var(--ff-body);background:var(--cream)}
+.cart-line input.cl-note:focus{outline:none;border-color:var(--amber)}
+.cart-empty{color:var(--slate-dim);font-size:13px;padding:14px 0;text-align:center}
+.send-btn{width:100%;margin-top:16px;background:var(--olive);color:#fff;border:none;border-radius:9px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--ff-body);transition:opacity .15s}
+.send-btn:hover:not(:disabled){opacity:.9}
+.send-btn:disabled{opacity:.35;cursor:default}
+.ticket-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.ticket{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:var(--shadow-card);transition:opacity .3s}
+.ticket.status-fertig{opacity:.8;box-shadow:inset 3px 0 0 var(--sage),var(--shadow-card)}
+.ticket.status-zubereitung{box-shadow:inset 3px 0 0 var(--amber),var(--shadow-card)}
+.ticket-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.ticket-head .tk-table{font-family:var(--ff-display);font-size:1.4rem;font-weight:600;color:var(--navy)}
+.tk-guest{font-family:var(--ff-mono);font-size:11px;color:var(--slate);margin:-6px 0 10px}
+.ticket-head .tk-time{font-family:var(--ff-mono);font-size:11px;color:var(--slate)}
+.ticket-status-badge{display:inline-block;font-family:var(--ff-mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;padding:5px 12px;border-radius:999px;text-transform:uppercase;margin-bottom:12px}
+.ticket-status-badge.neu{background:var(--rust-bg);color:var(--rust)}
+.ticket-status-badge.zubereitung{background:var(--amber-bg);color:var(--amber)}
+.ticket-status-badge.fertig{background:var(--sage-bg);color:var(--sage)}
+.ticket-items{list-style:none;margin:0 0 16px}
+.ticket-items li{font-size:13.5px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.ticket-items li:last-child{border-bottom:none}
+.ticket-items .ti-name{font-weight:600}
+.ticket-items .ti-note{color:var(--rust);font-size:12px;margin-top:2px;font-style:italic}
+.ticket-actions{display:flex;gap:6px}
+.ticket-actions button{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 4px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--ff-body);background:none;transition:all .15s}
+.btn-zubereitung{color:var(--amber);border-color:transparent;background:var(--amber-bg)}
+.btn-zubereitung:hover{background:var(--amber);color:#fff}
+.btn-fertig{color:var(--sage);border-color:transparent;background:var(--sage-bg)}
+.btn-fertig:hover{background:var(--sage);color:#fff}
+.btn-reset{color:var(--slate);font-size:10.5px}
+.btn-reset:hover{border-color:var(--slate)}
+.proto-empty-state{color:var(--slate-dim);font-size:14px;padding:60px 0;text-align:center;font-family:var(--ff-mono)}
+.kueche-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px}
+.daybtn{background:var(--rust-bg);color:var(--rust);border:1px solid transparent;border-radius:8px;padding:9px 16px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--ff-body);transition:all .15s}
+.daybtn:hover{background:var(--rust);color:#fff}
+.chef-only{display:none}
+body.chef-mode .chef-only{display:block}
+.kh-day{border-bottom:1px solid var(--line);padding:12px 0;position:relative}
+.kh-del{display:none;position:absolute;right:0;top:10px;border:none;background:var(--rust-bg);color:var(--rust);width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:13px;align-items:center;justify-content:center}
+body.chef-mode .kh-del{display:flex}
+.kh-day:last-child{border-bottom:none}
+.kh-day .kh-table{font-family:var(--ff-display);font-weight:600;color:var(--navy);font-size:1rem}
+.kh-day .kh-guest{font-family:var(--ff-mono);font-size:11.5px;color:var(--amber);font-weight:600}
+.kh-day .kh-time{font-family:var(--ff-mono);font-size:11px;color:var(--slate);margin-left:8px}
+.kh-day .kh-items{font-size:13px;color:var(--ink);margin-top:3px}
+.kh-empty{color:var(--slate-dim);font-size:13px;font-family:var(--ff-mono);padding:10px 0}
+.ko-entry{border-bottom:1px solid var(--line)}
+.ko-entry:last-child{border-bottom:none}
+.ko-head{display:flex;align-items:center;gap:10px;padding:13px 0;cursor:pointer;position:relative}
+.ko-head .ko-chev{width:16px;height:16px;stroke:var(--slate);fill:none;stroke-width:2;transition:transform .2s;flex-shrink:0}
+.ko-entry.is-open .ko-chev{transform:rotate(90deg)}
+.ko-head .ko-table{font-family:var(--ff-display);font-weight:600;color:var(--navy);font-size:.98rem}
+.ko-head .ko-guest{font-family:var(--ff-mono);font-size:11.5px;color:var(--amber);font-weight:600}
+.ko-head .ko-time{font-family:var(--ff-mono);font-size:11px;color:var(--slate);margin-left:auto}
+.ko-body{display:none;padding:0 0 14px 26px;font-size:13px;color:var(--ink)}
+.ko-entry.is-open .ko-body{display:block}
+.ko-del{display:none;border:none;background:var(--rust-bg);color:var(--rust);width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;flex-shrink:0;align-items:center;justify-content:center}
+body.chef-mode .ko-del{display:flex}
+.stat-card .n{font-family:var(--ff-display);font-size:2rem;font-weight:600;color:var(--olive)}
+.stat-card .l{font-family:var(--ff-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-top:4px}
+.stat-card .delta{font-size:11.5px;margin-top:8px;color:var(--sage);font-weight:600}
+.stat-card .delta.neg{color:var(--rust)}
+
+/* FEED */
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:28px;box-shadow:var(--shadow-card)}
+.panel-head{display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--line)}
+.panel-head h2{font-family:var(--ff-display);font-size:1.25rem;font-weight:600}
+.filter-chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font-family:var(--ff-mono);font-size:11px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);color:var(--slate);cursor:pointer;transition:all .2s;background:none}
+.chip.is-active{background:var(--amber);border-color:var(--amber);color:#1B1912}
+
+.feed{display:flex;flex-direction:column}
+#feed,#feedReservierungen,#feedBestellungen,#feedStornierungen,#feedKalender{max-height:520px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#protoTicketGrid{max-height:560px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:4px}
+#protoMenuColumns{max-height:640px;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:10px}
+.entry{display:grid;grid-template-columns:52px 1fr auto auto;gap:16px;align-items:center;padding:16px 24px;border-bottom:1px solid var(--line);transition:background .3s}
+.entry:last-child{border-bottom:none}
+.entry.is-new{animation:entryIn .6s ease-out}
+@keyframes entryIn{0%{background:var(--amber-bg);transform:translateX(-6px);opacity:0}60%{opacity:1}100%{background:transparent;transform:translateX(0)}}
+@media(max-width:700px){.entry{grid-template-columns:40px 1fr;grid-template-rows:auto auto}.entry .col-meta,.entry .col-status{grid-column:2}}
+.src-ico{width:38px;height:38px;border-radius:50%;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.src-ico.phone{background:var(--sage-bg)}
+.col-main .who{font-weight:600;font-size:14.5px}
+.col-main .what{font-size:12.5px;color:var(--slate);margin-top:2px}
+.col-meta{text-align:right;font-family:var(--ff-mono);font-size:12px;color:var(--slate)}
+.col-meta .time{color:var(--ink);font-weight:600}
+.status{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:6px 12px;border-radius:999px;white-space:nowrap;font-weight:600}
+.status.neu{background:var(--amber-bg);color:var(--amber)}
+.status.bestaetigt{background:var(--sage-bg);color:var(--sage)}
+.status.storniert{background:var(--rust-bg);color:var(--rust)}
+
+/* CALENDAR STRIP */
+.week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;padding:22px 24px}
+@media(max-width:700px){.week-strip{grid-template-columns:repeat(7,minmax(70px,1fr));overflow-x:auto}}
+.day-card{border:1px solid var(--line);border-radius:8px;padding:14px 10px;text-align:center}
+.day-card.is-today{border-color:var(--amber);background:var(--amber-bg)}
+.day-card .dow{font-family:var(--ff-mono);font-size:10px;color:var(--slate);text-transform:uppercase}
+.day-card .dnum{font-family:var(--ff-display);font-size:1.3rem;font-weight:600;margin:4px 0}
+.day-card .dcount{font-size:11px;color:var(--olive);font-weight:600}
+
+/* CLICKABLE STATES */
+.stat-card{cursor:pointer;transition:all .2s}
+.stat-card:hover{border-color:var(--amber);transform:translateY(-2px)}
+.stat-card.is-active{border-color:var(--amber);background:var(--paper2)}
+.gauge-card{cursor:default;display:flex;align-items:center;gap:16px}
+.gauge-card:hover{transform:none;border-color:var(--line)}
+.gauge-wrap{position:relative;width:60px;height:60px;flex-shrink:0}
+.gauge-svg{width:60px;height:60px;transform:rotate(-90deg)}
+.gauge-track{fill:none;stroke:var(--line);stroke-width:6}
+.gauge-fill{fill:none;stroke:var(--amber);stroke-width:6;stroke-linecap:round;stroke-dasharray:150.8;stroke-dashoffset:150.8;transition:stroke-dashoffset 1.6s cubic-bezier(.16,1,.3,1)}
+.gauge-fill.is-filled{stroke-dashoffset:19.6}
+.gauge-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--ff-mono);font-size:12.5px;font-weight:700;color:var(--ink)}
+.gauge-text .l{font-family:var(--ff-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);line-height:1.4}
+.gauge-text .delta{font-size:11.5px;margin-top:8px;color:var(--sage);font-weight:600}
+.toast-stack{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 18px;box-shadow:var(--shadow-modal);display:flex;align-items:center;gap:12px;min-width:260px;max-width:340px;transform:translateX(120%);opacity:0;transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .3s;pointer-events:auto}
+.toast.is-shown{transform:translateX(0);opacity:1}
+.toast-ico{width:34px;height:34px;border-radius:50%;background:var(--amber-bg);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.toast-body{font-size:13px;line-height:1.4}
+.toast-title{font-weight:700;color:var(--ink);font-family:var(--ff-display)}
+.toast-sub{color:var(--slate);font-size:12px;margin-top:2px}
+.day-card{cursor:pointer;transition:all .2s}
+.day-card:hover{border-color:var(--amber)}
+.cal-picker-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cal-nav-btn{width:26px;height:26px;border-radius:50%;border:none;background:none;color:var(--slate);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cal-nav-btn:hover{background:var(--amber-bg);color:var(--amber)}
+.cal-month-label{font-family:var(--ff-display);font-size:1.05rem;font-weight:600;min-width:140px}
+.cal-reset-btn{margin-left:auto;background:none;border:1px solid var(--line);color:var(--slate);font-size:12px;padding:6px 12px;border-radius:7px;cursor:pointer;font-family:var(--ff-mono);transition:all .15s}
+.cal-reset-btn:hover{border-color:var(--amber);color:var(--amber)}
+.cal-reset-btn.is-active{background:var(--amber);border-color:var(--amber);color:#fff}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px 0;row-gap:6px}
+.cal-dow{font-family:var(--ff-mono);font-size:10px;text-transform:uppercase;color:var(--slate-dim);text-align:center;padding-bottom:8px;letter-spacing:.04em}
+.cal-day{position:relative;aspect-ratio:1;max-width:40px;max-height:40px;margin:0 auto;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;font-size:13.5px;color:var(--ink)}
+.cal-day:hover{background:var(--amber-bg)}
+.cal-day.is-today{box-shadow:inset 0 0 0 1.5px var(--amber);font-weight:700}
+.cal-day.is-selected{background:var(--amber);color:#fff;font-weight:700;box-shadow:none}
+.cal-day.is-outside{opacity:.28;pointer-events:none}
+.cal-day .cdot{width:4px;height:4px;border-radius:50%;background:var(--amber);position:absolute;bottom:3px}
+.cal-day.is-selected .cdot{background:#fff}
+.collapsible-panel{padding:0}
+.collapsible-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 22px;background:none;border:none;cursor:pointer;font-family:var(--ff-display);font-size:1.05rem;font-weight:600;color:var(--ink)}
+.collapsible-toggle .chev{width:17px;height:17px;stroke:var(--slate);stroke-width:2.2;fill:none;transition:transform .2s}
+.collapsible-toggle.is-open .chev{transform:rotate(180deg)}
+.collapsible-toggle.mini-toggle{width:auto;padding:6px;margin-left:8px;flex-shrink:0}
+.collapsible-body{padding:0 22px 20px}
+.collapsible-body[hidden]{display:none}
+.range-tabs{display:flex;gap:8px;margin-bottom:14px}
+.range-tab{background:none;border:1px solid var(--line);color:var(--slate);font-size:12px;padding:6px 14px;border-radius:999px;cursor:pointer;font-family:var(--ff-mono);transition:all .15s}
+.range-tab:hover{border-color:var(--amber)}
+.range-tab.is-active{background:var(--amber);border-color:var(--amber);color:#fff}
+.entry{cursor:pointer}
+.entry:hover{background:var(--paper)}
+
+/* DETAIL MODAL */
+.detail-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .3s}
+.detail-modal.is-open{opacity:1;pointer-events:auto}
+.detail-modal-bg{position:absolute;inset:0;background:rgba(24,20,12,.38);backdrop-filter:blur(4px)}
+.detail-modal-card{position:relative;background:var(--paper2);border:1px solid var(--line);max-width:520px;width:100%;border-radius:14px;padding:30px 30px 26px;max-height:88vh;overflow-y:auto;transform:translateY(16px) scale(.97);transition:transform .3s;box-shadow:var(--shadow-modal)}
+.detail-modal.is-open .detail-modal-card{transform:translateY(0) scale(1)}
+.detail-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;background:var(--paper);border:none;font-size:17px;color:var(--slate);display:flex;align-items:center;justify-content:center}
+.rp-candidate{display:flex;justify-content:space-between;align-items:center;width:100%;text-align:left;border:1px solid var(--line);border-radius:9px;padding:11px 14px;background:var(--paper);cursor:pointer;transition:all .15s}
+.rp-candidate:hover{border-color:var(--amber);background:var(--amber-bg)}
+.rp-candidate .rp-name{font-weight:600;font-size:13.5px}
+.rp-candidate .rp-meta{font-family:var(--ff-mono);font-size:11.5px;color:var(--slate)}
+.detail-top{display:flex;align-items:center;gap:14px;margin-bottom:22px;padding-right:30px}
+.detail-src-ico{width:46px;height:46px;border-radius:50%;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.detail-src-ico.phone{background:var(--sage-bg)}
+.detail-who{font-family:var(--ff-display);font-size:1.3rem;font-weight:600}
+.detail-type{font-family:var(--ff-mono);font-size:11px;color:var(--slate);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-bottom:22px;padding:16px 18px;background:var(--cream);border-radius:8px}
+.detail-grid div span{display:block;font-family:var(--ff-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--slate);margin-bottom:3px}
+.detail-grid div b{font-size:14px;font-weight:600}
+.detail-block{margin-bottom:20px}
+.detail-block h5{font-family:var(--ff-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);margin-bottom:8px}
+.detail-block p{font-size:13.5px;color:var(--ink);line-height:1.6}
+.transcript-mini{background:var(--olive-dark);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.transcript-mini .tline{font-size:12.5px;line-height:1.5;padding:8px 12px;border-radius:8px;max-width:88%}
+.transcript-mini .tline.caller{background:rgba(250,247,238,.1);color:#fff;align-self:flex-start}
+.transcript-mini .tline.bot{background:var(--amber);color:#2B2A20;align-self:flex-end;font-weight:500}
+.detail-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+@media(max-width:460px){.detail-actions{grid-template-columns:1fr}}
+.dbtn{padding:11px 8px;border-radius:8px;border:1px solid var(--line);background:none;font-size:12.5px;font-weight:600;cursor:pointer;transition:all .2s}
+.dbtn.confirm{background:var(--sage-bg);color:var(--sage);border-color:transparent}
+.dbtn.confirm:hover{background:var(--sage);color:#fff}
+.dbtn.cancel{background:var(--rust-bg);color:var(--rust);border-color:transparent}
+.dbtn.cancel:hover{background:var(--rust);color:#fff}
+.dbtn.neutral:hover{border-color:var(--olive)}
+.dbtn:disabled{opacity:.4;cursor:not-allowed}
+.detail-note{font-family:var(--ff-mono);font-size:10.5px;color:var(--slate-dim);text-align:center}
+
+/* SETTINGS */
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.settings-row:last-of-type{border-bottom:none}
+.settings-row span{color:var(--slate)}
+.settings-row b{font-weight:600}
+.settings-live{color:var(--sage)}
+.settings-lock-note{color:var(--slate-dim)}
+.settings-unlock-note{display:flex;align-items:center;gap:12px;color:var(--sage);font-weight:600}
+.settings-editable{transition:background .15s;border-radius:5px;padding:2px 4px;margin:-2px -4px}
+body.chef-mode .settings-editable{cursor:text;box-shadow:inset 0 0 0 1px var(--line)}
+body.chef-mode .settings-editable:hover{box-shadow:inset 0 0 0 1px var(--amber)}
+body.chef-mode .settings-editable:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--amber);background:var(--amber-bg)}
+.settings-save-btn{background:var(--amber);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--ff-body)}
+.settings-save-btn:hover{opacity:.88}
+</style>
+</head>
+<body>
+<div class="toast-stack" id="toastStack"></div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-logo">Nofler</div>
+    <div class="sb-sub">MIJO AI &middot; LIVE-DASHBOARD</div>
+    <nav class="sb-nav">
+      <button type="button" class="sb-link privacy-btn" id="privacyBtn"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/><path d="M4 4l16 16"/></svg>Sichtschutz</button>
+      <div class="sb-divider"></div>
+      <a href="#" class="sb-link is-active" data-view="uebersicht"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Übersicht</a>
+      <a href="#" class="sb-link" data-view="reservierungen"><svg viewBox="0 0 24 24"><path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Reservierungen</a>
+      <a href="#" class="sb-link" data-view="bestellungen"><svg viewBox="0 0 24 24"><path d="M6 2l1 5h10l1-5M5 7h14l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7z"/></svg>Bestellungen</a>
+      <a href="#" class="sb-link" data-view="tische"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 9v12M15 9v12"/></svg>Tische</a>
+      <a href="#" class="sb-link" data-view="speisekarte"><svg viewBox="0 0 24 24"><path d="M6 2l1 5h10l1-5M5 7h14l-1 13a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 7z"/></svg>Speisekarte</a>
+      <a href="#" class="sb-link" data-view="kueche"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></svg>Küche</a>
+      <a href="#" class="sb-link" data-view="stornierungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>Stornierungen</a>
+      <a href="#" class="sb-link" data-view="kalender"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>Kalender</a>
+      <a href="#" class="sb-link" data-view="einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Einstellungen</a>
+    </nav>
+    <div class="chef-toggle">
+      <label class="chef-switch">
+        <input type="checkbox" id="chefModeToggle">
+        <span class="chef-slider"></span>
+      </label>
+      <div><b>Chef-Modus</b><br><span id="chefModeStatus">Aus</span></div>
+    </div>
+    
+  </aside>
+
+  <main class="main">
+    <div id="view-uebersicht" class="view">
+      <div class="topbar">
+        <div>
+          <h1 id="greeting">Guten Tag!</h1>
+          <p id="liveDateTime">&nbsp;</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div class="live-pill"><span class="live-dot"></span>Telefonassistent aktiv</div>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat-card"><div class="n" id="statRes">0</div><div class="l">Reservierungen heute</div><div class="delta">+3 zur Vorwoche</div></div>
+        <div class="stat-card"><div class="n" id="statOrd">0</div><div class="l">Vorbestellungen</div><div class="delta">+1 zur Vorwoche</div></div>
+        <div class="stat-card"><div class="n" id="statCancel">0</div><div class="l">Stornierungen</div><div class="delta neg">automatisch erfasst</div></div>
+        <div class="stat-card gauge-card">
+          <div class="gauge-wrap">
+            <svg viewBox="0 0 60 60" class="gauge-svg">
+              <circle cx="30" cy="30" r="24" class="gauge-track"></circle>
+              <circle cx="30" cy="30" r="24" class="gauge-fill" id="gaugeFill"></circle>
+            </svg>
+            <div class="gauge-label" id="gaugeLabel">0%</div>
+          </div>
+          <div class="gauge-text">
+            <div class="l">Tische heute<br>ausgelastet</div>
+            <div class="delta">bis 21 Uhr</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="weekStripWrap">
+          <span>Diese Woche</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="weekStripWrap" hidden>
+          <div class="week-strip" id="weekStrip"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="feedHeading">Live-Verlauf</h2>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="filter-chips" id="filterChips">
+              <button class="chip is-active" data-f="alle">Alle</button>
+              <button class="chip" data-f="reservierung">Reservierungen</button>
+              <button class="chip" data-f="bestellung">Vorbestellungen</button>
+              <button class="chip" data-f="storno">Stornierungen</button>
+            </div>
+            <button type="button" class="collapsible-toggle mini-toggle" data-target="feedWrap" aria-label="Liste auf-/zuklappen">
+              <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="collapsible-body" id="feedWrap" hidden>
+          <div class="feed" id="feed"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-reservierungen" class="view" hidden>
+      <div class="topbar"><div><h1>Reservierungen</h1><p>Alle Tischreservierungen, neueste zuerst — oder nach Tag filtern.</p></div></div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="calWrapRes">
+          <span>Kalender</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="calWrapRes" hidden>
+          <div class="cal-picker-head">
+            <button class="cal-nav-btn" id="calPrevMonth" aria-label="Vorheriger Monat">&#8249;</button>
+            <div class="cal-month-label" id="calMonthLabel">August 2026</div>
+            <button class="cal-nav-btn" id="calNextMonth" aria-label="Nächster Monat">&#8250;</button>
+            <button class="cal-reset-btn" id="calResetBtn">Alle anzeigen</button>
+          </div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="feedReservierungenWrap">
+          <span id="resFeedHeading">Alle Reservierungen</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="feedReservierungenWrap" hidden>
+          <div class="feed" id="feedReservierungen"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-bestellungen" class="view" hidden>
+      <div class="topbar"><div><h1>Vorbestellungen</h1><p>Alle telefonisch aufgenommenen Vorbestellungen — oder nach Tag filtern.</p></div></div>
+      <div class="stats stats-solo">
+        <div class="stat-card"><div class="n" id="statOrdToday">0</div><div class="l">Vorbestellungen heute</div><div class="delta" id="statOrdTodayDelta">&nbsp;</div></div>
+      </div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="weekStripOrdWrap">
+          <span>Diese Woche</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="weekStripOrdWrap" hidden>
+          <div class="week-strip" id="weekStripOrd"></div>
+        </div>
+      </div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="calWrapOrd">
+          <span>Kalender</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="calWrapOrd" hidden>
+          <div class="cal-picker-head">
+            <button class="cal-nav-btn" id="calPrevMonthOrd" aria-label="Vorheriger Monat">&#8249;</button>
+            <div class="cal-month-label" id="calMonthLabelOrd">August 2026</div>
+            <button class="cal-nav-btn" id="calNextMonthOrd" aria-label="Nächster Monat">&#8250;</button>
+            <button class="cal-reset-btn" id="calResetBtnOrd">Alle anzeigen</button>
+          </div>
+          <div class="cal-grid" id="calGridOrd"></div>
+        </div>
+      </div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="feedBestellungenWrap">
+          <span id="ordFeedHeading">Alle Vorbestellungen</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="feedBestellungenWrap" hidden>
+          <div class="feed" id="feedBestellungen"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-tische" class="view" hidden>
+      <div class="topbar"><div><h1>Tische</h1><p>Live-Belegung — Walk-in-Kunden hier markieren, damit der Telefonassistent besetzte Tische nicht doppelt vergibt.</p></div></div>
+      <div class="panel">
+        <div class="panel-head"><h2>2er-Tische</h2></div>
+        <div class="tisch-grid" id="tischGrid2"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>4er-Tische</h2></div>
+        <div class="tisch-grid" id="tischGrid4"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2>6er-Tische</h2></div>
+        <div class="tisch-grid" id="tischGrid6"></div>
+      </div>
+    </div>
+
+    <div id="view-speisekarte" class="view" hidden>
+      <div class="topbar"><div><h1>Speisekarte</h1><p>Tisch wählen, Gerichte anklicken, bei Bedarf Notiz eintragen, dann an die Küche senden.</p></div></div>
+      <div class="proto-badge" style="background:var(--sage-bg);color:var(--sage)">● Live — verbunden mit Airtable/n8n</div>
+      <div class="table-picker" id="protoTablePicker"></div>
+      <div class="order-layout">
+        <div id="protoMenuColumns"></div>
+        <div class="cart-panel">
+          <h3>Aktuelle Bestellung</h3>
+          <div class="cart-table-label" id="protoCartTableLabel">Tisch: —</div>
+          <div id="protoCartLines"><div class="cart-empty">Noch keine Gerichte gewählt.</div></div>
+          <button class="send-btn" id="protoSendBtn" disabled>An Küche senden</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-kueche" class="view" hidden>
+      <div class="topbar"><div><h1>Küche</h1><p>Eingehende Bestellungen — Status hier direkt umschalten. Der Mitarbeiter wird benachrichtigt, sobald ein Tisch fertig ist.</p></div></div>
+      <div class="proto-badge" style="background:var(--sage-bg);color:var(--sage)">● Live — verbunden mit Airtable/n8n</div>
+
+      <div class="stats stats-solo">
+        <div class="stat-card"><div class="n" id="kuecheStatHeute">0</div><div class="l">Bestellungen heute</div><div class="delta" id="kuecheStatHeuteDelta">&nbsp;</div></div>
+      </div>
+
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="weekStripKuecheWrap">
+          <span>Diese Woche</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="weekStripKuecheWrap" hidden>
+          <div class="week-strip" id="weekStripKueche"></div>
+        </div>
+      </div>
+
+      <div class="kueche-toolbar">
+        <button type="button" class="daybtn" id="kuecheClearBtn">Tag abschließen</button>
+      </div>
+
+      <div class="ticket-grid" id="protoTicketGrid"></div>
+      <div class="proto-empty-state" id="protoEmptyState">Noch keine Bestellungen eingegangen.</div>
+    </div>
+
+    <div id="view-stornierungen" class="view" hidden>
+      <div class="topbar"><div><h1>Stornierungen</h1><p>Alle Stornierungen — oder nach Tag filtern.</p></div></div>
+      <div class="stats stats-solo">
+        <div class="stat-card"><div class="n" id="statStornoToday">0</div><div class="l">Stornierungen heute</div><div class="delta neg" id="statStornoTodayDelta">automatisch erfasst</div></div>
+      </div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="weekStripStornoWrap">
+          <span>Diese Woche</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="weekStripStornoWrap" hidden>
+          <div class="week-strip" id="weekStripStorno"></div>
+        </div>
+      </div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="calWrapStorno">
+          <span>Kalender</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="calWrapStorno" hidden>
+          <div class="cal-picker-head">
+            <button class="cal-nav-btn" id="calPrevMonthStorno" aria-label="Vorheriger Monat">&#8249;</button>
+            <div class="cal-month-label" id="calMonthLabelStorno">August 2026</div>
+            <button class="cal-nav-btn" id="calNextMonthStorno" aria-label="Nächster Monat">&#8250;</button>
+            <button class="cal-reset-btn" id="calResetBtnStorno">Alle anzeigen</button>
+          </div>
+          <div class="cal-grid" id="calGridStorno"></div>
+        </div>
+      </div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="feedStornierungenWrap">
+          <span id="stornoFeedHeading">Alle Stornierungen</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="feedStornierungenWrap" hidden>
+          <div class="feed" id="feedStornierungen"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-kalender" class="view" hidden>
+      <div class="topbar"><div><h1>Kalender</h1><p>Auf einen Tag klicken, um alle Vorgänge dieses Tages zu sehen.</p></div></div>
+      <div class="panel collapsible-panel">
+        <button class="collapsible-toggle" data-target="weekStripCalWrap">
+          <span>Diese Woche</span>
+          <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+        <div class="collapsible-body" id="weekStripCalWrap" hidden>
+          <div class="range-tabs" id="calRangeTabs">
+            <button type="button" class="range-tab is-active" data-range="woche">Woche</button>
+            <button type="button" class="range-tab" data-range="monat">Monat bis heute</button>
+          </div>
+          <div class="week-strip" id="weekStripCal"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 id="calFeedHeading">Donnerstag, 6. August</h2>
+          <button type="button" class="collapsible-toggle mini-toggle" data-target="feedKalenderWrap" aria-label="Liste auf-/zuklappen">
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="collapsible-body" id="feedKalenderWrap" hidden>
+          <div class="feed" id="feedKalender"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="kuecheHistoryPanel">
+        <div class="panel-head"><h2 id="kuecheHistoryHeading">Bestellverlauf Küche</h2></div>
+        <div class="proto-badge" style="margin:0 22px 14px;background:var(--sage-bg);color:var(--sage)">● Live — für alle sichtbar · Löschen nur im Chef-Modus</div>
+        <div id="kuecheHistoryList" style="padding:0 22px 22px"></div>
+      </div>
+
+      <div class="panel chef-only">
+        <div class="panel-head"><h2>Bestellverlauf Küche — letzte 12 Monate</h2></div>
+        <div class="proto-badge" style="margin:0 22px 14px">Beispieldaten zur Demonstration — Namen sind frei erfunden, nicht echt</div>
+        <div class="month-grid" id="kuecheMonthGrid"></div>
+      </div>
+      <div class="panel chef-only" id="kuecheMonthDetailPanel" style="display:none">
+        <div class="panel-head"><h2 id="kuecheMonthDetailHeading">Monat</h2></div>
+        <div class="month-summary" id="kuecheMonthSummary"></div>
+        <div class="panel-head" style="border-top:1px solid var(--line)">
+          <h2 style="font-size:1rem">Bestellungen diesen Monat</h2>
+          <button type="button" class="collapsible-toggle mini-toggle" data-target="kuecheMonthOrderListWrap" aria-label="Liste auf-/zuklappen">
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="collapsible-body" id="kuecheMonthOrderListWrap" hidden>
+          <div id="kuecheMonthOrderList" style="padding:0 22px 22px"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Verlauf der letzten 12 Monate</h2></div>
+        <div class="month-grid" id="monthGrid"></div>
+      </div>
+      <div class="panel" id="monthDetailPanel" style="display:none">
+        <div class="panel-head"><h2 id="monthDetailHeading">Monat</h2></div>
+        <div class="month-summary" id="monthSummary"></div>
+        <div class="panel-head" style="border-top:1px solid var(--line)">
+          <h2 style="font-size:1rem">Kunden diesen Monat</h2>
+          <button type="button" class="collapsible-toggle mini-toggle" data-target="monthCustomerFeedWrap" aria-label="Liste auf-/zuklappen">
+            <svg class="chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="collapsible-body" id="monthCustomerFeedWrap" hidden>
+          <div class="feed" id="monthCustomerFeed"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-einstellungen" class="view" hidden>
+      <div class="topbar"><div><h1>Einstellungen</h1><p>Grundangaben zu deinem Telefonassistenten.</p></div></div>
+      <div class="panel" style="padding:26px 28px">
+        <div class="settings-row"><span>Restaurant</span><b class="settings-editable" contenteditable="false" data-field="restaurant">Nofler, Feldkirch</b></div>
+        <div class="settings-row"><span>Telefonnummer</span><b class="settings-editable" contenteditable="false" data-field="phone">+43 5522 12345</b></div>
+        <div class="settings-row"><span>Telefonassistent</span><b class="settings-live">● Aktiv seit 07:00 Uhr</b></div>
+        <div class="settings-row"><span>Verbunden über</span><b>n8n &middot; Airtable</b></div>
+        <div class="settings-row"><span>Tischbestand</span><b class="settings-editable" contenteditable="false" data-field="tables">5&times; 2er &middot; 5&times; 4er &middot; 4&times; 6er</b></div>
+        <div class="settings-row"><span>Benachrichtigungen</span><b class="settings-editable" contenteditable="false" data-field="notify">Per E-Mail bei neuer Reservierung</b></div>
+        <p class="detail-note settings-lock-note" style="margin-top:18px;text-align:left">Nur im Chef-Modus bearbeitbar.</p>
+        <p class="detail-note settings-unlock-note" style="margin-top:18px;text-align:left;display:none">Chef-Modus aktiv — Felder antippen und bearbeiten. <button id="settingsSaveBtn" class="settings-save-btn">Speichern</button></p>
+      </div>
+      <div class="panel" style="padding:26px 28px">
+        <div class="panel-head" style="padding:0 0 16px;border:none"><h2 style="font-size:1.1rem">Chef-PIN ändern</h2></div>
+        <div id="pinChangeCard"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="privacy-screen" id="privacyScreen">
+  <div class="privacy-bg" id="privacyBg" style="background-image:url('https://images.unsplash.com/photo-1758243488328-148e39e5e6b1?q=80&amp;w=1600&amp;auto=format&amp;fit=crop')"></div>
+  <div class="privacy-scrim"></div>
+  <div class="privacy-content">
+    <div class="privacy-logo">Nofler</div>
+    <div class="privacy-sub">Reserviert &middot; Gedeckt &middot; Bereit für Sie</div>
+    <div class="privacy-clock" id="privacyClock">--:--</div>
+    <div class="privacy-date" id="privacyDate">&nbsp;</div>
+  </div>
+  <div class="privacy-hint">
+    <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    <span>Nach oben wischen oder tippen zum Entsperren</span>
+  </div>
+</div>
+
+<div class="detail-modal" id="rpModal">
+  <div class="detail-modal-bg" id="rpModalBg"></div>
+  <div class="detail-modal-card" style="max-width:420px">
+    <button class="detail-close" id="rpClose">&times;</button>
+    <h3 style="font-family:var(--ff-display);font-size:1.2rem;margin:0 0 6px" id="rpHeading">Wer ist angekommen?</h3>
+    <p style="color:var(--slate);font-size:13px;margin:0 0 16px">Für diesen Tisch gibt es mehrere offene Reservierungen heute — bitte den passenden Gast auswählen.</p>
+    <div id="rpList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px"></div>
+    <button type="button" id="rpWalkinBtn" class="daybtn" style="width:100%">Keiner davon — als neuer Walk-in anlegen</button>
+  </div>
+</div>
+
+<div class="detail-modal" id="detailModal">
+  <div class="detail-modal-bg" id="detailModalBg"></div>
+  <div class="detail-modal-card">
+    <button class="detail-close" id="detailClose">&times;</button>
+    <div class="detail-top">
+      <div class="detail-src-ico" id="dtIco"></div>
+      <div>
+        <div class="detail-who" id="dtWho"></div>
+        <div class="detail-type" id="dtType"></div>
+      </div>
+      <span class="status" id="dtStatus"></span>
+    </div>
+    <div class="detail-grid" id="dtGrid"></div>
+    <div class="detail-block" id="dtNotesBlock">
+      <h5>Notiz</h5>
+      <p id="dtNotes"></p>
+    </div>
+    <div class="detail-block" id="dtTranscriptBlock">
+      <h5>Aus dem Telefonat notiert</h5>
+      <div class="transcript-mini" id="dtTranscript"></div>
+    </div>
+    <div class="detail-actions">
+      <button type="button" class="dbtn confirm" id="dtConfirmBtn">✓ Bestätigen</button>
+      <button type="button" class="dbtn cancel" id="dtCancelBtn">✕ Stornieren</button>
+      <button type="button" class="dbtn neutral" id="dtCallBtn">📞 Zurückrufen</button>
+    </div>
+    <div class="detail-actions" id="dtFreeTableRow" style="display:none">
+      <button type="button" class="dbtn free-table" id="dtFreeTableBtn">🔓 Tisch freigeben — Kunde ist gegangen</button>
+    </div>
+    <p class="free-table-hint" id="dtFreeTableHint" style="display:none">Tisch wurde freigegeben — ab sofort für Neubuchungen verfügbar.</p>
+    <div class="detail-delete-row">
+      <button type="button" class="dbtn danger" id="dtDeleteBtn">🗑 Eintrag endgültig löschen (Chef-Funktion)</button>
+    </div>
+    <p class="detail-note">Demo — Änderungen werden nicht dauerhaft gespeichert.</p>
+  </div>
+</div>
+
+<div class="mini-modal" id="orderStatusModal">
+  <div class="mini-modal-bg" id="orderStatusModalBg"></div>
+  <div class="mini-modal-card">
+    <div class="mini-modal-ico">🍽️</div>
+    <h3 id="orderStatusName">Bestellung</h3>
+    <p id="orderStatusWhat">&nbsp;</p>
+    <div class="order-status-options">
+      <button type="button" class="order-status-btn cooking" data-set="zubereitung">&hellip; In Zubereitung</button>
+      <button type="button" class="order-status-btn done" data-set="fertig">&#10003; Fertig</button>
+      <button type="button" class="order-status-btn reset" data-set="neu" id="orderStatusResetBtn">&#8635; Zurücksetzen</button>
+    </div>
+    <div class="mini-modal-actions">
+      <button type="button" class="dbtn neutral" id="orderStatusCancel">Schließen</button>
+    </div>
+  </div>
+</div>
+
+<div class="mini-modal" id="pinModal">
+  <div class="mini-modal-bg"></div>
+  <div class="mini-modal-card">
+    <div class="mini-modal-ico">🔒</div>
+    <h3>Chef-Modus</h3>
+    <p>Bitte PIN eingeben, um Löschrechte freizuschalten.</p>
+    <input type="password" inputmode="numeric" maxlength="6" id="pinInput" placeholder="••••••" autocomplete="off">
+    <p class="pin-error" id="pinError">Falsche PIN, bitte erneut versuchen.</p>
+    <div class="mini-modal-actions">
+      <button type="button" class="dbtn neutral" id="pinCancel">Abbrechen</button>
+      <button type="button" class="dbtn confirm" id="pinSubmit">Einloggen</button>
+    </div>
+    <button type="button" class="pin-forgot-link" id="pinForgotLink">PIN vergessen?</button>
+    <p class="detail-note" style="margin-top:10px">Demo-PIN: 123456</p>
+  </div>
+</div>
+
+<div class="mini-modal" id="resetPinModal">
+  <div class="mini-modal-bg"></div>
+  <div class="mini-modal-card">
+    <div class="mini-modal-ico">🆕</div>
+    <h3>Neue PIN erstellen</h3>
+    <p>In einem echten System würde das über einen verifizierten Kanal (SMS/E-Mail) laufen. In dieser Demo kannst du direkt eine neue 6-stellige PIN festlegen.</p>
+    <input type="password" inputmode="numeric" maxlength="6" id="newPinInput1" placeholder="Neue PIN (6-stellig)" autocomplete="off" style="margin-bottom:10px">
+    <input type="password" inputmode="numeric" maxlength="6" id="newPinInput2" placeholder="PIN bestätigen" autocomplete="off">
+    <p class="pin-error" id="resetPinError">PINs stimmen nicht überein oder sind nicht 6-stellig.</p>
+    <div class="mini-modal-actions">
+      <button type="button" class="dbtn neutral" id="resetPinCancel">Abbrechen</button>
+      <button type="button" class="dbtn confirm" id="resetPinSubmit">PIN speichern</button>
+    </div>
+  </div>
+</div>
+
+<div class="mini-modal" id="confirmDeleteModal">
+  <div class="mini-modal-bg"></div>
+  <div class="mini-modal-card">
+    <div class="mini-modal-ico">🗑</div>
+    <h3>Eintrag löschen?</h3>
+    <p id="confirmDeleteText">Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
+    <div class="mini-modal-actions">
+      <button type="button" class="dbtn neutral" id="confirmDeleteCancel">Abbrechen</button>
+      <button type="button" class="dbtn danger" id="confirmDeleteYes">Endgültig löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var ENTRIES = []; // wird unten live von Airtable befuellt
+
+  var OTHER_DAYS = [
+    { id:101, day:0, type:'reservierung', who:'Herr Vögel', what:'Tisch für 2 Personen &middot; Tisch T1', time:'12:10', status:'bestaetigt', source:'phone', phone:'+43 664 101 2020', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:102, day:0, type:'bestellung', who:'Frau Amann', what:'Vorbestellung: Käsknöpfle, Abholung 18:00', time:'10:40', status:'bestaetigt', source:'phone', phone:'+43 676 303 4040', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:103, day:0, type:'reservierung', who:'Familie Kaufmann', what:'Tisch für 5 Personen &middot; Tisch T10', time:'09:55', status:'bestaetigt', source:'phone', phone:'+43 699 505 6060', guests:'5 Personen', table:'T10 (6er-Tisch)', notes:'—', transcript:null },
+    { id:104, day:0, type:'storno', who:'Herr Beck', what:'Reservierung für 2 Personen, ursprünglich 20:00 Uhr', time:'08:30', status:'storniert', source:'phone', phone:'+43 664 707 8080', guests:'2 Personen', table:'T3 (2er-Tisch)', notes:'—', transcript:null },
+
+    { id:111, day:1, type:'reservierung', who:'Frau Egger', what:'Tisch für 3 Personen &middot; Tisch T8', time:'13:05', status:'bestaetigt', source:'phone', phone:'+43 660 111 2233', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+    { id:112, day:1, type:'reservierung', who:'Herr Loacker', what:'Tisch für 2 Personen &middot; Tisch T2', time:'12:20', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'2 Personen', table:'T2 (2er-Tisch)', notes:'—', transcript:null },
+    { id:113, day:1, type:'bestellung', who:'Frau Blum', what:'Vorbestellung: Rindsgulasch, Abholung 12:30', time:'11:15', status:'bestaetigt', source:'phone', phone:'+43 676 222 3344', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:114, day:1, type:'reservierung', who:'Herr &amp; Frau Nardin', what:'Tisch für 2 Personen &middot; Tisch T4', time:'10:50', status:'bestaetigt', source:'phone', phone:'+43 699 333 4455', guests:'2 Personen', table:'T4 (2er-Tisch)', notes:'—', transcript:null },
+    { id:115, day:1, type:'reservierung', who:'Familie Dünser', what:'Tisch für 6 Personen &middot; Tisch T11', time:'09:40', status:'neu', source:'phone', phone:'+43 664 444 5566', guests:'6 Personen', table:'T11 (6er-Tisch)', notes:'Geburtstag, Kerze erwünscht.', transcript:null },
+    { id:116, day:1, type:'storno', who:'Herr Metzler', what:'Reservierung für 4 Personen, ursprünglich 18:30 Uhr', time:'08:20', status:'storniert', source:'phone', phone:'+43 676 555 6677', guests:'4 Personen', table:'T7 (4er-Tisch)', notes:'—', transcript:null },
+
+    { id:121, day:2, type:'reservierung', who:'Frau Hollenstein', what:'Tisch für 4 Personen &middot; Tisch T9', time:'12:45', status:'bestaetigt', source:'phone', phone:'+43 699 666 7788', guests:'4 Personen', table:'T9 (4er-Tisch)', notes:'—', transcript:null },
+    { id:122, day:2, type:'bestellung', who:'Herr Kopf', what:'Vorbestellung: Kässpätzle, Abholung 12:00', time:'11:00', status:'bestaetigt', source:'phone', phone:'+43 664 777 8899', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:123, day:2, type:'reservierung', who:'Familie Bertsch', what:'Tisch für 2 Personen &middot; Tisch T1', time:'10:15', status:'bestaetigt', source:'phone', phone:'+43 676 888 9900', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:124, day:2, type:'reservierung', who:'Herr Vonier', what:'Tisch für 3 Personen &middot; Tisch T8', time:'09:30', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+    { id:125, day:2, type:'reservierung', who:'Frau Feuerstein', what:'Tisch für 2 Personen &middot; Tisch T2', time:'08:50', status:'bestaetigt', source:'phone', phone:'+43 699 999 0011', guests:'2 Personen', table:'T2 (2er-Tisch)', notes:'—', transcript:null },
+
+    { id:131, day:4, type:'reservierung', who:'Familie Schoder', what:'Tisch für 4 Personen &middot; Tisch T7', time:'13:20', status:'bestaetigt', source:'phone', phone:'+43 664 010 1122', guests:'4 Personen', table:'T7 (4er-Tisch)', notes:'—', transcript:null },
+    { id:132, day:4, type:'reservierung', who:'Herr Tschabrun', what:'Tisch für 2 Personen &middot; Tisch T3', time:'12:35', status:'bestaetigt', source:'phone', phone:'+43 676 020 2233', guests:'2 Personen', table:'T3 (2er-Tisch)', notes:'—', transcript:null },
+    { id:133, day:4, type:'bestellung', who:'Frau Ess', what:'Vorbestellung: Wiener Schnitzel, Abholung 19:00', time:'11:50', status:'bestaetigt', source:'phone', phone:'+43 699 030 3344', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:134, day:4, type:'reservierung', who:'Familie Ludescher', what:'Tisch für 6 Personen &middot; Tisch T11', time:'10:40', status:'bestaetigt', source:'phone', phone:'+43 664 040 4455', guests:'6 Personen', table:'T11 (6er-Tisch)', notes:'Firmenessen.', transcript:null },
+    { id:135, day:4, type:'reservierung', who:'Herr Nachbaur', what:'Tisch für 2 Personen &middot; Tisch T1', time:'09:20', status:'neu', source:'phone', phone:'+43 676 050 5566', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:136, day:4, type:'storno', who:'Frau Giesinger', what:'Reservierung für 3 Personen, ursprünglich 19:30 Uhr', time:'08:10', status:'storniert', source:'phone', phone:'+43 699 060 6677', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+
+    { id:141, day:5, type:'reservierung', who:'Familie Türtscher', what:'Tisch für 4 Personen &middot; Tisch T9', time:'13:50', status:'bestaetigt', source:'phone', phone:'+43 664 070 7788', guests:'4 Personen', table:'T9 (4er-Tisch)', notes:'—', transcript:null },
+    { id:142, day:5, type:'reservierung', who:'Herr Wachter', what:'Tisch für 2 Personen &middot; Tisch T2', time:'12:55', status:'bestaetigt', source:'phone', phone:'+43 676 080 8899', guests:'2 Personen', table:'T2 (2er-Tisch)', notes:'—', transcript:null },
+    { id:143, day:5, type:'bestellung', who:'Frau Konzett', what:'Vorbestellung: Kaiserschmarrn, Abholung 15:00', time:'11:30', status:'bestaetigt', source:'phone', phone:'+43 699 090 9900', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:144, day:5, type:'reservierung', who:'Familie Burtscher', what:'Tisch für 6 Personen &middot; Tisch T11', time:'10:20', status:'bestaetigt', source:'phone', phone:'+43 664 011 2233', guests:'6 Personen', table:'T11 (6er-Tisch)', notes:'Familienfeier.', transcript:null },
+    { id:145, day:5, type:'reservierung', who:'Herr Zudrell', what:'Tisch für 3 Personen &middot; Tisch T8', time:'09:15', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null },
+    { id:146, day:5, type:'reservierung', who:'Frau Matt', what:'Tisch für 2 Personen &middot; Tisch T3', time:'08:40', status:'neu', source:'phone', phone:'+43 676 021 3344', guests:'2 Personen', table:'T3 (2er-Tisch)', notes:'—', transcript:null },
+    { id:147, day:5, type:'storno', who:'Herr Getzner', what:'Reservierung für 4 Personen, ursprünglich 20:00 Uhr', time:'07:55', status:'storniert', source:'phone', phone:'+43 699 031 4455', guests:'4 Personen', table:'T7 (4er-Tisch)', notes:'—', transcript:null },
+
+    { id:151, day:6, type:'reservierung', who:'Familie Rein', what:'Tisch für 2 Personen &middot; Tisch T1', time:'12:30', status:'bestaetigt', source:'phone', phone:'+43 664 041 5566', guests:'2 Personen', table:'T1 (2er-Tisch)', notes:'—', transcript:null },
+    { id:152, day:6, type:'bestellung', who:'Herr Batlogg', what:'Vorbestellung: Käsknöpfle, Abholung 13:00', time:'11:10', status:'bestaetigt', source:'phone', phone:'+43 676 051 6677', guests:'—', table:'Abholung', notes:'—', transcript:null },
+    { id:153, day:6, type:'reservierung', who:'Frau Sohm', what:'Tisch für 4 Personen &middot; Tisch T9', time:'10:05', status:'bestaetigt', source:'phone', phone:'+43 699 061 7788', guests:'4 Personen', table:'T9 (4er-Tisch)', notes:'—', transcript:null },
+    { id:154, day:6, type:'reservierung', who:'Familie Hagen', what:'Tisch für 3 Personen &middot; Tisch T8', time:'09:00', status:'bestaetigt', source:'manual', phone:'+43 5522 12345', guests:'3 Personen', table:'T8 (4er-Tisch)', notes:'—', transcript:null }
+  ];
+
+  var ALL_ENTRIES = ENTRIES.concat(OTHER_DAYS);
+
+  function iconFor(source){
+    return source === 'phone' ? '📞' : '✍️';
+  }
+
+  function getOrderStatusMap(){
+    try{ return JSON.parse(localStorage.getItem('nofler_order_status') || '{}'); }catch(e){ return {}; }
+  }
+  function getOrderStatus(id){
+    var map = getOrderStatusMap();
+    return map[id] || 'neu';
+  }
+  function setOrderStatus(id, status){
+    var map = getOrderStatusMap();
+    if(status === 'neu'){ delete map[id]; } else { map[id] = status; }
+    try{ localStorage.setItem('nofler_order_status', JSON.stringify(map)); }catch(e){}
+  }
+  function orderStatusPill(status, fallbackStatus){
+    if(status === 'zubereitung') return '<span class="status zubereitung">in zubereitung</span>';
+    if(status === 'fertig') return '<span class="status fertig">fertig</span>';
+    return '<span class="status ' + fallbackStatus + '">' + fallbackStatus + '</span>';
+  }
+
+  var orderStatusModal = document.getElementById('orderStatusModal');
+  var orderStatusResetBtn = document.getElementById('orderStatusResetBtn');
+  var currentOrderStatusRow = null;
+  var currentOrderStatusEntry = null;
+
+  function openOrderStatusModal(entry, row){
+    currentOrderStatusEntry = entry;
+    currentOrderStatusRow = row;
+    document.getElementById('orderStatusName').textContent = entry.who;
+    document.getElementById('orderStatusWhat').textContent = entry.what;
+    orderStatusResetBtn.hidden = (getOrderStatus(entry.id) === 'neu');
+    orderStatusModal.classList.add('is-open');
+  }
+  function closeOrderStatusModal(){
+    orderStatusModal.classList.remove('is-open');
+    currentOrderStatusRow = null;
+    currentOrderStatusEntry = null;
+  }
+  document.querySelectorAll('.order-status-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(!currentOrderStatusEntry) return;
+      var status = btn.dataset.set;
+      setOrderStatus(currentOrderStatusEntry.id, status);
+      if(currentOrderStatusRow){
+        currentOrderStatusRow.classList.remove('is-done','is-cooking');
+        if(status === 'fertig') currentOrderStatusRow.classList.add('is-done');
+        if(status === 'zubereitung') currentOrderStatusRow.classList.add('is-cooking');
+        var pillWrap = currentOrderStatusRow.querySelector('.col-status');
+        if(pillWrap) pillWrap.innerHTML = orderStatusPill(status, currentOrderStatusEntry.status);
+      }
+      closeOrderStatusModal();
+    });
+  });
+  document.getElementById('orderStatusCancel').addEventListener('click', closeOrderStatusModal);
+  document.getElementById('orderStatusModalBg').addEventListener('click', closeOrderStatusModal);
+
+  function renderFeedInto(containerId, list){
+    var feed = document.getElementById(containerId);
+    feed.innerHTML = '';
+    if(list.length === 0){
+      feed.innerHTML = '<p style="padding:26px 24px;color:var(--slate);font-size:13.5px">Keine Einträge für diese Auswahl.</p>';
+      return;
+    }
+    list.forEach(function(e){
+      var row = document.createElement('div');
+      var isOrder = e.type === 'bestellung';
+      var oStatus = isOrder ? getOrderStatus(e.id) : 'neu';
+      row.className = 'entry' + (oStatus === 'fertig' ? ' is-done' : '') + (oStatus === 'zubereitung' ? ' is-cooking' : '');
+      row.dataset.id = e.id;
+      row.innerHTML =
+        '<div class="src-ico ' + (e.source === 'phone' ? 'phone' : '') + '">' + iconFor(e.source) + '</div>' +
+        '<div class="col-main"><div class="who">' + e.who + '</div><div class="what">' + e.what + '</div></div>' +
+        '<div class="col-meta">' + (e.type === 'storno' ? '' : ('<span class="time">' + e.time + '</span> Uhr')) + '</div>' +
+        '<div class="col-status">' + orderStatusPill(oStatus, e.status) + '</div>' +
+        '<button type="button" class="entry-delete" title="Eintrag löschen (Chef-Modus)">&times;</button>';
+      row.addEventListener('click', function(ev){
+        if(ev.target.classList.contains('entry-delete')){
+          ev.stopPropagation();
+          deleteEntry(e.id);
+          return;
+        }
+        if(isOrder){
+          openOrderStatusModal(e, row);
+          return;
+        }
+        openDetail(e.id);
+      });
+      feed.appendChild(row);
+    });
+  }
+
+  var pendingDeleteId = null;
+  var pendingDeleteFromModal = false;
+
+  function requestDelete(id, fromDetailModal){
+    if(!chefUnlocked) return;
+    pendingDeleteId = id;
+    pendingDeleteFromModal = !!fromDetailModal;
+    var entry = findEntry(id);
+    document.getElementById('confirmDeleteText').textContent = entry ? ('„' + entry.who.replace(/&amp;/g,'&') + '" wird endgültig aus dem System entfernt.') : 'Dieser Vorgang kann nicht rückgängig gemacht werden.';
+    document.getElementById('confirmDeleteModal').classList.add('is-open');
+  }
+
+  function performDelete(id){
+    ALL_ENTRIES = ALL_ENTRIES.filter(function(e){ return e.id !== id; });
+    ENTRIES = ENTRIES.filter(function(e){ return e.id !== id; });
+    if(id >= 2000 && typeof MONTH_CUSTOMERS !== 'undefined'){
+      var monthIndex = Math.floor((id - 2000) / 10);
+      var deletedEntry = MONTH_CUSTOMERS[monthIndex] ? MONTH_CUSTOMERS[monthIndex].filter(function(e){ return e.id === id; })[0] : null;
+      if(deletedEntry) decrementMonthStats(deletedEntry, monthIndex);
+    }
+    Object.keys(MONTH_CUSTOMERS).forEach(function(k){
+      MONTH_CUSTOMERS[k] = MONTH_CUSTOMERS[k].filter(function(e){ return e.id !== id; });
+    });
+  }
+
+  function decrementMonthStats(entry, monthIndex){
+    var m = MONTH_STATS[monthIndex];
+    if(!m) return;
+    m.customers = Math.max(0, m.customers - 1);
+    if(entry.type === 'reservierung') m.res = Math.max(0, m.res - 1);
+    if(entry.type === 'bestellung') m.orders = Math.max(0, m.orders - 1);
+    if(entry.type === 'storno') m.cancel = Math.max(0, m.cancel - 1);
+    var card = monthGrid && monthGrid.children[monthIndex];
+    if(card){
+      var numEl = card.querySelector('.mnum');
+      if(numEl) numEl.textContent = m.customers;
+    }
+    if(monthIndex === currentMonthIndex){
+      document.getElementById('monthSummary').innerHTML =
+        '<div class="m-stat"><div class="n">' + m.customers + '</div><div class="l">Kunden gesamt</div></div>' +
+        '<div class="m-stat"><div class="n">' + m.res + '</div><div class="l">Reservierungen</div></div>' +
+        '<div class="m-stat"><div class="n">' + m.orders + '</div><div class="l">Vorbestellungen</div></div>' +
+        '<div class="m-stat"><div class="n">' + m.cancel + '</div><div class="l">Stornierungen</div></div>';
+    }
+  }
+
+  document.getElementById('confirmDeleteCancel').addEventListener('click', function(){
+    document.getElementById('confirmDeleteModal').classList.remove('is-open');
+    pendingDeleteId = null;
+  });
+  document.getElementById('confirmDeleteYes').addEventListener('click', function(){
+    if(pendingDeleteId == null) return;
+    performDelete(pendingDeleteId);
+    document.getElementById('confirmDeleteModal').classList.remove('is-open');
+    if(pendingDeleteFromModal){ closeDetail(); }
+    refreshCurrentView();
+    pendingDeleteId = null;
+  });
+
+  function deleteEntry(id){
+    if(!chefUnlocked) return;
+    requestDelete(id, false);
+  }
+
+  function refreshCurrentView(){
+    var active = document.querySelector('.sb-link.is-active');
+    var view = active ? active.dataset.view : 'uebersicht';
+    if(view === 'uebersicht'){
+      renderFeed(document.querySelector('#filterChips .chip.is-active').dataset.f);
+      buildWeekStrip('weekStrip', weekStripHandlerOverview);
+      if(typeof updateOverviewStats === 'function') updateOverviewStats();
+      if(typeof updateGauge === 'function') updateGauge();
+    } else {
+      showView(view);
+    }
+    if(view === 'kalender' && typeof MONTH_CUSTOMERS !== 'undefined' && MONTH_CUSTOMERS[currentMonthIndex]){
+      renderFeedInto('monthCustomerFeed', MONTH_CUSTOMERS[currentMonthIndex]);
+    }
+  }
+
+  function renderFeed(filter){
+    var todays = ENTRIES.filter(function(e){ return e.day === todayIdx; });
+    var list = filter === 'alle' ? todays : todays.filter(function(e){ return e.type === filter; });
+    renderFeedInto('feed', list);
+  }
+
+  document.querySelectorAll('.chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-active'); });
+      chip.classList.add('is-active');
+      renderFeed(chip.dataset.f);
+    });
+  });
+
+  // animate stat counters
+  function animateCount(id, target){
+    var el = document.getElementById(id);
+    var start = performance.now(), dur = 600;
+    var from = parseInt(el.textContent, 10) || 0;
+    function tick(now){
+      var p = Math.min((now - start) / dur, 1);
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(from + (target - from) * eased);
+      if(p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }
+  function updateOverviewStats(){
+    var todays = ENTRIES.filter(function(e){ return e.day === todayIdx; });
+    var resCount = todays.filter(function(e){ return e.type === 'reservierung'; }).length;
+    var ordCount = todays.filter(function(e){ return e.type === 'bestellung'; }).length;
+    var cancelCount = todays.filter(function(e){ return e.type === 'storno'; }).length;
+    animateCount('statRes', resCount);
+    animateCount('statOrd', ordCount);
+    animateCount('statCancel', cancelCount);
+  }
+
+  // week strip — echte, live berechnete Woche (nicht mehr fest verdrahtet)
+  var MONTH_NAMES_DE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  var DAYS = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+  var NOW = new Date();
+  var nowDow = NOW.getDay(); // 0=So..6=Sa
+  var todayIdx = (nowDow === 0) ? 6 : nowDow - 1; // Mo=0..So=6
+  var MONDAY = new Date(NOW);
+  MONDAY.setHours(0,0,0,0);
+  MONDAY.setDate(NOW.getDate() - todayIdx);
+  var WEEK_DATES = [];
+  for(var wd = 0; wd < 7; wd++){
+    var dt = new Date(MONDAY);
+    dt.setDate(MONDAY.getDate() + wd);
+    WEEK_DATES.push(dt);
+  }
+  var DATES = WEEK_DATES.map(function(d){ return d.getDate(); });
+  var MONTHNAMES = WEEK_DATES.map(function(d){ return d.getDate() + '. ' + MONTH_NAMES_DE[d.getMonth()]; });
+  updateOverviewStats();
+  renderFeed('alle');
+
+  // ordnet ein Live-Datum (YYYY-MM-DD) der richtigen Position in der aktuell angezeigten Woche zu.
+  // Kein erkennbares Datum ODER Datum außerhalb dieser Woche → -1: der Eintrag taucht dann NICHT
+  // in der Wochenansicht auf (fällt nicht mehr fälschlich auf "heute"), bleibt aber in der
+  // "Reservierungen"-Liste und im neuen Kalender-Picker sichtbar.
+  // Blendet unvollständige Anrufe aus (Name erfasst, aber Gespräch abgebrochen bevor
+  // Tisch/Uhrzeit/Gäste feststanden) — solche Datensätze sollen nirgends im Dashboard auftauchen.
+  function isCompleteEntry(it){
+    var w = it.who ? String(it.who).trim().toLowerCase() : '';
+    if(!w) return false;
+    var placeholders = ['ohne namen','(ohne namen)','unbekannt','n/a','-','–','—','unknown'];
+    if(placeholders.indexOf(w) !== -1) return false;
+    if(it.type === 'reservierung'){
+      var hasTime = it.time && it.time !== '—' && it.time !== '-';
+      var hasTable = it.table && String(it.table).trim() !== '';
+      if(!hasTime || !hasTable) return false;
+    }
+    return true;
+  }
+
+  function dayIndexForDate(dateStr){
+    if(!dateStr) return -1;
+    var d = new Date(String(dateStr).slice(0,10) + 'T00:00:00');
+    if(isNaN(d.getTime())) return -1;
+    var diffDays = Math.round((d - MONDAY) / 86400000);
+    if(diffDays < 0 || diffDays > 6) return -1;
+    return diffDays;
+  }
+
+  // absolutes Datum (YYYY-MM-DD) fürs Kalender-Picker auf der Reservierungen-Seite.
+  // Für Demo-Einträge dieser Woche wird das reale Datum anhand ihres Wochentags-Index berechnet.
+  function toISODate(d){
+    var y = d.getFullYear(), m = ('0'+(d.getMonth()+1)).slice(-2), day = ('0'+d.getDate()).slice(-2);
+    return y + '-' + m + '-' + day;
+  }
+  function absoluteDateFor(entry){
+    if(entry.isoDate) return entry.isoDate;
+    if(entry.day != null && entry.day >= 0 && entry.day <= 6) return toISODate(WEEK_DATES[entry.day]);
+    return null;
+  }
+
+  /* ---------------- EINKLAPPBARE PANELS ---------------- */
+  document.querySelectorAll('.collapsible-toggle').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var body = document.getElementById(btn.dataset.target);
+      if(!body) return;
+      var willOpen = body.hidden;
+      body.hidden = !willOpen;
+      btn.classList.toggle('is-open', willOpen);
+    });
+  });
+
+  /* ---------------- KALENDER-PICKER (wiederverwendbar: Reservierungen + Bestellungen) ---------------- */
+  var calYear = NOW.getFullYear();
+  var calMonth = NOW.getMonth();
+  var TODAY_ISO = toISODate(NOW);
+
+  function formatGermanDate(iso){
+    var parts = iso.split('-');
+    var d = new Date(parts[0], parts[1]-1, parts[2]);
+    return d.getDate() + '. ' + MONTH_NAMES_DE[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function firstWeekdayIndex(y, m){ var d = new Date(y, m, 1).getDay(); return d === 0 ? 6 : d - 1; }
+  function daysInMonth(y, m){ return new Date(y, m + 1, 0).getDate(); }
+
+  function createCalendarPicker(cfg){
+    // cfg: gridId, monthLabelId, prevBtnId, nextBtnId, resetBtnId, feedId, headingId, entryType, allLabel
+    var state = { selectedISO: null };
+
+    function showAll(){
+      var all = ALL_ENTRIES.filter(function(e){ return e.type === cfg.entryType; })
+        .slice().sort(function(a,b){ return (absoluteDateFor(a)||'').localeCompare(absoluteDateFor(b)||''); });
+      renderFeedInto(cfg.feedId, all);
+      var h = document.getElementById(cfg.headingId);
+      if(h) h.textContent = cfg.allLabel;
+      var reset = document.getElementById(cfg.resetBtnId);
+      if(reset) reset.classList.add('is-active');
+    }
+    function filterByDate(iso){
+      var list = ALL_ENTRIES.filter(function(e){ return e.type === cfg.entryType && absoluteDateFor(e) === iso; });
+      renderFeedInto(cfg.feedId, list);
+      var h = document.getElementById(cfg.headingId);
+      var noun = cfg.entryType === 'bestellung' ? 'Vorbestellungen' : (cfg.entryType === 'storno' ? 'Stornierungen' : 'Reservierungen');
+      if(h) h.textContent = (list.length ? noun : 'Keine ' + noun) + ' — ' + formatGermanDate(iso);
+      var reset = document.getElementById(cfg.resetBtnId);
+      if(reset) reset.classList.remove('is-active');
+    }
+    function render(){
+      var grid = document.getElementById(cfg.gridId);
+      var label = document.getElementById(cfg.monthLabelId);
+      if(!grid || !label) return;
+      label.textContent = MONTH_NAMES_DE[calMonth] + ' ' + calYear;
+      grid.innerHTML = '';
+      ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function(d){
+        var el = document.createElement('div');
+        el.className = 'cal-dow';
+        el.textContent = d;
+        grid.appendChild(el);
+      });
+      var lead = firstWeekdayIndex(calYear, calMonth);
+      for(var i = 0; i < lead; i++){
+        var pad = document.createElement('div');
+        pad.className = 'cal-day is-outside';
+        grid.appendChild(pad);
+      }
+      var total = daysInMonth(calYear, calMonth);
+      for(var day = 1; day <= total; day++){
+        var iso = toISODate(new Date(calYear, calMonth, day));
+        var cell = document.createElement('div');
+        cell.className = 'cal-day';
+        if(iso === TODAY_ISO) cell.classList.add('is-today');
+        if(iso === state.selectedISO) cell.classList.add('is-selected');
+        var hasEntries = ALL_ENTRIES.some(function(e){ return e.type === cfg.entryType && absoluteDateFor(e) === iso; });
+        cell.innerHTML = '<span>' + day + '</span>' + (hasEntries ? '<span class="cdot"></span>' : '');
+        cell.dataset.iso = iso;
+        cell.addEventListener('click', function(){
+          state.selectedISO = this.dataset.iso;
+          render();
+          filterByDate(this.dataset.iso);
+        });
+        grid.appendChild(cell);
+      }
+    }
+    var prevBtn = document.getElementById(cfg.prevBtnId);
+    var nextBtn = document.getElementById(cfg.nextBtnId);
+    var resetBtn = document.getElementById(cfg.resetBtnId);
+    if(prevBtn) prevBtn.addEventListener('click', function(){ calMonth--; if(calMonth < 0){ calMonth = 11; calYear--; } render(); });
+    if(nextBtn) nextBtn.addEventListener('click', function(){ calMonth++; if(calMonth > 11){ calMonth = 0; calYear++; } render(); });
+    if(resetBtn) resetBtn.addEventListener('click', function(){ state.selectedISO = null; render(); showAll(); });
+
+    return {
+      open: function(){ render(); if(state.selectedISO) filterByDate(state.selectedISO); else showAll(); },
+      selectByDay: function(dayIdx){
+        var iso = toISODate(WEEK_DATES[dayIdx]);
+        state.selectedISO = iso;
+        render();
+        filterByDate(iso);
+      }
+    };
+  }
+
+  function showKalenderDay(i){
+    document.getElementById('calFeedHeading').textContent = DAYS[i] + ', ' + MONTHNAMES[i];
+    renderFeedInto('feedKalender', ALL_ENTRIES.filter(function(e){ return e.day === i; }));
+  }
+  function showKalenderMonthToDate(){
+    var monthStartISO = toISODate(new Date(NOW.getFullYear(), NOW.getMonth(), 1));
+    var list = ALL_ENTRIES.filter(function(e){
+      var iso = absoluteDateFor(e);
+      return iso && iso >= monthStartISO && iso <= TODAY_ISO;
+    }).slice().sort(function(a,b){ return (absoluteDateFor(b)||'').localeCompare(absoluteDateFor(a)||''); });
+    document.getElementById('calFeedHeading').textContent = '1.–' + NOW.getDate() + '. ' + MONTH_NAMES_DE[NOW.getMonth()] + ' — alle Vorgänge';
+    renderFeedInto('feedKalender', list);
+  }
+  var calRangeTabsEl = document.getElementById('calRangeTabs');
+  if(calRangeTabsEl){
+    calRangeTabsEl.querySelectorAll('.range-tab').forEach(function(tab){
+      tab.addEventListener('click', function(){
+        calRangeTabsEl.querySelectorAll('.range-tab').forEach(function(t){ t.classList.remove('is-active'); });
+        tab.classList.add('is-active');
+        if(tab.dataset.range === 'monat'){
+          showKalenderMonthToDate();
+        } else {
+          showKalenderDay(todayIdx);
+        }
+      });
+    });
+  }
+
+  var reservierungenPicker = createCalendarPicker({
+    gridId:'calGrid', monthLabelId:'calMonthLabel', prevBtnId:'calPrevMonth', nextBtnId:'calNextMonth',
+    resetBtnId:'calResetBtn', feedId:'feedReservierungen', headingId:'resFeedHeading',
+    entryType:'reservierung', allLabel:'Alle Reservierungen'
+  });
+  var bestellungenPicker = createCalendarPicker({
+    gridId:'calGridOrd', monthLabelId:'calMonthLabelOrd', prevBtnId:'calPrevMonthOrd', nextBtnId:'calNextMonthOrd',
+    resetBtnId:'calResetBtnOrd', feedId:'feedBestellungen', headingId:'ordFeedHeading',
+    entryType:'bestellung', allLabel:'Alle Vorbestellungen'
+  });
+  var stornoPicker = createCalendarPicker({
+    gridId:'calGridStorno', monthLabelId:'calMonthLabelStorno', prevBtnId:'calPrevMonthStorno', nextBtnId:'calNextMonthStorno',
+    resetBtnId:'calResetBtnStorno', feedId:'feedStornierungen', headingId:'stornoFeedHeading',
+    entryType:'storno', allLabel:'Alle Stornierungen'
+  });
+
+  function countForDay(i, type){ return ALL_ENTRIES.filter(function(e){ return e.day === i && (!type || e.type === type); }).length; }
+
+  function buildWeekStrip(containerId, onClick, filterType){
+    var strip = document.getElementById(containerId);
+    strip.innerHTML = '';
+    DAYS.forEach(function(d, i){
+      var card = document.createElement('div');
+      card.className = 'day-card' + (i === todayIdx ? ' is-today' : '');
+      card.dataset.day = i;
+      card.innerHTML = '<div class="dow">' + d + '</div><div class="dnum">' + DATES[i] + '</div><div class="dcount">' + countForDay(i, filterType) + ' Vorg.</div>';
+      card.addEventListener('click', function(){
+        strip.querySelectorAll('.day-card').forEach(function(c){ c.classList.remove('is-today'); });
+        card.classList.add('is-today');
+        onClick(i);
+      });
+      strip.appendChild(card);
+    });
+  }
+
+  function weekStripHandlerOverview(i){
+    document.getElementById('feedHeading').textContent = i === todayIdx ? 'Live-Verlauf' : 'Verlauf — ' + DAYS[i] + ', ' + MONTHNAMES[i];
+    document.querySelectorAll('#filterChips .chip').forEach(function(c){ c.classList.remove('is-active'); });
+    document.querySelector('#filterChips .chip[data-f="alle"]').classList.add('is-active');
+    renderFeedInto('feed', ALL_ENTRIES.filter(function(e){ return e.day === i; }));
+  }
+  buildWeekStrip('weekStrip', weekStripHandlerOverview);
+
+  buildWeekStrip('weekStripCal', function(i){
+    document.getElementById('calFeedHeading').textContent = DAYS[i] + ', ' + MONTHNAMES[i];
+    renderFeedInto('feedKalender', ALL_ENTRIES.filter(function(e){ return e.day === i; }));
+    if(typeof renderKuecheHistoryForDay === 'function') renderKuecheHistoryForDay(i);
+  });
+
+  // simulate a new live phone booking arriving
+  setTimeout(function(){
+    var activeFilter = document.querySelector('.chip.is-active').dataset.f;
+    var newEntry = { id:9, day:3, type:'reservierung', who:'Herr Sturn', what:'Tisch für 3 Personen &middot; Tisch T5', time:'Jetzt', status:'neu', source:'phone', phone:'+43 664 777 9900', guests:'3 Personen', table:'T5 (4er-Tisch)', notes:'Gerade eben eingegangen.', transcript:[
+      { who:'caller', text:'Hallo, haben Sie gleich noch einen Tisch für drei Personen frei?' },
+      { who:'bot', text:'Ja, Tisch 5 ist in 20 Minuten frei — soll ich den für Sie reservieren?' },
+      { who:'caller', text:'Ja, perfekt, danke!' }
+    ] };
+    ENTRIES.unshift(newEntry);
+    ALL_ENTRIES.unshift(newEntry);
+    if(activeFilter !== 'alle' && activeFilter !== 'reservierung') return;
+    var feed = document.getElementById('feed');
+    var row = document.createElement('div');
+    row.className = 'entry is-new';
+    row.dataset.id = newEntry.id;
+    row.innerHTML =
+      '<div class="src-ico phone">📞</div>' +
+      '<div class="col-main"><div class="who">' + newEntry.who + '</div><div class="what">' + newEntry.what + '</div></div>' +
+      '<div class="col-meta"><span class="time">Jetzt</span></div>' +
+      '<div class="col-status"><span class="status neu">neu</span></div>';
+    row.addEventListener('click', function(){ openDetail(newEntry.id); });
+    feed.insertBefore(row, feed.firstChild);
+  }, 3200);
+
+  /* ---------------- DETAIL MODAL ---------------- */
+  var detailModal = document.getElementById('detailModal');
+  var currentDetailId = null;
+
+  function findEntry(id){
+    for(var i=0;i<ALL_ENTRIES.length;i++){ if(ALL_ENTRIES[i].id === id) return ALL_ENTRIES[i]; }
+    return null;
+  }
+
+  function typeLabel(type){
+    return type === 'reservierung' ? 'Tischreservierung' : type === 'bestellung' ? 'Vorbestellung' : 'Stornierung';
+  }
+
+  function openDetail(id){
+    var e = findEntry(id);
+    if(!e) return;
+    currentDetailId = id;
+    document.getElementById('dtIco').className = 'detail-src-ico ' + (e.source === 'phone' ? 'phone' : '');
+    document.getElementById('dtIco').textContent = iconFor(e.source);
+    document.getElementById('dtWho').innerHTML = e.who;
+    document.getElementById('dtType').textContent = typeLabel(e.type) + ' · ' + (e.source === 'phone' ? 'Erfasst via Telefonassistent' : 'Manuell erfasst');
+    document.getElementById('dtStatus').className = 'status ' + e.status;
+    document.getElementById('dtStatus').textContent = e.status;
+    document.getElementById('dtGrid').innerHTML =
+      '<div><span>Uhrzeit</span><b>' + e.time + ' Uhr</b></div>' +
+      '<div><span>Telefon</span><b>' + e.phone + '</b></div>' +
+      '<div><span>Personen</span><b>' + e.guests + '</b></div>' +
+      '<div><span>Tisch</span><b>' + e.table + '</b></div>';
+    var notesBlock = document.getElementById('dtNotesBlock');
+    if(e.notes && e.notes !== '—'){
+      notesBlock.style.display = 'block';
+      document.getElementById('dtNotes').textContent = e.notes;
+    } else {
+      notesBlock.style.display = 'none';
+    }
+    var transcriptBlock = document.getElementById('dtTranscriptBlock');
+    if(e.transcript && Array.isArray(e.transcript)){
+      transcriptBlock.style.display = 'block';
+      document.getElementById('dtTranscript').innerHTML = e.transcript.map(function(t){
+        return '<div class="tline ' + t.who + '">' + t.text + '</div>';
+      }).join('');
+    } else if(e.transcript && typeof e.transcript === 'string'){
+      transcriptBlock.style.display = 'block';
+      var lines = e.transcript.split('\n').filter(function(l){ return l.trim(); });
+      document.getElementById('dtTranscript').innerHTML = lines.map(function(l){
+        var isAgent = /^Agent:/i.test(l);
+        var cls = isAgent ? 'bot' : 'caller';
+        var text = l.replace(/^(Agent|User):\s*/i, '');
+        return '<div class="tline ' + cls + '">' + text.replace(/</g,'&lt;') + '</div>';
+      }).join('');
+    } else {
+      transcriptBlock.style.display = 'none';
+    }
+    updateActionButtons(e);
+    detailModal.classList.add('is-open');
+  }
+
+  function updateActionButtons(e){
+    var confirmBtn = document.getElementById('dtConfirmBtn');
+    var cancelBtn = document.getElementById('dtCancelBtn');
+    confirmBtn.disabled = (e.status === 'bestaetigt');
+    cancelBtn.disabled = (e.status === 'storniert');
+
+    var freeRow = document.getElementById('dtFreeTableRow');
+    var freeBtn = document.getElementById('dtFreeTableBtn');
+    var freeHint = document.getElementById('dtFreeTableHint');
+    var showFreeTable = e.type === 'reservierung' && e.status === 'bestaetigt';
+    freeRow.style.display = showFreeTable ? 'flex' : 'none';
+    freeHint.style.display = 'none';
+    if(showFreeTable){
+      freeBtn.disabled = false;
+      freeBtn.textContent = '🔓 Tisch freigeben — Kunde ist gegangen';
+    }
+  }
+
+  var TISCH_FREIGEBEN_ENDPOINT = 'https://a4milan.app.n8n.cloud/webhook/nofler-tisch-freigeben';
+  document.getElementById('dtFreeTableBtn').addEventListener('click', function(){
+    var e = findEntry(currentDetailId);
+    if(!e) return;
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Wird freigegeben …';
+    fetch(TISCH_FREIGEBEN_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: e.who, datum: absoluteDateFor(e), uhrzeit: e.time, tisch: e.table })
+    }).then(function(r){ return r.json(); }).then(function(){
+      document.getElementById('dtFreeTableRow').style.display = 'none';
+      document.getElementById('dtFreeTableHint').style.display = 'block';
+    }).catch(function(){
+      btn.disabled = false;
+      btn.textContent = 'Fehlgeschlagen — nochmal versuchen';
+    });
+  });
+
+  function closeDetail(){ detailModal.classList.remove('is-open'); }
+  document.getElementById('detailClose').addEventListener('click', closeDetail);
+  document.getElementById('detailModalBg').addEventListener('click', closeDetail);
+  document.addEventListener('keydown', function(ev){ if(ev.key === 'Escape') closeDetail(); });
+
+  /* ---------------- RESERVIERUNGS-AUSWAHL (beim "Belegt"-Klick auf Tische) ---------------- */
+  var rpModal = document.getElementById('rpModal');
+  function closeRp(){ rpModal.classList.remove('is-open'); }
+
+  function showReservationPicker(tischId, candidates, onPick, onWalkin, onCancel){
+    var heading = document.getElementById('rpHeading');
+    var list = document.getElementById('rpList');
+    var walkinBtn = document.getElementById('rpWalkinBtn');
+    heading.textContent = 'Wer ist an Tisch ' + tischId + ' angekommen?';
+    list.innerHTML = '';
+
+    candidates.forEach(function(c){
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'rp-candidate';
+      btn.innerHTML = '<span class="rp-name">' + (c.who || 'Unbekannt') + '</span><span class="rp-meta">' + c.time + ' Uhr' + (c.guests ? ' · ' + c.guests : '') + '</span>';
+      btn.addEventListener('click', function(){
+        closeRp();
+        onPick(c);
+      });
+      list.appendChild(btn);
+    });
+
+    var newWalkinBtn = walkinBtn.cloneNode(true); // alte Listener entfernen, damit sie sich nicht summieren
+    walkinBtn.parentNode.replaceChild(newWalkinBtn, walkinBtn);
+    newWalkinBtn.addEventListener('click', function(){
+      closeRp();
+      onWalkin();
+    });
+
+    var cancelled = true;
+    function handleClose(){
+      if(cancelled && onCancel) onCancel();
+    }
+    var oldBg = document.getElementById('rpModalBg');
+    var newBg = oldBg.cloneNode(true);
+    oldBg.parentNode.replaceChild(newBg, oldBg);
+    newBg.addEventListener('click', function(){ closeRp(); handleClose(); });
+
+    var oldClose = document.getElementById('rpClose');
+    var newClose = oldClose.cloneNode(true);
+    oldClose.parentNode.replaceChild(newClose, oldClose);
+    newClose.addEventListener('click', function(){ closeRp(); handleClose(); });
+
+    list.querySelectorAll('.rp-candidate').forEach(function(btn){
+      btn.addEventListener('click', function(){ cancelled = false; });
+    });
+    newWalkinBtn.addEventListener('click', function(){ cancelled = false; });
+
+    rpModal.classList.add('is-open');
+  }
+
+  document.getElementById('dtConfirmBtn').addEventListener('click', function(){
+    var e = findEntry(currentDetailId);
+    if(!e) return;
+    e.status = 'bestaetigt';
+    updateActionButtons(e);
+    document.getElementById('dtStatus').className = 'status bestaetigt';
+    document.getElementById('dtStatus').textContent = 'bestaetigt';
+    renderFeed(document.querySelector('.chip.is-active').dataset.f);
+  });
+  document.getElementById('dtCancelBtn').addEventListener('click', function(){
+    var e = findEntry(currentDetailId);
+    if(!e) return;
+    e.status = 'storniert';
+    e.type = 'storno';
+    updateActionButtons(e);
+    document.getElementById('dtStatus').className = 'status storniert';
+    document.getElementById('dtStatus').textContent = 'storniert';
+    renderFeed(document.querySelector('.chip.is-active').dataset.f);
+  });
+  document.getElementById('dtCallBtn').addEventListener('click', function(){
+    var btn = document.getElementById('dtCallBtn');
+    var original = btn.textContent;
+    btn.textContent = '📞 Wird angerufen ...';
+    setTimeout(function(){ btn.textContent = original; }, 1600);
+  });
+
+  /* ---------------- STAT CARD FILTERS ---------------- */
+  var statMap = { statRes:'reservierung', statOrd:'bestellung', statCancel:'storno' };
+  Object.keys(statMap).forEach(function(statId){
+    var card = document.getElementById(statId).closest('.stat-card');
+    card.addEventListener('click', function(){
+      var type = statMap[statId];
+      var chip = document.querySelector('.chip[data-f="' + type + '"]');
+      document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('is-active'); });
+      chip.classList.add('is-active');
+      renderFeed(type);
+      document.getElementById('feed').closest('.panel').scrollIntoView({ behavior:'smooth', block:'center' });
+    });
+  });
+
+  /* ---------------- TISCHE — LIVE-BELEGUNG (Walk-in-Verwaltung) ---------------- */
+  var TABLE_CAPACITY = {
+    T1:2, T2:2, T3:2, T4:2, T5:2,
+    T6:4, T7:4, T8:4, T9:4, T10:4,
+    T11:6, T12:6, T13:6, T14:6
+  };
+  var TISCH_BESETZEN_ENDPOINT = 'https://a4milan.app.n8n.cloud/webhook/nofler-tisch-besetzen';
+
+  function timeToMinutesLocal(t){
+    if(!t || t === '—' || t === '-') return null;
+    var p = String(t).split(':');
+    var h = parseInt(p[0], 10), m = parseInt(p[1], 10);
+    if(isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  }
+
+  // findet für einen Tisch den aktiven Eintrag (Reservierung ODER Walk-in), der GENAU JETZT
+  // den Tisch belegt — Datum = heute, Status nicht storniert/abgeschlossen, Uhrzeit innerhalb
+  // von 2h um die aktuelle Zeit (dieselbe Regel, die auch das Telefon-Backend verwendet).
+  var tischOverride = {}; // optimistisches lokales Overlay, verhindert Race-Condition mit Airtable-Lesezeit
+
+  function findActiveOccupant(tischId){
+    if(tischOverride.hasOwnProperty(tischId)){
+      return tischOverride[tischId]; // null (=frei) oder synthetisches Walk-in-Objekt
+    }
+    var nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+    var candidates = ENTRIES.filter(function(e){
+      if(e.table !== tischId) return false;
+      if(e.status === 'storniert' || e.status === 'abgeschlossen') return false;
+      if(absoluteDateFor(e) !== TODAY_ISO) return false;
+      var mins = timeToMinutesLocal(e.time);
+      if(mins == null) return false;
+      return Math.abs(mins - nowMins) < 120;
+    });
+    if(!candidates.length) return null;
+    // neuester Eintrag zuerst (ENTRIES ist bereits chronologisch sortiert)
+    return candidates[0];
+  }
+
+  /* ---------------- SPEISEKARTE / KÜCHE — PROTOTYP (NICHT LIVE VERBUNDEN) ---------------- */
+  var PROTO_MENU = [
+    { cat: "Suppe", items: [
+      { name: "Grießnockerlsuppe", price: 7.50 },
+      { name: "Leberspätzlesuppe", price: 7.50 },
+      { name: "Kräuterflädlesuppe", price: 7.50 },
+      { name: "Tomatencremesuppe", price: 7.50 }
+    ]},
+    { cat: "Der Salat", items: [
+      { name: "Blattsalat der Jahreszeit", price: 7.90 },
+      { name: "Gemischter Salat", price: 8.20 },
+      { name: "Rusticanasalat", price: 14.90 },
+      { name: "Putenchilisalat", price: 19.90 },
+      { name: "Ruccolasalat", price: 15.90 },
+      { name: "Gustosalat", price: 25.90 },
+      { name: "Haussalat", price: 16.50 },
+      { name: "Fitnessteller", price: 19.90 },
+      { name: "Steirischer Backhendlsalat", price: 19.90 },
+      { name: "Zandersalat", price: 25.90 }
+    ]},
+    { cat: "Pizza", items: [
+      { name: "Margherita", price: 13.00 },
+      { name: "Napoli", price: 14.50 },
+      { name: "Aglio", price: 14.00 },
+      { name: "Della Nonna", price: 14.50 },
+      { name: "Diavolo – scharf", price: 14.80 },
+      { name: "Funghi", price: 14.50 },
+      { name: "Prosciutto", price: 14.50 },
+      { name: "Paesana", price: 14.50 },
+      { name: "Carciofina", price: 15.50 },
+      { name: "Salami", price: 14.80 },
+      { name: "Calabrese – scharf", price: 16.00 },
+      { name: "Romana", price: 15.00 },
+      { name: "Siziliana – scharf", price: 16.50 },
+      { name: "Capricciosa", price: 16.00 },
+      { name: "Quattro Stagioni", price: 16.90 },
+      { name: "Calzone", price: 17.00 },
+      { name: "Tonno", price: 15.50 },
+      { name: "Frutti di mare", price: 17.00 },
+      { name: "Rusticana", price: 15.00 },
+      { name: "Contadino", price: 15.90 },
+      { name: "Della Casa", price: 15.90 },
+      { name: "Hawaii", price: 15.50 },
+      { name: "Gorgonzola", price: 16.00 },
+      { name: "Quattro Formaggio", price: 16.50 },
+      { name: "Vegetariana", price: 15.00 },
+      { name: "Speziale", price: 16.50 },
+      { name: "Ruccola", price: 17.50 },
+      { name: "Don Giovanni", price: 15.50 },
+      { name: "Buon Giorno", price: 16.50 },
+      { name: "Parma", price: 16.50 },
+      { name: "Dalba – scharf", price: 16.50 },
+      { name: "Papagalo – scharf", price: 15.50 }
+    ]},
+    { cat: "Pasta und Risotti", items: [
+      { name: "Napoli (Pasta)", price: 14.40 },
+      { name: "Al Arabiata", price: 14.50 },
+      { name: "Bolognese", price: 15.40 },
+      { name: "Carbonara", price: 16.00 },
+      { name: "Alla Panna", price: 16.00 },
+      { name: "Quattro Formaggio (Pasta)", price: 15.90 },
+      { name: "Salmone", price: 16.90 },
+      { name: "Della Nonna (Pasta)", price: 16.50 },
+      { name: "Fiorentina", price: 17.00 },
+      { name: "Casalinga", price: 16.00 },
+      { name: "Lasagne al forno", price: 16.50 },
+      { name: "Risotto Buon Gustaio", price: 17.50 },
+      { name: "Risotto Primavera", price: 16.00 }
+    ]},
+    { cat: "Fischgerichte", items: [
+      { name: "Gebratenes Zanderfilet „Provencale“", price: 28.90 },
+      { name: "Black Tiger Riesengarnelen vom Grill", price: 30.90 },
+      { name: "Gebratenes Forellenfilet", price: 27.90 },
+      { name: "Calamari Fritti", price: 25.90 }
+    ]},
+    { cat: "Hauptspeisen", items: [
+      { name: "Haussspieß", price: 23.90 },
+      { name: "Rusticanatöpfle", price: 27.40 },
+      { name: "Jungschweinsteak", price: 25.00 },
+      { name: "Geschmortes Gulasch", price: 24.90 },
+      { name: "Wiener Schnitzel vom Schwein", price: 19.90 },
+      { name: "Cordon Bleu vom Schwein", price: 20.90 }
+    ]},
+    { cat: "Empfehlung vom Küchenchef", items: [
+      { name: "Tournedos vom Schweinefilet", price: 28.90 },
+      { name: "Zarte Rindsfiletspitzen „Stroganoff“", price: 32.90 },
+      { name: "Geschnetzelte Leber vom Ländle Kalb", price: 25.90 },
+      { name: "Zwiebelrostbraten vom Angus Rind", price: 28.90 },
+      { name: "Gegrilltes Angus Entrecote", price: 34.50 },
+      { name: "Gegrilltes Rindsfiletsteak", price: 37.70 }
+    ]},
+    { cat: "Vegetarisch", items: [
+      { name: "Vorarlberger Käsespätzle", price: 18.50 },
+      { name: "Gemüseteller", price: 15.90 },
+      { name: "Gebratene Couscousgemüselaibchen", price: 15.90 },
+      { name: "Cannelloni", price: 16.90 }
+    ]},
+    { cat: "Für Kinder", items: [
+      { name: "Schnipo", price: 12.00 },
+      { name: "Spaghetti mit Tomatensauce", price: 12.00 },
+      { name: "Spaghetti mit Fleischsauce", price: 12.00 },
+      { name: "Räuberspieß", price: 12.00 },
+      { name: "Wienerle mit Pommes", price: 12.00 }
+    ]},
+    { cat: "Süßer Abschluss", items: [
+      { name: "Gebackene Apfelküchle", price: 8.70 },
+      { name: "Tiramisu", price: 7.40 },
+      { name: "Mohr im Hemd", price: 8.50 },
+      { name: "Zitronensorbet", price: 6.90 },
+      { name: "Hausgemachte Eispalatschinken", price: 8.70 },
+      { name: "Heiße Liebe", price: 8.40 },
+      { name: "Coupe Danemark", price: 8.30 },
+      { name: "Gemischtes Eis", price: 6.40 },
+      { name: "Bananensplit", price: 8.40 },
+      { name: "Hausgemachte Creme Brülee", price: 8.50 }
+    ]}
+  ];
+
+  var protoSelectedTable = null;
+  var protoCart = [];
+  var KO_LIVE = []; // echte Küchenbestellungen aus Airtable (über n8n)
+  var KO_ENDPOINT_BASE = 'https://a4milan.app.n8n.cloud/webhook/';
+  var protoInitDone = false;
+
+  function showSimpleToast(icon, title, sub){
+    var stack = document.getElementById('toastStack');
+    if(!stack) return;
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = '<div class="toast-ico">' + icon + '</div><div class="toast-body"><div class="toast-title">' + title + '</div><div class="toast-sub">' + sub + '</div></div>';
+    stack.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('is-shown'); });
+    setTimeout(function(){
+      el.classList.remove('is-shown');
+      setTimeout(function(){ el.remove(); }, 400);
+    }, 4200);
+  }
+
+  function loadKuecheOrders(cb){
+    fetch(KO_ENDPOINT_BASE + 'nofler-kueche-data')
+      .then(function(r){ return r.json(); })
+      .then(function(items){
+        if(!Array.isArray(items)) return;
+        KO_LIVE = items.map(function(it){
+          return {
+            id: it.id,
+            table: it.table || '—',
+            guest: it.guest || 'Unbekannt',
+            artikel: it.artikel || '',
+            status: it.status || 'neu',
+            dateISO: it.date ? String(it.date).slice(0,10) : null,
+            time: it.time || '—'
+          };
+        });
+        if(cb) cb();
+      })
+      .catch(function(err){ console.warn('Küchenbestellungen konnten nicht geladen werden:', err); });
+  }
+  loadKuecheOrders(function(){ if(typeof renderProtoTickets === 'function') renderProtoTickets(); });
+  setInterval(function(){ loadKuecheOrders(function(){ if(typeof renderProtoTickets === 'function') renderProtoTickets(); }); }, 15000);
+
+  function initProtoSpeisekarte(){
+    if(protoInitDone) return;
+    protoInitDone = true;
+
+    var tablePicker = document.getElementById('protoTablePicker');
+    Object.keys(TABLE_CAPACITY).forEach(function(t){
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'table-chip';
+      chip.textContent = t;
+      chip.addEventListener('click', function(){
+        protoSelectedTable = t;
+        document.querySelectorAll('#protoTablePicker .table-chip').forEach(function(c){ c.classList.remove('is-active'); });
+        chip.classList.add('is-active');
+        document.getElementById('protoCartTableLabel').textContent = 'Tisch: ' + t;
+        updateProtoSendBtn();
+      });
+      tablePicker.appendChild(chip);
+    });
+
+    var menuColumns = document.getElementById('protoMenuColumns');
+    PROTO_MENU.forEach(function(section){
+      var block = document.createElement('div');
+      block.className = 'cat-block';
+      var title = document.createElement('h3');
+      title.className = 'cat-title';
+      title.textContent = section.cat;
+      block.appendChild(title);
+      var grid = document.createElement('div');
+      grid.className = 'menu-grid';
+      section.items.forEach(function(item){
+        var card = document.createElement('div');
+        card.className = 'menu-item';
+        card.innerHTML = '<div class="name">' + item.name + '</div><div class="price">' + item.price.toFixed(2).replace('.', ',') + ' €</div>';
+        card.addEventListener('click', function(){ addToProtoCart(item); });
+        grid.appendChild(card);
+      });
+      block.appendChild(grid);
+      menuColumns.appendChild(block);
+    });
+
+    document.getElementById('protoSendBtn').addEventListener('click', function(){
+      if(!protoSelectedTable || !protoCart.length) return;
+
+      // Herausfinden, wer/was den Tisch gerade belegt — Reservierung (Name) oder Walk-in.
+      var occupant = (typeof findActiveOccupant === 'function') ? findActiveOccupant(protoSelectedTable) : null;
+      var guestLabel = 'Unbekannt (kein aktiver Tisch-Status)';
+      if(occupant){
+        var isWalkIn = occupant.notes && String(occupant.notes).toLowerCase().indexOf('walk-in') !== -1;
+        guestLabel = isWalkIn ? 'Walk-in' : (occupant.who || 'Reservierung');
+      }
+
+      var artikelStr = protoCart.map(function(c){ return c.qty + '× ' + c.name + (c.note ? ' (' + c.note + ')' : ''); }).join(', ');
+      var sentTable = protoSelectedTable;
+      var sendBtn = document.getElementById('protoSendBtn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Wird gesendet …';
+
+      fetch(KO_ENDPOINT_BASE + 'nofler-bestellung-erstellen', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tisch: sentTable, gast: guestLabel, artikel: artikelStr })
+      }).then(function(r){ return r.json(); }).then(function(resp){
+        KO_LIVE.unshift({
+          id: resp.id,
+          table: resp.tisch || sentTable,
+          guest: resp.gast || guestLabel,
+          artikel: resp.artikel || artikelStr,
+          status: resp.status || 'neu',
+          dateISO: resp.datum || TODAY_ISO,
+          time: resp.uhrzeit || new Date().toLocaleTimeString('de-AT', { hour: '2-digit', minute: '2-digit' })
+        });
+        protoCart = [];
+        // Sicherheits-Reset: Tischauswahl wird nach jeder gesendeten Bestellung geleert,
+        // damit die nächste Bestellung nie versehentlich dem vorherigen Tisch zugeordnet wird.
+        protoSelectedTable = null;
+        document.querySelectorAll('#protoTablePicker .table-chip').forEach(function(c){ c.classList.remove('is-active'); });
+        document.getElementById('protoCartTableLabel').textContent = 'Tisch: —';
+        renderProtoCart();
+        renderProtoTickets();
+        showSimpleToast('📨', 'Bestellung gesendet', 'Tisch ' + sentTable + ' — an die Küche übermittelt.');
+      }).catch(function(){
+        showSimpleToast('⚠️', 'Senden fehlgeschlagen', 'Bitte nochmal versuchen — keine Verbindung zum Server.');
+      }).finally(function(){
+        sendBtn.textContent = 'An Küche senden';
+        updateProtoSendBtn();
+      });
+    });
+  }
+
+  function addToProtoCart(item){
+    var existing = protoCart.find(function(c){ return c.name === item.name; });
+    if(existing){ existing.qty += 1; }
+    else { protoCart.push({ name: item.name, price: item.price, qty: 1, note: '' }); }
+    renderProtoCart();
+  }
+
+  function renderProtoCart(){
+    var container = document.getElementById('protoCartLines');
+    container.innerHTML = '';
+    if(!protoCart.length){
+      container.innerHTML = '<div class="cart-empty">Noch keine Gerichte gewählt.</div>';
+      updateProtoSendBtn();
+      return;
+    }
+    protoCart.forEach(function(line, idx){
+      var el = document.createElement('div');
+      el.className = 'cart-line';
+      el.innerHTML =
+        '<div class="cl-top"><span>' + line.name + '</span>' +
+        '<div class="cl-qty">' +
+          '<button data-idx="' + idx + '" data-act="minus">−</button>' +
+          '<span>' + line.qty + '</span>' +
+          '<button data-idx="' + idx + '" data-act="plus">+</button>' +
+        '</div></div>' +
+        '<input class="cl-note" data-idx="' + idx + '" placeholder="Notiz, z. B. ohne Zwiebel …" value="' + line.note.replace(/"/g,'&quot;') + '">';
+      container.appendChild(el);
+    });
+    container.querySelectorAll('button[data-act]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = parseInt(this.dataset.idx, 10);
+        if(this.dataset.act === 'plus') protoCart[idx].qty += 1;
+        else {
+          protoCart[idx].qty -= 1;
+          if(protoCart[idx].qty <= 0) protoCart.splice(idx, 1);
+        }
+        renderProtoCart();
+      });
+    });
+    container.querySelectorAll('.cl-note').forEach(function(inp){
+      inp.addEventListener('input', function(){
+        protoCart[parseInt(this.dataset.idx, 10)].note = this.value;
+      });
+    });
+    updateProtoSendBtn();
+  }
+
+  function updateProtoSendBtn(){
+    var btn = document.getElementById('protoSendBtn');
+    if(btn) btn.disabled = !(protoSelectedTable && protoCart.length);
+  }
+
+  function updateKuecheOrderStatus(tk, newStatus, onDone){
+    fetch(KO_ENDPOINT_BASE + 'nofler-bestellung-status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tisch: tk.table, datum: tk.dateISO, uhrzeit: tk.time, status: newStatus })
+    }).then(function(r){ return r.json(); }).then(function(){
+      tk.status = newStatus;
+      if(onDone) onDone(true);
+    }).catch(function(){
+      showSimpleToast('⚠️', 'Status-Update fehlgeschlagen', 'Bitte nochmal versuchen — keine Verbindung zum Server.');
+      if(onDone) onDone(false);
+    });
+  }
+
+  function renderProtoTickets(){
+    var grid = document.getElementById('protoTicketGrid');
+    var empty = document.getElementById('protoEmptyState');
+    if(!grid) return;
+    grid.innerHTML = '';
+
+    var todaysTickets = KO_LIVE.filter(function(t){ return t.dateISO === TODAY_ISO; });
+    var statEl = document.getElementById('kuecheStatHeute');
+    if(statEl) statEl.textContent = todaysTickets.length;
+
+    renderKuecheWeekStrip();
+    if(typeof renderKuecheHistoryForDay === 'function') renderKuecheHistoryForDay(todayIdx);
+
+    var liveTickets = todaysTickets.filter(function(t){ return t.status !== 'abgeschlossen'; });
+
+    if(!liveTickets.length){
+      empty.style.display = 'block';
+      empty.textContent = todaysTickets.length ? 'Heutiger Tag ist abgeschlossen — neue Bestellungen erscheinen automatisch hier.' : 'Noch keine Bestellungen eingegangen.';
+      return;
+    }
+    empty.style.display = 'none';
+
+    liveTickets.forEach(function(tk){
+      var card = document.createElement('div');
+      card.className = 'ticket status-' + tk.status;
+
+      var statusLabel = tk.status === 'neu' ? 'Neu' : (tk.status === 'zubereitung' ? 'In Zubereitung' : 'Fertig');
+
+      card.innerHTML =
+        '<div class="ticket-head"><span class="tk-table">' + tk.table + '</span><span class="tk-time">' + tk.time + ' Uhr</span></div>' +
+        (tk.guest ? '<div class="tk-guest">' + tk.guest + '</div>' : '') +
+        '<div class="ticket-status-badge ' + tk.status + '">' + statusLabel + '</div>' +
+        '<div class="ticket-items"><li style="list-style:none"><div class="ti-name">' + (tk.artikel || '—') + '</div></li></div>' +
+        '<div class="ticket-actions">' +
+          '<button class="btn-zubereitung" data-id="' + tk.id + '" data-set="zubereitung" title="Als in Zubereitung markieren">In Zubereitung</button>' +
+          '<button class="btn-fertig" data-id="' + tk.id + '" data-set="fertig" title="Mitarbeiter benachrichtigen — kann mehrfach gedrückt werden">Fertig</button>' +
+          '<button class="btn-reset" data-id="' + tk.id + '" data-set="neu" title="Versehentlich falsch gesetzt? Zurücksetzen auf Neu">Zurücksetzen</button>' +
+        '</div>';
+      grid.appendChild(card);
+    });
+
+    grid.querySelectorAll('button[data-set]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = this.dataset.id;
+        var tk = KO_LIVE.find(function(t){ return String(t.id) === String(id); });
+        if(!tk) return;
+        var newStatus = this.dataset.set;
+        var wasAlreadyFertig = (tk.status === 'fertig' && newStatus === 'fertig');
+        var cardBtns = this.parentElement.querySelectorAll('button');
+        cardBtns.forEach(function(b){ b.disabled = true; });
+        updateKuecheOrderStatus(tk, newStatus, function(ok){
+          renderProtoTickets();
+          if(!ok) return;
+          if(newStatus === 'fertig'){
+            showSimpleToast('✅', wasAlreadyFertig ? 'Erinnerung: Bestellung fertig!' : 'Bestellung fertig!', 'Tisch ' + tk.table + ' kann jetzt abgeholt werden.');
+          } else if(newStatus === 'zubereitung'){
+            showSimpleToast('🍳', 'In Zubereitung', 'Tisch ' + tk.table + ' wird gerade zubereitet.');
+          } else if(newStatus === 'neu'){
+            showSimpleToast('↺', 'Zurückgesetzt', 'Tisch ' + tk.table + ' wieder auf "Neu" gestellt.');
+          }
+        });
+      });
+    });
+
+    var clearBtn = document.getElementById('kuecheClearBtn');
+    if(clearBtn && !clearBtn.dataset.wired){
+      clearBtn.dataset.wired = '1';
+      clearBtn.addEventListener('click', function(){
+        var openToday = KO_LIVE.filter(function(t){ return t.dateISO === TODAY_ISO && t.status !== 'abgeschlossen'; });
+        if(!openToday.length){ showSimpleToast('ℹ️', 'Nichts zu tun', 'Für heute ist bereits alles abgeschlossen.'); return; }
+        var ok = confirm('Heutigen Tag abschließen? ' + openToday.length + ' Bestellung(en) werden als erledigt markiert. Sie bleiben in der Wochenübersicht und im Bestellverlauf sichtbar, verschwinden aber aus der aktiven Küchen-Ansicht.');
+        if(!ok) return;
+        clearBtn.disabled = true;
+        fetch(KO_ENDPOINT_BASE + 'nofler-tag-abschliessen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ datum: TODAY_ISO })
+        }).then(function(r){ return r.json(); }).then(function(){
+          openToday.forEach(function(t){ t.status = 'abgeschlossen'; });
+          renderProtoTickets();
+          showSimpleToast('✅', 'Tag abgeschlossen', openToday.length + ' Bestellung(en) abgeschlossen.');
+        }).catch(function(){
+          showSimpleToast('⚠️', 'Fehlgeschlagen', 'Bitte nochmal versuchen — keine Verbindung zum Server.');
+        }).finally(function(){
+          clearBtn.disabled = false;
+        });
+      });
+    }
+  }
+
+  function kuecheAuslastungPct(count){
+    // grobe Schätzung: angenommene Tageskapazität von 25 Bestellungen = 100%
+    return Math.min(100, Math.round((count / 25) * 100));
+  }
+
+  function renderKuecheWeekStrip(){
+    var strip = document.getElementById('weekStripKueche');
+    if(!strip) return;
+    strip.innerHTML = '';
+    DAYS.forEach(function(d, i){
+      var iso = toISODate(WEEK_DATES[i]);
+      var count = KO_LIVE.filter(function(t){ return t.dateISO === iso; }).length;
+      var pct = kuecheAuslastungPct(count);
+      var card = document.createElement('div');
+      card.className = 'day-card' + (i === todayIdx ? ' is-today' : '');
+      card.innerHTML = '<div class="dow">' + d + '</div><div class="dnum">' + DATES[i] + '</div><div class="dcount">' + count + ' Best. &middot; ' + pct + '%</div>';
+      strip.appendChild(card);
+    });
+  }
+
+  function renderKuecheHistoryForDay(i){
+    var list = document.getElementById('kuecheHistoryList');
+    var heading = document.getElementById('kuecheHistoryHeading');
+    if(!list) return;
+    var iso = toISODate(WEEK_DATES[i]);
+    if(heading) heading.textContent = 'Bestellverlauf Küche — ' + DAYS[i] + ', ' + MONTHNAMES[i];
+    var dayTickets = KO_LIVE.filter(function(t){ return t.dateISO === iso; });
+    if(!dayTickets.length){
+      list.innerHTML = '<div class="kh-empty">Keine Bestellungen an diesem Tag.</div>';
+      return;
+    }
+    list.innerHTML = dayTickets.map(function(tk){
+      return '<div class="kh-day" data-id="' + tk.id + '"><span class="kh-table">' + tk.table + '</span> <span class="kh-guest">' + (tk.guest || 'Unbekannt') + '</span><span class="kh-time">' + tk.time + ' Uhr' + (tk.status === 'abgeschlossen' ? ' · abgeschlossen' : ' · offen') + '</span>' +
+        '<button type="button" class="kh-del" title="Eintrag löschen (Chef-Modus)" data-id="' + tk.id + '">&times;</button>' +
+        '<div class="kh-items">' + (tk.artikel || '—') + '</div></div>';
+    }).join('');
+
+    list.querySelectorAll('.kh-del').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = this.dataset.id;
+        btn.disabled = true;
+        fetch(KO_ENDPOINT_BASE + 'nofler-bestellung-loeschen', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id })
+        }).then(function(r){ return r.json(); }).then(function(){
+          KO_LIVE = KO_LIVE.filter(function(t){ return String(t.id) !== String(id); });
+          renderKuecheHistoryForDay(i);
+          if(typeof renderProtoTickets === 'function') renderProtoTickets();
+          showSimpleToast('🗑️', 'Gelöscht', 'Eintrag wurde entfernt.');
+        }).catch(function(){
+          btn.disabled = false;
+          showSimpleToast('⚠️', 'Löschen fehlgeschlagen', 'Bitte nochmal versuchen — keine Verbindung zum Server.');
+        });
+      });
+    });
+  }
+
+  function renderTischGrid(){
+    var groups = { 2: document.getElementById('tischGrid2'), 4: document.getElementById('tischGrid4'), 6: document.getElementById('tischGrid6') };
+    if(!groups[2]) return;
+    Object.keys(groups).forEach(function(k){ groups[k].innerHTML = ''; });
+
+    Object.keys(TABLE_CAPACITY).forEach(function(tischId){
+      var kap = TABLE_CAPACITY[tischId];
+      var occupant = findActiveOccupant(tischId);
+      var isBesetzt = !!occupant;
+
+      var card = document.createElement('div');
+      card.className = 'tisch-card' + (isBesetzt ? ' is-besetzt' : '');
+
+      var whoLine = '';
+      if(isBesetzt){
+        var isWalkIn = occupant.notes && String(occupant.notes).toLowerCase().indexOf('walk-in') !== -1;
+        whoLine = '<div class="tisch-who">' + (isWalkIn ? 'Walk-in · seit ' + occupant.time : (occupant.who || 'Reserviert') + ' · ' + occupant.time) + ' Uhr</div>';
+      }
+
+      card.innerHTML =
+        '<div class="tisch-id">' + tischId + '</div>' +
+        '<div class="tisch-kap">' + kap + ' Plätze</div>' +
+        '<div class="tisch-status-badge ' + (isBesetzt ? 'besetzt' : 'frei') + '">' + (isBesetzt ? 'Besetzt' : 'Frei') + '</div>' +
+        whoLine +
+        '<div class="tisch-toggle">' +
+          '<button type="button" class="tisch-toggle-btn frei' + (isBesetzt ? '' : ' is-active') + '" data-tisch="' + tischId + '" data-action="frei">Frei</button>' +
+          '<button type="button" class="tisch-toggle-btn besetzt' + (isBesetzt ? ' is-active' : '') + '" data-tisch="' + tischId + '" data-action="besetzt">Belegt</button>' +
+        '</div>';
+
+      groups[kap].appendChild(card);
+    });
+
+    function refreshEntriesThen(cb){
+      fetch('https://a4milan.app.n8n.cloud/webhook/nofler-dashboard-data')
+        .then(function(r){ return r.json(); })
+        .then(function(items){
+          if(!Array.isArray(items)) return;
+          var mapped = items.map(function(it){
+            var rawDate = it.date || it.datum || it.reservationDate || null;
+            return { id: it.id, day: dayIndexForDate(rawDate), isoDate: rawDate ? String(rawDate).slice(0,10) : null, type: it.type, who: it.who, what: it.what || '', time: it.time || '—', status: it.status, source: it.source, phone: it.phone, guests: it.guests, table: it.table, notes: it.notes, transcript: it.transcript || null };
+          }).filter(isCompleteEntry);
+          mapped.reverse();
+          ENTRIES = mapped;
+          ALL_ENTRIES = ENTRIES.concat(OTHER_DAYS);
+          if(cb) cb();
+        });
+    }
+
+    document.querySelectorAll('.tisch-toggle-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var tischId = this.dataset.tisch;
+        var action = this.dataset.action; // 'frei' oder 'besetzt'
+        var alreadyActive = this.classList.contains('is-active');
+        if(alreadyActive) return; // Klick auf den schon aktiven Zustand macht nichts
+
+        var cardBtns = this.parentElement.querySelectorAll('.tisch-toggle-btn');
+        cardBtns.forEach(function(b){ b.disabled = true; });
+
+        if(action === 'besetzt'){
+          // Erst prüfen: gibt es für diesen Tisch heute schon offene Reservierungen,
+          // die noch nicht als "aktiv" erkannt werden (z. B. weil der Gast früher/später
+          // kommt als angegeben)? Dann eine davon auswählen lassen und ALS DIESE markieren,
+          // statt einen neuen, unverknüpften Walk-in-Eintrag anzulegen.
+          var pendingCandidates = ENTRIES.filter(function(e){
+            return e.table === tischId
+              && e.type === 'reservierung'
+              && e.status !== 'storniert' && e.status !== 'abgeschlossen'
+              && absoluteDateFor(e) === TODAY_ISO;
+          });
+
+          function createWalkIn(){
+            fetch(TISCH_BESETZEN_ENDPOINT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tisch: tischId })
+            }).then(function(r){ return r.json(); }).then(function(resp){
+              // Wir merken uns die Airtable-Datensatz-ID — Freigeben matcht ab jetzt darüber,
+              // nicht mehr über Name/Datum/Uhrzeit-Text (das war die Ursache für die
+              // "bleibt auf Belegt hängen"-Bugs bei knappem Timing über Minutengrenzen hinweg).
+              tischOverride[tischId] = {
+                id: resp && resp.id,
+                who: (resp && resp.name) || 'Walk-in',
+                time: (resp && resp.uhrzeit) || new Date().toTimeString().slice(0,5),
+                isoDate: (resp && resp.datum) || TODAY_ISO,
+                notes: 'Walk-in / Vor-Ort-Kunde',
+                synthetic: true
+              };
+              renderTischGrid();
+              refreshEntriesThen(function(){ renderTischGrid(); });
+            }).catch(function(){
+              cardBtns.forEach(function(b){ b.disabled = false; });
+              if(typeof showSimpleToast === 'function') showSimpleToast('⚠️', 'Markieren fehlgeschlagen', 'Bitte nochmal versuchen — keine Verbindung zum Server.');
+            });
+          }
+
+          function checkInReservation(reservation){
+            fetch('https://a4milan.app.n8n.cloud/webhook/nofler-reservierung-eintreffen', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: reservation.id })
+            }).then(function(r){ return r.json(); }).then(function(resp){
+              tischOverride[tischId] = {
+                id: reservation.id,
+                who: reservation.who,
+                time: (resp && resp.uhrzeit) || reservation.time,
+                isoDate: TODAY_ISO,
+                notes: reservation.notes || '',
+                synthetic: true
+              };
+              renderTischGrid();
+              refreshEntriesThen(function(){ renderTischGrid(); });
+              if(typeof showSimpleToast === 'function') showSimpleToast('✅', 'Gast eingecheckt', (reservation.who || 'Reservierung') + ' ist jetzt am Tisch ' + tischId + '.');
+            }).catch(function(){
+              cardBtns.forEach(function(b){ b.disabled = false; });
+              if(typeof showSimpleToast === 'function') showSimpleToast('⚠️', 'Fehlgeschlagen', 'Bitte nochmal versuchen — keine Verbindung zum Server.');
+            });
+          }
+
+          if(pendingCandidates.length){
+            showReservationPicker(tischId, pendingCandidates, checkInReservation, function(){
+              createWalkIn();
+            }, function(){
+              // Abgebrochen (Modal geschlossen ohne Auswahl) — Buttons wieder freigeben, nichts tun
+              cardBtns.forEach(function(b){ b.disabled = false; });
+            });
+          } else {
+            createWalkIn();
+          }
+        } else {
+          var occupant = findActiveOccupant(tischId);
+          if(!occupant){ cardBtns.forEach(function(b){ b.disabled = false; }); return; }
+          if(!occupant.id){
+            cardBtns.forEach(function(b){ b.disabled = false; });
+            if(typeof showSimpleToast === 'function') showSimpleToast('⚠️', 'Freigeben nicht möglich', 'Kein eindeutiger Datensatz gefunden — bitte Seite neu laden.');
+            return;
+          }
+          fetch('https://a4milan.app.n8n.cloud/webhook/nofler-tisch-freigeben', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: occupant.id })
+          }).then(function(r){ return r.json(); }).then(function(){
+            // Sofort als frei anzeigen und dauerhaft so belassen, bis erneut aktiv geklickt wird.
+            tischOverride[tischId] = null;
+            renderTischGrid();
+            refreshEntriesThen(function(){ renderTischGrid(); });
+          }).catch(function(){
+            cardBtns.forEach(function(b){ b.disabled = false; });
+            if(typeof showSimpleToast === 'function') showSimpleToast('⚠️', 'Freigeben fehlgeschlagen', 'Bitte nochmal versuchen — keine Verbindung zum Server.');
+          });
+        }
+      });
+    });
+  }
+
+  /* ---------------- SIDEBAR NAVIGATION ---------------- */
+  var VIEWS = ['uebersicht','reservierungen','bestellungen','tische','speisekarte','kueche','stornierungen','kalender','einstellungen'];
+  function showView(view){
+    VIEWS.forEach(function(v){
+      document.getElementById('view-' + v).hidden = (v !== view);
+    });
+    document.querySelectorAll('.sb-link').forEach(function(l){
+      l.classList.toggle('is-active', l.dataset.view === view);
+    });
+    if(view === 'reservierungen'){
+      reservierungenPicker.open();
+    }
+    if(view === 'bestellungen'){
+      var ordToday = ENTRIES.filter(function(e){ return e.day === todayIdx && e.type === 'bestellung'; }).length;
+      var statOrdTodayEl = document.getElementById('statOrdToday');
+      if(statOrdTodayEl) statOrdTodayEl.textContent = ordToday;
+      buildWeekStrip('weekStripOrd', function(i){ bestellungenPicker.selectByDay(i); }, 'bestellung');
+      bestellungenPicker.open();
+    }
+    if(view === 'stornierungen'){
+      var stornoToday = ENTRIES.filter(function(e){ return e.day === todayIdx && e.type === 'storno'; }).length;
+      var statStornoTodayEl = document.getElementById('statStornoToday');
+      if(statStornoTodayEl) statStornoTodayEl.textContent = stornoToday;
+      buildWeekStrip('weekStripStorno', function(i){ stornoPicker.selectByDay(i); }, 'storno');
+      stornoPicker.open();
+    }
+    if(view === 'kalender'){
+      showKalenderDay(todayIdx);
+      document.querySelectorAll('#calRangeTabs .range-tab').forEach(function(t){ t.classList.toggle('is-active', t.dataset.range === 'woche'); });
+    }
+    if(view === 'einstellungen' && typeof renderSettingsPinCard === 'function'){
+      renderSettingsPinCard();
+    }
+    if(view === 'tische' && typeof renderTischGrid === 'function'){
+      renderTischGrid();
+    }
+    if(view === 'speisekarte'){
+      initProtoSpeisekarte();
+    }
+    if(view === 'kueche'){
+      renderProtoTickets();
+    }
+  }
+  document.querySelectorAll('.sb-link').forEach(function(link){
+    link.addEventListener('click', function(ev){
+      ev.preventDefault();
+      showView(link.dataset.view);
+    });
+  });
+
+  /* ---------------- CHEF-MODE (PIN protected) ---------------- */
+  var CHEF_PIN = '123456';
+  var chefUnlocked = false;
+  var chefToggle = document.getElementById('chefModeToggle');
+  var pinModal = document.getElementById('pinModal');
+  var pinInput = document.getElementById('pinInput');
+  var pinError = document.getElementById('pinError');
+  var resetPinModal = document.getElementById('resetPinModal');
+
+  chefToggle.addEventListener('change', function(){
+    if(chefToggle.checked){
+      // require PIN before actually unlocking
+      chefToggle.checked = false;
+      pinError.classList.remove('is-shown');
+      pinInput.value = '';
+      pinModal.classList.add('is-open');
+      setTimeout(function(){ pinInput.focus(); }, 150);
+    } else {
+      chefUnlocked = false;
+      document.body.classList.remove('chef-mode');
+      document.getElementById('chefModeStatus').textContent = 'Aus';
+      if(typeof renderSettingsPinCard === 'function') renderSettingsPinCard();
+    }
+  });
+
+  function tryUnlockChef(){
+    if(pinInput.value === CHEF_PIN){
+      chefUnlocked = true;
+      chefToggle.checked = true;
+      document.body.classList.add('chef-mode');
+      document.getElementById('chefModeStatus').textContent = 'Aktiv — Löschen möglich';
+      pinModal.classList.remove('is-open');
+      renderSettingsPinCard();
+    } else {
+      pinError.classList.add('is-shown');
+      pinInput.value = '';
+      pinInput.focus();
+    }
+  }
+  document.getElementById('pinSubmit').addEventListener('click', tryUnlockChef);
+  pinInput.addEventListener('keydown', function(ev){ if(ev.key === 'Enter') tryUnlockChef(); });
+  document.getElementById('pinCancel').addEventListener('click', function(){
+    pinModal.classList.remove('is-open');
+    chefToggle.checked = false;
+  });
+  document.querySelector('#pinModal .mini-modal-bg').addEventListener('click', function(){
+    pinModal.classList.remove('is-open');
+    chefToggle.checked = false;
+  });
+
+  /* ---------------- EINSTELLUNGEN — bearbeitbar nur im Chef-Modus ---------------- */
+  (function settingsEditable(){
+    var fields = document.querySelectorAll('.settings-editable');
+    var lockNote = document.querySelector('.settings-lock-note');
+    var unlockNote = document.querySelector('.settings-unlock-note');
+    var saveBtn = document.getElementById('settingsSaveBtn');
+
+    // gespeicherte Werte laden
+    try{
+      var saved = JSON.parse(localStorage.getItem('nofler_settings') || '{}');
+      fields.forEach(function(f){
+        var key = f.dataset.field;
+        if(saved[key]) f.textContent = saved[key];
+      });
+    }catch(e){}
+
+    function refreshEditability(){
+      var unlocked = document.body.classList.contains('chef-mode');
+      fields.forEach(function(f){ f.setAttribute('contenteditable', unlocked ? 'true' : 'false'); });
+      if(lockNote) lockNote.style.display = unlocked ? 'none' : 'block';
+      if(unlockNote) unlockNote.style.display = unlocked ? 'flex' : 'none';
+    }
+    // bei jeder Chef-Mode Änderung neu prüfen (Toggle feuert 'change', wir hängen uns per MutationObserver an die body-Klasse)
+    new MutationObserver(refreshEditability).observe(document.body, { attributes:true, attributeFilter:['class'] });
+    refreshEditability();
+
+    if(saveBtn){
+      saveBtn.addEventListener('click', function(ev){
+        ev.preventDefault();
+        var data = {};
+        fields.forEach(function(f){ data[f.dataset.field] = f.textContent.trim(); });
+        try{ localStorage.setItem('nofler_settings', JSON.stringify(data)); }catch(e){}
+        saveBtn.textContent = 'Gespeichert ✓';
+        setTimeout(function(){ saveBtn.textContent = 'Speichern'; }, 1800);
+      });
+    }
+  })();
+
+  /* ---- PIN vergessen ---- */
+  document.getElementById('pinForgotLink').addEventListener('click', function(){
+    pinModal.classList.remove('is-open');
+    document.getElementById('newPinInput1').value = '';
+    document.getElementById('newPinInput2').value = '';
+    document.getElementById('resetPinError').classList.remove('is-shown');
+    resetPinModal.classList.add('is-open');
+  });
+  function closeResetPin(){
+    resetPinModal.classList.remove('is-open');
+    chefToggle.checked = false;
+  }
+  document.getElementById('resetPinCancel').addEventListener('click', closeResetPin);
+  document.querySelector('#resetPinModal .mini-modal-bg').addEventListener('click', closeResetPin);
+  document.getElementById('resetPinSubmit').addEventListener('click', function(){
+    var p1 = document.getElementById('newPinInput1').value;
+    var p2 = document.getElementById('newPinInput2').value;
+    var valid = /^\d{6}$/.test(p1) && p1 === p2;
+    if(!valid){
+      document.getElementById('resetPinError').classList.add('is-shown');
+      return;
+    }
+    CHEF_PIN = p1;
+    resetPinModal.classList.remove('is-open');
+    pinError.classList.remove('is-shown');
+    pinInput.value = '';
+    pinModal.classList.add('is-open');
+    setTimeout(function(){ pinInput.focus(); }, 150);
+  });
+
+  /* ---- PIN ändern (in Einstellungen, nur wenn eingeloggt) ---- */
+  function renderSettingsPinCard(){
+    var wrap = document.getElementById('pinChangeCard');
+    if(!wrap) return;
+    if(!chefUnlocked){
+      wrap.innerHTML = '<p style="color:var(--slate);font-size:13px">Aktiviere zuerst den Chef-Modus, um die PIN zu ändern.</p>';
+      return;
+    }
+    wrap.innerHTML =
+      '<div class="bk-form-cols" style="margin-bottom:12px">' +
+        '<div class="bk-form-row"><label>Neue PIN (6-stellig)</label><input type="password" inputmode="numeric" maxlength="6" id="chgPinInput1"></div>' +
+        '<div class="bk-form-row"><label>PIN bestätigen</label><input type="password" inputmode="numeric" maxlength="6" id="chgPinInput2"></div>' +
+      '</div>' +
+      '<p class="pin-error" id="chgPinError" style="text-align:left">PINs stimmen nicht überein oder sind nicht 6-stellig.</p>' +
+      '<p class="pin-error" id="chgPinSuccess" style="text-align:left;color:var(--sage)!important">PIN erfolgreich geändert.</p>' +
+      '<button type="button" class="btn btn-brass" id="chgPinSubmit" style="margin-top:6px">PIN speichern</button>';
+    document.getElementById('chgPinSubmit').addEventListener('click', function(){
+      var p1 = document.getElementById('chgPinInput1').value;
+      var p2 = document.getElementById('chgPinInput2').value;
+      var errEl = document.getElementById('chgPinError');
+      var okEl = document.getElementById('chgPinSuccess');
+      okEl.classList.remove('is-shown');
+      if(!/^\d{6}$/.test(p1) || p1 !== p2){
+        errEl.classList.add('is-shown');
+        return;
+      }
+      errEl.classList.remove('is-shown');
+      CHEF_PIN = p1;
+      okEl.classList.add('is-shown');
+      document.getElementById('chgPinInput1').value = '';
+      document.getElementById('chgPinInput2').value = '';
+    });
+  }
+
+  document.getElementById('dtDeleteBtn').addEventListener('click', function(){
+    if(!currentDetailId || !chefUnlocked) return;
+    requestDelete(currentDetailId, true);
+  });
+
+  /* ---------------- LIVE CLOCK & GREETING ---------------- */
+  var WEEKDAY_NAMES = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var MONTH_NAMES_FULL = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+  function updateClock(){
+    var now = new Date();
+    var h = now.getHours();
+    var greetWord = h < 11 ? 'Guten Morgen' : h < 18 ? 'Guten Tag' : 'Guten Abend';
+    var emoji = h < 11 ? '☀️' : h < 18 ? '👋' : '🌙';
+    document.getElementById('greeting').textContent = greetWord + '! ' + emoji;
+    var dateStr = WEEKDAY_NAMES[now.getDay()] + ', ' + now.getDate() + '. ' + MONTH_NAMES_FULL[now.getMonth()] + ' ' + now.getFullYear();
+    var timeStr = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('liveDateTime').textContent = dateStr + ' \u00b7 ' + timeStr + ' Uhr \u00b7 hier ist, was der Telefonassistent heute erledigt hat.';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ---------------- 12-MONTH HISTORY ---------------- */
+  var MONTH_LABELS = ['Sep','Okt','Nov','Dez','Jän','Feb','Mär','Apr','Mai','Jun','Jul','Aug'];
+  var monthGrid = document.getElementById('monthGrid');
+  var NAME_POOL = ['Herr Böhler','Frau Ritter','Familie Preg','Herr Hopfner','Frau Wachter','Familie Kalb','Herr Sohm','Frau Bertsch','Familie Dobler','Herr Zangerl','Frau Schmidinger','Familie Klien'];
+  var TABLE_POOL = ['T1 (2er-Tisch)','T2 (2er-Tisch)','T4 (2er-Tisch)','T7 (4er-Tisch)','T8 (4er-Tisch)','T9 (4er-Tisch)','T11 (6er-Tisch)'];
+  var TYPE_POOL = ['reservierung','reservierung','reservierung','bestellung','storno'];
+
+  var MONTH_STATS = [
+    { label:'Sep 2025', customers:186, res:142, orders:38, cancel:12 },
+    { label:'Okt 2025', customers:204, res:158, orders:41, cancel:9 },
+    { label:'Nov 2025', customers:171, res:129, orders:35, cancel:14 },
+    { label:'Dez 2025', customers:298, res:221, orders:58, cancel:11 },
+    { label:'Jän 2026', customers:152, res:118, orders:29, cancel:8 },
+    { label:'Feb 2026', customers:167, res:131, orders:30, cancel:10 },
+    { label:'Mär 2026', customers:189, res:146, orders:33, cancel:7 },
+    { label:'Apr 2026', customers:201, res:154, orders:37, cancel:9 },
+    { label:'Mai 2026', customers:224, res:172, orders:40, cancel:8 },
+    { label:'Jun 2026', customers:246, res:189, orders:44, cancel:6 },
+    { label:'Jul 2026', customers:271, res:206, orders:49, cancel:10 },
+    { label:'Aug 2026', customers:214, res:163, orders:39, cancel:6 }
+  ];
+
+  var MONTH_CUSTOMERS = {};
+  for(var mi=0; mi<12; mi++){
+    var list = [];
+    var totalForMonth = MONTH_STATS[mi].customers;
+    for(var ci=0; ci<totalForMonth; ci++){
+      var nameIdx = (mi * 3 + ci) % NAME_POOL.length;
+      var tableIdx = (mi + ci) % TABLE_POOL.length;
+      var type = TYPE_POOL[(mi + ci) % TYPE_POOL.length];
+      var day = 1 + ((mi + ci * 4) % 28);
+      var hour = 11 + ((mi + ci * 2) % 9);
+      var guests = 2 + ((mi + ci) % 5);
+      list.push({
+        id: 2000 + mi * 1000 + ci,
+        type: type,
+        who: NAME_POOL[nameIdx],
+        what: type === 'bestellung' ? 'Vorbestellung zur Abholung' : 'Tisch für ' + guests + ' Personen &middot; ' + TABLE_POOL[tableIdx],
+        time: day + '.' + String(mi<4? mi+9 : mi-3).padStart(2,'0') + '. &middot; ' + String(hour).padStart(2,'0') + ':00',
+        status: type === 'storno' ? 'storniert' : 'bestaetigt',
+        source: ci % 3 === 0 ? 'manual' : 'phone',
+        phone: '+43 6' + (60+(ci%9)) + ' ' + (100+mi) + ' ' + (1000+ci*7)%10000,
+        guests: type === 'bestellung' ? '—' : guests + ' Personen',
+        table: type === 'bestellung' ? 'Abholung' : TABLE_POOL[tableIdx],
+        notes: '—',
+        transcript: null
+      });
+    }
+    MONTH_CUSTOMERS[mi] = list;
+  }
+
+  var currentMonthIndex = 11;
+  MONTH_STATS.forEach(function(m, i){
+    var card = document.createElement('div');
+    card.className = 'month-card' + (i === 11 ? ' is-active' : '');
+    card.innerHTML = '<div class="mname">' + MONTH_LABELS[i] + '</div><div class="mnum">' + m.customers + '</div><div class="mlabel">Kunden</div>';
+    card.addEventListener('click', function(){
+      monthGrid.querySelectorAll('.month-card').forEach(function(c){ c.classList.remove('is-active'); });
+      card.classList.add('is-active');
+      currentMonthIndex = i;
+      showMonthDetail(m, i);
+    });
+    monthGrid.appendChild(card);
+  });
+  function showMonthDetail(m, i){
+    document.getElementById('monthDetailPanel').style.display = 'block';
+    document.getElementById('monthDetailHeading').textContent = m.label;
+    document.getElementById('monthSummary').innerHTML =
+      '<div class="m-stat"><div class="n">' + m.customers + '</div><div class="l">Kunden gesamt</div></div>' +
+      '<div class="m-stat"><div class="n">' + m.res + '</div><div class="l">Reservierungen</div></div>' +
+      '<div class="m-stat"><div class="n">' + m.orders + '</div><div class="l">Vorbestellungen</div></div>' +
+      '<div class="m-stat"><div class="n">' + m.cancel + '</div><div class="l">Stornierungen</div></div>';
+    renderFeedInto('monthCustomerFeed', MONTH_CUSTOMERS[i]);
+  }
+  showMonthDetail(MONTH_STATS[11], 11);
+
+  /* ---------------- KÜCHE — 12-MONATS-VERLAUF (Beispieldaten, klar als Demo gekennzeichnet) ---------------- */
+  var KO_NAME_POOL = ['Walk-in','Herr Böhler','Walk-in','Frau Ritter','Familie Preg','Walk-in','Herr Hopfner','Frau Wachter','Walk-in','Familie Kalb','Herr Sohm','Walk-in','Frau Bertsch','Familie Dobler'];
+  var KO_TABLE_POOL = ['T1','T2','T3','T4','T5','T6','T7','T8','T9','T10','T11','T12','T13','T14'];
+  var KO_DISH_POOL = (function(){
+    var flat = [];
+    PROTO_MENU.forEach(function(sec){ sec.items.forEach(function(it){ flat.push(it.name); }); });
+    return flat;
+  })();
+  var KO_MONTH_STATS = [
+    { label:'Sep 2025', orders:74 },
+    { label:'Okt 2025', orders:81 },
+    { label:'Nov 2025', orders:69 },
+    { label:'Dez 2025', orders:112 },
+    { label:'Jän 2026', orders:58 },
+    { label:'Feb 2026', orders:63 },
+    { label:'Mär 2026', orders:75 },
+    { label:'Apr 2026', orders:80 },
+    { label:'Mai 2026', orders:89 },
+    { label:'Jun 2026', orders:97 },
+    { label:'Jul 2026', orders:104 },
+    { label:'Aug 2026', orders:83 }
+  ];
+  var KO_MONTH_ORDERS = {};
+  for(var kmi = 0; kmi < 12; kmi++){
+    var koList = [];
+    var koTotalForMonth = KO_MONTH_STATS[kmi].orders;
+    for(var koi = 0; koi < koTotalForMonth; koi++){
+      var guestIdx = (kmi * 4 + koi) % KO_NAME_POOL.length;
+      var tableIdx = (kmi + koi * 2) % KO_TABLE_POOL.length;
+      var dishCount = 1 + ((kmi + koi) % 3);
+      var items = [];
+      for(var di = 0; di < dishCount; di++){
+        var dishIdx = (kmi * 5 + koi * 3 + di) % KO_DISH_POOL.length;
+        items.push({ name: KO_DISH_POOL[dishIdx], qty: 1 + ((koi + di) % 2) });
+      }
+      var koDay = 1 + ((kmi + koi * 3) % 28);
+      var koHour = 11 + ((kmi + koi) % 10);
+      koList.push({
+        id: 'ko-' + kmi + '-' + koi,
+        table: KO_TABLE_POOL[tableIdx],
+        guest: KO_NAME_POOL[guestIdx],
+        time: String(koDay).padStart(2,'0') + '.' + String(kmi<4? kmi+9 : kmi-3).padStart(2,'0') + '. · ' + String(koHour).padStart(2,'0') + ':00',
+        items: items
+      });
+    }
+    KO_MONTH_ORDERS[kmi] = koList;
+  }
+
+  var kuecheMonthGrid = document.getElementById('kuecheMonthGrid');
+  var kuecheCurrentMonthIndex = 11;
+  if(kuecheMonthGrid){
+    KO_MONTH_STATS.forEach(function(m, i){
+      var card = document.createElement('div');
+      card.className = 'month-card' + (i === 11 ? ' is-active' : '');
+      card.innerHTML = '<div class="mname">' + MONTH_LABELS[i] + '</div><div class="mnum">' + m.orders + '</div><div class="mlabel">Bestellungen</div>';
+      card.addEventListener('click', function(){
+        kuecheMonthGrid.querySelectorAll('.month-card').forEach(function(c){ c.classList.remove('is-active'); });
+        card.classList.add('is-active');
+        kuecheCurrentMonthIndex = i;
+        showKuecheMonthDetail(m, i);
+      });
+      kuecheMonthGrid.appendChild(card);
+    });
+  }
+
+  function renderKuecheMonthOrderList(i){
+    var list = document.getElementById('kuecheMonthOrderList');
+    if(!list) return;
+    var orders = KO_MONTH_ORDERS[i];
+    if(!orders.length){
+      list.innerHTML = '<div class="kh-empty">Keine Bestellungen in diesem Monat.</div>';
+      return;
+    }
+    list.innerHTML = orders.map(function(o){
+      var itemsStr = o.items.map(function(it){ return it.qty + '× ' + it.name; }).join(', ');
+      return '<div class="ko-entry" data-id="' + o.id + '">' +
+        '<div class="ko-head">' +
+          '<svg class="ko-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>' +
+          '<span class="ko-table">' + o.table + '</span>' +
+          '<span class="ko-guest">' + o.guest + '</span>' +
+          '<span class="ko-time">' + o.time + ' Uhr</span>' +
+          '<button type="button" class="ko-del" title="Eintrag löschen (Chef-Modus)">&times;</button>' +
+        '</div>' +
+        '<div class="ko-body">' + itemsStr + '</div>' +
+      '</div>';
+    }).join('');
+
+    list.querySelectorAll('.ko-head').forEach(function(head){
+      head.addEventListener('click', function(ev){
+        if(ev.target.classList.contains('ko-del')) return;
+        head.parentElement.classList.toggle('is-open');
+      });
+    });
+    list.querySelectorAll('.ko-del').forEach(function(btn){
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        var entry = btn.closest('.ko-entry');
+        var id = entry.dataset.id;
+        KO_MONTH_ORDERS[i] = KO_MONTH_ORDERS[i].filter(function(o){ return o.id !== id; });
+        entry.remove();
+        if(!KO_MONTH_ORDERS[i].length){
+          list.innerHTML = '<div class="kh-empty">Keine Bestellungen in diesem Monat.</div>';
+        }
+      });
+    });
+  }
+
+  function showKuecheMonthDetail(m, i){
+    document.getElementById('kuecheMonthDetailPanel').style.display = 'block';
+    document.getElementById('kuecheMonthDetailHeading').textContent = m.label;
+    document.getElementById('kuecheMonthSummary').innerHTML =
+      '<div class="m-stat"><div class="n">' + m.orders + '</div><div class="l">Bestellungen gesamt</div></div>' +
+      '<div class="m-stat"><div class="n">' + KO_MONTH_ORDERS[i].length + '</div><div class="l">Einzeln aufgelistet</div></div>';
+    renderKuecheMonthOrderList(i);
+  }
+  if(kuecheMonthGrid) showKuecheMonthDetail(KO_MONTH_STATS[11], 11);
+
+  /* ---------------- PRIVACY SCREEN ---------------- */
+  (function privacyScreen(){
+    var screen = document.getElementById('privacyScreen');
+    var btn = document.getElementById('privacyBtn');
+    var clockEl = document.getElementById('privacyClock');
+    var dateEl = document.getElementById('privacyDate');
+    var clockTimer = null;
+
+    function updatePrivacyClock(){
+      var now = new Date();
+      clockEl.textContent = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+      dateEl.textContent = WEEKDAY_NAMES[now.getDay()] + ', ' + now.getDate() + '. ' + MONTH_NAMES_FULL[now.getMonth()] + ' ' + now.getFullYear();
+    }
+
+    function openPrivacy(){
+      screen.classList.add('is-active');
+      updatePrivacyClock();
+      clockTimer = setInterval(updatePrivacyClock, 1000);
+    }
+    function closePrivacy(){
+      screen.classList.remove('is-active');
+      if(clockTimer){ clearInterval(clockTimer); clockTimer = null; }
+    }
+    btn.addEventListener('click', openPrivacy);
+
+    // swipe-up (or simple tap) to unlock — uses Pointer Events so it works for touch and mouse alike
+    var startY = null, startX = null, dragging = false;
+    screen.addEventListener('pointerdown', function(ev){
+      startY = ev.clientY; startX = ev.clientX; dragging = true;
+      screen.classList.add('is-dragging');
+      screen.setPointerCapture(ev.pointerId);
+    });
+    screen.addEventListener('pointermove', function(ev){
+      if(!dragging || startY == null) return;
+      var dy = startY - ev.clientY;
+      if(dy > 0){
+        screen.style.transform = 'translateY(-' + Math.min(dy, window.innerHeight) + 'px)';
+        screen.style.opacity = String(Math.max(1 - dy / (window.innerHeight * 0.7), 0.15));
+      }
+    });
+    function endDrag(ev){
+      if(!dragging) return;
+      dragging = false;
+      screen.classList.remove('is-dragging');
+      var dy = startY != null ? startY - ev.clientY : 0;
+      var dx = startX != null ? Math.abs(startX - ev.clientX) : 0;
+      screen.style.transform = '';
+      screen.style.opacity = '';
+      var isSwipeUp = dy > 60 && dx < 120;
+      var isSimpleTap = Math.abs(dy) < 8 && dx < 8;
+      if(isSwipeUp || isSimpleTap){
+        closePrivacy();
+      }
+      startY = null; startX = null;
+    }
+    screen.addEventListener('pointerup', endDrag);
+    screen.addEventListener('pointercancel', endDrag);
+
+    // keyboard fallback (Escape or Enter) for accessibility
+    document.addEventListener('keydown', function(ev){
+      if(!screen.classList.contains('is-active')) return;
+      if(ev.key === 'Escape' || ev.key === 'Enter' || ev.key === ' '){ closePrivacy(); }
+    });
+  })();
+
+  /* ---------------- LIVE-BENACHRICHTIGUNGEN ---------------- */
+  var SEEN_ENTRY_IDS = null;
+  function showToast(entry){
+    var stack = document.getElementById('toastStack');
+    if(!stack) return;
+    var icon = entry.type === 'storno' ? '\u2715' : (entry.type === 'bestellung' ? '\uD83E\uDD61' : '\uD83D\uDCDE');
+    var title = entry.type === 'storno' ? 'Stornierung' : (entry.type === 'bestellung' ? 'Neue Vorbestellung' : 'Neue Reservierung');
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = '<div class="toast-ico">' + icon + '</div><div class="toast-body"><div class="toast-title">' + title + '</div><div class="toast-sub">' + (entry.who || '') + ' &middot; ' + (entry.time || '') + ' Uhr</div></div>';
+    stack.appendChild(el);
+    requestAnimationFrame(function(){ el.classList.add('is-shown'); });
+    setTimeout(function(){
+      el.classList.remove('is-shown');
+      setTimeout(function(){ el.remove(); }, 400);
+    }, 6000);
+  }
+  function notifyNewEntries(mapped){
+    if(SEEN_ENTRY_IDS === null){
+      SEEN_ENTRY_IDS = {};
+      mapped.forEach(function(e){ SEEN_ENTRY_IDS[e.id] = true; });
+      return;
+    }
+    mapped.forEach(function(e){
+      if(!SEEN_ENTRY_IDS[e.id]){
+        showToast(e);
+        SEEN_ENTRY_IDS[e.id] = true;
+      }
+    });
+  }
+
+  /* ---------------- AUSLASTUNGS-ANZEIGE — echt berechnet ---------------- */
+  var TOTAL_TABLES = 14; // 5x 2er + 5x 4er + 4x 6er (Tischinventar Nofler Stuba)
+  var GAUGE_CIRCUMFERENCE = 150.8;
+  function updateGauge(){
+    var fill = document.getElementById('gaugeFill');
+    var label = document.getElementById('gaugeLabel');
+    if(!fill || !label) return;
+    var todaysReservations = ENTRIES.filter(function(e){
+      return e.day === todayIdx && e.type === 'reservierung' && e.status !== 'storniert';
+    }).length;
+    var pct = Math.max(0, Math.min(100, Math.round((todaysReservations / TOTAL_TABLES) * 100)));
+    label.textContent = pct + '%';
+    var offset = GAUGE_CIRCUMFERENCE * (1 - pct / 100);
+    fill.classList.add('is-filled');
+    fill.style.strokeDashoffset = offset;
+  }
+  updateGauge();
+
+  /* ---------------- LIVE DATEN VON AIRTABLE ---------------- */
+  (function loadLiveData(){
+    var LIVE_ENDPOINT = 'https://a4milan.app.n8n.cloud/webhook/nofler-dashboard-data';
+    fetch(LIVE_ENDPOINT)
+      .then(function(r){ return r.json(); })
+      .then(function(items){
+        if(!Array.isArray(items)) return;
+        var mapped = items.map(function(it){
+          var rawDate = it.date || it.datum || it.reservationDate || null;
+          return {
+            id: it.id,
+            day: dayIndexForDate(rawDate),
+            isoDate: rawDate ? String(rawDate).slice(0,10) : null,
+            type: it.type,
+            who: it.who,
+            what: it.what || '',
+            time: it.time || '—',
+            status: it.status,
+            source: it.source,
+            phone: it.phone,
+            guests: it.guests,
+            table: it.table,
+            notes: it.notes,
+            transcript: it.transcript || null
+          };
+        });
+        mapped = mapped.filter(isCompleteEntry);
+        mapped.reverse(); // neueste Reservierung zuerst
+        notifyNewEntries(mapped);
+        ENTRIES = mapped;
+        ALL_ENTRIES = ENTRIES.concat(OTHER_DAYS);
+        refreshCurrentView();
+      })
+      .catch(function(err){ console.warn('Live-Daten konnten nicht geladen werden:', err); });
+    setInterval(function(){
+      fetch(LIVE_ENDPOINT)
+        .then(function(r){ return r.json(); })
+        .then(function(items){
+          if(!Array.isArray(items)) return;
+          var mapped = items.map(function(it){
+            var rawDate = it.date || it.datum || it.reservationDate || null;
+            return { id: it.id, day: dayIndexForDate(rawDate), isoDate: rawDate ? String(rawDate).slice(0,10) : null, type: it.type, who: it.who, what: it.what || '', time: it.time || '—', status: it.status, source: it.source, phone: it.phone, guests: it.guests, table: it.table, notes: it.notes, transcript: it.transcript || null };
+          });
+          mapped = mapped.filter(isCompleteEntry);
+          mapped.reverse(); // neueste Reservierung zuerst
+          notifyNewEntries(mapped);
+          ENTRIES = mapped;
+          ALL_ENTRIES = ENTRIES.concat(OTHER_DAYS);
+          refreshCurrentView();
+        })
+        .catch(function(){});
+    }, 15000);
+  })();
+})();
+</script>
+</body>
+</html>

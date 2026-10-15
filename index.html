@@ -244,6 +244,10 @@
   .tariff-ideal{color:var(--ink-soft);font-size:13.5px;font-style:italic;margin:auto 0 0;}
   .tariff-grid .price-card{display:flex;flex-direction:column;}
   .tariff-grid .price-card ul{margin-bottom:18px;}
+  .tariff-btn{margin-top:16px;width:100%;justify-content:center;text-align:center;cursor:pointer;}
+  .field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:600px){ .field-row{grid-template-columns:1fr;} }
+  .form-status{font-size:14px;margin-top:12px;text-align:center;color:var(--navy);}
   .tariff-note{color:var(--ink-soft);font-size:14.5px;max-width:760px;margin:0 auto;text-align:center;}
   .extra-offer{
     margin-top:28px;background:var(--stone);border-radius:var(--radius-m);padding:36px;
@@ -537,18 +541,19 @@
       <div class="price-card">
         <h3>Basis</h3>
         <div class="amount"><b>200 €</b> / Monat</div>
-        <p class="tariff-meta">bis 300 Freiminuten<br>Einrichtung einmalig 500 €</p>
+        <p class="tariff-meta">bis 300 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
         </ul>
         <p class="tariff-ideal">Ideal für kleine Betriebe</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Restaurant · Basis (200 €/Monat)">Tarif wählen</button>
       </div>
       <div class="price-card">
         <h3>Standard</h3>
         <div class="amount"><b>300 €</b> / Monat</div>
-        <p class="tariff-meta">bis 400 Freiminuten<br>Einrichtung einmalig 500 €</p>
+        <p class="tariff-meta">bis 400 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
@@ -556,11 +561,12 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support</li>
         </ul>
         <p class="tariff-ideal">Ideal für mittleres Volumen</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Restaurant · Standard (300 €/Monat)">Tarif wählen</button>
       </div>
       <div class="price-card">
         <h3>Premium</h3>
         <div class="amount"><b>350 €</b> / Monat</div>
-        <p class="tariff-meta">bis 700 Freiminuten<br>Einrichtung einmalig 500 €</p>
+        <p class="tariff-meta">bis 700 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
@@ -569,11 +575,12 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kostenlose laufende Updates</li>
         </ul>
         <p class="tariff-ideal">Ideal für stark frequentierte Betriebe</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Restaurant · Premium (350 €/Monat)">Tarif wählen</button>
       </div>
       <div class="price-card">
         <h3>Exklusiv</h3>
         <div class="amount"><b>500 €</b> / Monat</div>
-        <p class="tariff-meta">bis 1500 Freiminuten<br>Einrichtung einmalig 500 €</p>
+        <p class="tariff-meta">bis 1500 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
@@ -583,6 +590,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Individuelle Sonderwünsche &amp; Vor-Ort-Betreuung</li>
         </ul>
         <p class="tariff-ideal">Ideal für Top-Adressen</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Restaurant · Exklusiv (500 €/Monat)">Tarif wählen</button>
       </div>
     </div>
     <h3 class="tariff-title">Tarife für Friseursalons</h3>
@@ -591,18 +599,19 @@
       <div class="price-card">
         <h3>Basis</h3>
         <div class="amount"><b>150 €</b> / Monat</div>
-        <p class="tariff-meta">bis 200 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <p class="tariff-meta">bis 200 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
         </ul>
         <p class="tariff-ideal">Ideal für kleine Salons</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Basis (150 €/Monat)">Tarif wählen</button>
       </div>
       <div class="price-card">
         <h3>Standard</h3>
         <div class="amount"><b>250 €</b> / Monat</div>
-        <p class="tariff-meta">bis 350 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <p class="tariff-meta">bis 350 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
@@ -610,11 +619,12 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support</li>
         </ul>
         <p class="tariff-ideal">Ideal für mittleres Volumen</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Standard (250 €/Monat)">Tarif wählen</button>
       </div>
       <div class="price-card">
         <h3>Premium</h3>
         <div class="amount"><b>300 €</b> / Monat</div>
-        <p class="tariff-meta">bis 500 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <p class="tariff-meta">bis 500 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
@@ -623,11 +633,12 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kostenlose laufende Updates</li>
         </ul>
         <p class="tariff-ideal">Ideal für stark frequentierte Salons</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Premium (300 €/Monat)">Tarif wählen</button>
       </div>
       <div class="price-card">
         <h3>Exklusiv</h3>
         <div class="amount"><b>400 €</b> / Monat</div>
-        <p class="tariff-meta">bis 1000 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <p class="tariff-meta">bis 1000 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
@@ -637,6 +648,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Individuelle Sonderwünsche &amp; Vor-Ort-Betreuung</li>
         </ul>
         <p class="tariff-ideal">Ideal für Premium-Salons</p>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Exklusiv (400 €/Monat)">Tarif wählen</button>
       </div>
     </div>
     <p class="tariff-note">Mindestlaufzeit 3 Monate, danach monatlich kündbar. Jederzeit upgradebar: Reicht Ihr Paket nicht mehr aus, wechseln wir in die nächsthöhere Stufe (einmalige Umstellungsgebühr 20 €). Mehrere Standorte oder besondere Anforderungen? Individuell nach Vereinbarung.</p>
@@ -694,15 +706,48 @@
         <a href="mailto:mijoai.kontakt@gmail.com">mijoai.kontakt@gmail.com</a>
       </div>
     </div>
-    <form action="#" method="POST">
-      <!-- Formspree-Endpunkt hier eintragen, siehe Hinweis im Chat -->
-      <div class="field">
-        <label for="name">Name</label>
-        <input type="text" id="name" name="name" required>
+    <form id="request-form" action="#" method="POST">
+      <div class="field-row">
+        <div class="field">
+          <label for="name">Ihr Name</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+        <div class="field">
+          <label for="company">Name des Betriebs</label>
+          <input type="text" id="company" name="company" required>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="email">E-Mail</label>
+          <input type="email" id="email" name="email" required>
+        </div>
+        <div class="field">
+          <label for="phone">Telefon für Rückruf</label>
+          <input type="tel" id="phone" name="phone" required>
+        </div>
       </div>
       <div class="field">
-        <label for="email">E-Mail</label>
-        <input type="email" id="email" name="email" required>
+        <label for="tarif">Gewünschter Tarif</label>
+        <select id="tarif" name="tarif">
+          <option>Noch unentschlossen — bitte beraten</option>
+          <optgroup label="Restaurants &amp; Cafés">
+            <option>Restaurant · Basis (200 €/Monat)</option>
+            <option>Restaurant · Standard (300 €/Monat)</option>
+            <option>Restaurant · Premium (350 €/Monat)</option>
+            <option>Restaurant · Exklusiv (500 €/Monat)</option>
+          </optgroup>
+          <optgroup label="Friseursalons">
+            <option>Friseursalon · Basis (150 €/Monat)</option>
+            <option>Friseursalon · Standard (250 €/Monat)</option>
+            <option>Friseursalon · Premium (300 €/Monat)</option>
+            <option>Friseursalon · Exklusiv (400 €/Monat)</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="field">
+        <label for="bizphone">Bisherige Telefonnummer des Betriebs (soll auf Mijo AI umgeleitet werden)</label>
+        <input type="tel" id="bizphone" name="bizphone">
       </div>
       <div class="field">
         <label for="topic">Ihre Anfrage betrifft</label>
@@ -710,15 +755,15 @@
           <option>KI-Telefon-Assistent</option>
           <option>Website-Erstellung</option>
           <option>Beides</option>
-          <option>Sonstiges / weiß noch nicht</option>
         </select>
       </div>
       <div class="field">
-        <label for="message">Nachricht</label>
+        <label for="message">Nachricht (z. B. Öffnungszeiten, Anzahl Tische, Sonderwünsche)</label>
         <textarea id="message" name="message"></textarea>
       </div>
-      <button type="submit" class="btn-primary" style="border:none;cursor:pointer;">Demo anfragen</button>
-      <p class="form-note">Keine Kreditkarte · Unverbindliche Demo</p>
+      <button type="submit" class="btn-primary" style="border:none;cursor:pointer;">Anfrage senden</button>
+      <p class="form-note">Unverbindlich · Wir melden uns persönlich bei Ihnen. Mit dem Absenden stimmen Sie der Verarbeitung Ihrer Angaben laut Datenschutzerklärung zu.</p>
+      <p class="form-status" id="form-status" role="status"></p>
     </form>
   </div>
 </section>
@@ -776,7 +821,7 @@
     <h4>1. Verantwortlicher</h4>
     <p>Milan Mohammad Karim, Mijo AI, Achsiedlungsstraße 91, 6900 Bregenz, Österreich. E-Mail: mijoai.kontakt@gmail.com</p>
     <h4>2. Welche Daten wir verarbeiten</h4>
-    <p><b>Kontaktformular:</b> Wenn Sie über das Formular auf dieser Seite eine Demo anfragen, verarbeiten wir Name, E-Mail-Adresse, optional Telefonnummer und Ihre Nachricht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b bzw. f DSGVO.</p>
+    <p><b>Kontaktformular:</b> Wenn Sie über das Formular auf dieser Seite eine Demo anfragen, verarbeiten wir Name, Name des Betriebs, E-Mail-Adresse, Telefonnummer, gewünschten Tarif und Ihre Nachricht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b bzw. f DSGVO.</p>
     <p><b>Telefon-Demo:</b> Testanrufe bei unserem KI-Telefon-Assistenten werden über den Anbieter Retell AI verarbeitet (Spracherkennung, Gesprächsanalyse). Anfallende Daten wie Name, Telefonnummer, Datum, Uhrzeit und Reservierungsdetails werden über die Automatisierungsplattform n8n zu Demonstrationszwecken übermittelt und gespeichert.</p>
     <p><b>Hosting:</b> Diese Website wird über GitHub Pages (GitHub Inc., USA) gehostet. Dabei können technisch bedingt Zugriffsdaten (z. B. IP-Adresse) verarbeitet werden.</p>
     <h4>3. Empfänger / Drittanbieter</h4>
@@ -791,6 +836,35 @@
 </div>
 
 <script>
+
+  // Tarif wählen -> Formular vorbelegen
+  document.querySelectorAll('.tariff-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var sel = document.getElementById('tarif');
+      sel.value = btn.getAttribute('data-tarif');
+      document.getElementById('contact').scrollIntoView({behavior:'smooth'});
+      setTimeout(function(){ document.getElementById('name').focus({preventScroll:true}); }, 600);
+    });
+  });
+
+  // Formular: mit Formspree-Endpunkt (FORM_ENDPOINT) wird direkt gesendet, sonst öffnet sich das E-Mail-Programm mit allen Angaben
+  var FORM_ENDPOINT = '';
+  document.getElementById('request-form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var f = e.target, status = document.getElementById('form-status');
+    var fields = [['Name','name'],['Betrieb','company'],['E-Mail','email'],['Telefon','phone'],['Tarif','tarif'],['Bisherige Nummer des Betriebs','bizphone'],['Anfrage betrifft','topic'],['Nachricht','message']];
+    var data = {}; fields.forEach(function(x){ data[x[0]] = f.elements[x[1]].value; });
+    if (FORM_ENDPOINT) {
+      fetch(FORM_ENDPOINT, {method:'POST', headers:{'Accept':'application/json','Content-Type':'application/json'}, body:JSON.stringify(data)})
+        .then(function(r){ if(!r.ok) throw new Error(); status.textContent = 'Danke! Ihre Anfrage ist angekommen, wir melden uns bei Ihnen.'; f.reset(); })
+        .catch(function(){ status.textContent = 'Das hat leider nicht geklappt. Bitte schreiben Sie uns an mijoai.kontakt@gmail.com.'; });
+    } else {
+      var body = fields.map(function(x){ return x[0] + ': ' + data[x[0]]; }).join('\n');
+      window.location.href = 'mailto:mijoai.kontakt@gmail.com?subject=' + encodeURIComponent('Anfrage Mijo AI: ' + data['Tarif']) + '&body=' + encodeURIComponent(body);
+      status.textContent = 'Ihr E-Mail-Programm öffnet sich mit Ihrer Anfrage. Bitte auf Senden klicken.';
+    }
+  });
+
   function openModal(name){ document.getElementById('modal-'+name).classList.add('open'); }
   function closeModal(name){ document.getElementById('modal-'+name).classList.remove('open'); }
   document.querySelectorAll('.modal-overlay').forEach(function(ov){

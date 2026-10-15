@@ -233,6 +233,18 @@
   .price-card li svg{width:17px;height:17px;color:var(--navy);flex-shrink:0;margin-top:2px;}
   .price-card .btn-secondary, .price-card .btn-primary{width:100%;justify-content:center;text-align:center;}
 
+  .tariff-title{font-size:24px;margin:8px 0 4px;}
+  .tariff-sub{color:var(--ink-soft);font-size:15px;margin-bottom:20px;}
+  .tariff-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:40px;}
+  @media (max-width:1000px){ .tariff-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:600px){ .tariff-grid{grid-template-columns:1fr;} }
+  .tariff-grid .price-card h3{font-size:20px;}
+  .tariff-grid .price-card .amount b{font-size:30px;color:var(--navy-deep);}
+  .tariff-meta{color:var(--ink-soft);font-size:14px;margin:0 0 16px;}
+  .tariff-ideal{color:var(--ink-soft);font-size:13.5px;font-style:italic;margin:auto 0 0;}
+  .tariff-grid .price-card{display:flex;flex-direction:column;}
+  .tariff-grid .price-card ul{margin-bottom:18px;}
+  .tariff-note{color:var(--ink-soft);font-size:14.5px;max-width:760px;margin:0 auto;text-align:center;}
   .extra-offer{
     margin-top:28px;background:var(--stone);border-radius:var(--radius-m);padding:36px;
     display:grid;grid-template-columns:1.2fr 1fr;gap:32px;align-items:center;
@@ -406,8 +418,8 @@
     <div class="feature-row">
       <div class="f-text">
         <div class="f-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="1.8"><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg></div>
-        <h3>Setup in 24h</h3>
-        <p>Sie schicken uns Ihre Öffnungszeiten und Tisch- bzw. Terminstruktur, wir richten alles ein und schalten die Nummer live — meist innerhalb eines Tages.</p>
+        <h3>Schnell eingerichtet</h3>
+        <p>Sie schicken uns Ihre Öffnungszeiten und Tisch- bzw. Terminstruktur, wir richten alles ein und schalten die Nummer live — zügig und unkompliziert.</p>
       </div>
     </div>
 
@@ -425,7 +437,7 @@
   <div class="wrap">
     <div class="section-head">
       <h2>In drei Schritten live</h2>
-      <p>Vom ersten Gespräch bis zum fertigen System — meist in weniger als 24 Stunden.</p>
+      <p>Vom ersten Gespräch bis zum fertigen System — schnell und unkompliziert.</p>
     </div>
     <div class="steps">
       <div class="step">
@@ -517,31 +529,118 @@
   <div class="wrap">
     <div class="section-head">
       <h2>Transparent &amp; fair</h2>
-      <p>Jeder Betrieb ist anders — deshalb sprechen wir vorab kurz über Ihren Bedarf und machen ein passendes Angebot.</p>
+      <p>Feste Monatspreise mit Freiminuten — ohne versteckte Kosten.</p>
     </div>
-    <div class="price-grid">
-      <div class="price-card featured">
-        <span class="tag">Unser Angebot</span>
-        <h3>Mijo AI</h3>
-        <div class="amount">Preis nach Anfrage — unverbindlich &amp; individuell</div>
+    <h3 class="tariff-title">Tarife für Restaurants</h3>
+    <p class="tariff-sub">Reservierungsannahme, Verfügbarkeitsprüfung &amp; automatische Eintragung — Preise pro Monat.</p>
+    <div class="tariff-grid">
+      <div class="price-card">
+        <h3>Basis</h3>
+        <div class="amount"><b>200 €</b> / Monat</div>
+        <p class="tariff-meta">bis 300 Freiminuten<br>Einrichtung einmalig 500 €</p>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Automatische Reservierungs- &amp; Terminverwaltung in Echtzeit</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard für Ihr gesamtes Team</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Mehrsprachig — Deutsch &amp; Englisch, weitere möglich</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönliche Betreuung direkt vom Gründer — kein Callcenter</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Setup meist innerhalb von 24 Stunden</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> DSGVO-konform</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
         </ul>
-        <a href="#contact" class="btn-primary">Anfrage senden</a>
+        <p class="tariff-ideal">Ideal für kleine Betriebe</p>
       </div>
       <div class="price-card">
-        <span class="tag">Für mehr Standorte</span>
-        <h3>Enterprise</h3>
-        <div class="amount">Individuell nach Vereinbarung</div>
-        <p style="color:var(--ink-soft);font-size:14.5px;margin-bottom:24px;">Für größere Betriebe, mehrere Standorte oder besondere Anforderungen. Wir besprechen gemeinsam, was Sie brauchen.</p>
-        <a href="#contact" class="btn-secondary">Kontakt aufnehmen</a>
+        <h3>Standard</h3>
+        <div class="amount"><b>300 €</b> / Monat</div>
+        <p class="tariff-meta">bis 400 Freiminuten<br>Einrichtung einmalig 500 €</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support</li>
+        </ul>
+        <p class="tariff-ideal">Ideal für mittleres Volumen</p>
+      </div>
+      <div class="price-card">
+        <h3>Premium</h3>
+        <div class="amount"><b>350 €</b> / Monat</div>
+        <p class="tariff-meta">bis 700 Freiminuten<br>Einrichtung einmalig 500 €</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support 24/7</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kostenlose laufende Updates</li>
+        </ul>
+        <p class="tariff-ideal">Ideal für stark frequentierte Betriebe</p>
+      </div>
+      <div class="price-card">
+        <h3>Exklusiv</h3>
+        <div class="amount"><b>500 €</b> / Monat</div>
+        <p class="tariff-meta">bis 1500 Freiminuten<br>Einrichtung einmalig 500 €</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Anrufannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Reservierungen &amp; Stornos</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support 24/7</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kostenlose laufende Updates</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Individuelle Sonderwünsche &amp; Vor-Ort-Betreuung</li>
+        </ul>
+        <p class="tariff-ideal">Ideal für Top-Adressen</p>
       </div>
     </div>
+    <h3 class="tariff-title">Tarife für Friseursalons</h3>
+    <p class="tariff-sub">Terminvereinbarung, Kundenkartei &amp; Auslastungsübersicht — Preise pro Monat.</p>
+    <div class="tariff-grid">
+      <div class="price-card">
+        <h3>Basis</h3>
+        <div class="amount"><b>150 €</b> / Monat</div>
+        <p class="tariff-meta">bis 200 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
+        </ul>
+        <p class="tariff-ideal">Ideal für kleine Salons</p>
+      </div>
+      <div class="price-card">
+        <h3>Standard</h3>
+        <div class="amount"><b>250 €</b> / Monat</div>
+        <p class="tariff-meta">bis 350 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support</li>
+        </ul>
+        <p class="tariff-ideal">Ideal für mittleres Volumen</p>
+      </div>
+      <div class="price-card">
+        <h3>Premium</h3>
+        <div class="amount"><b>300 €</b> / Monat</div>
+        <p class="tariff-meta">bis 500 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support 24/7</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kostenlose laufende Updates</li>
+        </ul>
+        <p class="tariff-ideal">Ideal für stark frequentierte Salons</p>
+      </div>
+      <div class="price-card">
+        <h3>Exklusiv</h3>
+        <div class="amount"><b>400 €</b> / Monat</div>
+        <p class="tariff-meta">bis 1000 Freiminuten<br>Einrichtung einmalig 400 €</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Live-Dashboard</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Persönlicher Support 24/7</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kostenlose laufende Updates</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Individuelle Sonderwünsche &amp; Vor-Ort-Betreuung</li>
+        </ul>
+        <p class="tariff-ideal">Ideal für Premium-Salons</p>
+      </div>
+    </div>
+    <p class="tariff-note">Mindestlaufzeit 3 Monate, danach monatlich kündbar. Jederzeit upgradebar: Reicht Ihr Paket nicht mehr aus, wechseln wir in die nächsthöhere Stufe (einmalige Umstellungsgebühr 20 €). Mehrere Standorte oder besondere Anforderungen? Individuell nach Vereinbarung.</p>
+    <div style="text-align:center;margin:26px 0 56px;"><a href="#contact" class="btn-primary">Demo anfragen</a></div>
 
     <div class="extra-offer">
       <div>
@@ -577,7 +676,7 @@
     </details>
     <details class="faq-item">
       <summary>Wie lange dauert die Einrichtung?</summary>
-      <p>In der Regel weniger als 24 Stunden, sobald Öffnungszeiten und Tisch- bzw. Terminstruktur feststehen.</p>
+      <p>Wir richten alles zügig ein, sobald Öffnungszeiten und Tisch- bzw. Terminstruktur feststehen. Den genauen Zeitplan besprechen wir im Erstgespräch.</p>
     </details>
     <details class="faq-item">
       <summary>Wo werden meine Daten gespeichert?</summary>
@@ -619,7 +718,7 @@
         <textarea id="message" name="message"></textarea>
       </div>
       <button type="submit" class="btn-primary" style="border:none;cursor:pointer;">Demo anfragen</button>
-      <p class="form-note">Keine Kreditkarte · Setup in 24h · Jederzeit kündbar</p>
+      <p class="form-note">Keine Kreditkarte · Unverbindliche Demo</p>
     </form>
   </div>
 </section>
@@ -659,6 +758,12 @@
     </p>
     <h4>Kontakt</h4>
     <p>E-Mail: mijoai.kontakt@gmail.com</p>
+    <h4>Kammer und Behörde</h4>
+    <p>
+      Mitglied der Wirtschaftskammer Vorarlberg, Fachgruppe Unternehmensberatung, Buchhaltung und Informationstechnologie.<br>
+      Gewerbebehörde: Bezirkshauptmannschaft Bregenz.<br>
+      Anwendbare Rechtsvorschriften: Gewerbeordnung (abrufbar unter <a href="https://www.ris.bka.gv.at" style="color:var(--navy);">ris.bka.gv.at</a>).
+    </p>
     <h4>EU-Streitschlichtung</h4>
     <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit: <a href="https://ec.europa.eu/consumers/odr" style="color:var(--navy);">ec.europa.eu/consumers/odr</a></p>
   </div>

@@ -759,7 +759,7 @@
         </select>
       </div>
       <div class="field">
-        <label for="message">Nachricht (z. B. Öffnungszeiten, Anzahl Tische, Sonderwünsche)</label>
+        <label for="message" id="message-label">Nachricht (z. B. Öffnungszeiten, Anzahl Tische, Sonderwünsche)</label>
         <textarea id="message" name="message"></textarea>
       </div>
       <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
@@ -839,11 +839,27 @@
 
 <script>
 
+  // Beschriftung der Nachricht passt sich der Branche an (Restaurant / Friseursalon)
+  function updateMessageLabel(){
+    var v = document.getElementById('tarif').value || '';
+    var lab = document.getElementById('message-label');
+    if (v.indexOf('Friseursalon') === 0) {
+      lab.textContent = 'Nachricht (z. B. Öffnungszeiten, Anzahl Mitarbeiter, Leistungen, Sonderwünsche)';
+    } else if (v.indexOf('Restaurant') === 0) {
+      lab.textContent = 'Nachricht (z. B. Öffnungszeiten, Anzahl Tische, Sonderwünsche)';
+    } else {
+      lab.textContent = 'Nachricht (z. B. Branche, Öffnungszeiten, Sonderwünsche)';
+    }
+  }
+  document.getElementById('tarif').addEventListener('change', updateMessageLabel);
+  updateMessageLabel();
+
   // Tarif wählen -> Formular vorbelegen
   document.querySelectorAll('.tariff-btn').forEach(function(btn){
     btn.addEventListener('click', function(){
       var sel = document.getElementById('tarif');
       sel.value = btn.getAttribute('data-tarif');
+      updateMessageLabel();
       document.getElementById('contact').scrollIntoView({behavior:'smooth'});
       setTimeout(function(){ document.getElementById('name').focus({preventScroll:true}); }, 600);
     });

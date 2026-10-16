@@ -747,10 +747,6 @@
         </select>
       </div>
       <div class="field">
-        <label for="bizphone">Bisherige Telefonnummer des Betriebs (soll auf Mijo AI umgeleitet werden)</label>
-        <input type="tel" id="bizphone" name="bizphone">
-      </div>
-      <div class="field">
         <label for="topic">Ihre Anfrage betrifft</label>
         <select id="topic" name="topic">
           <option>KI-Telefon-Assistent</option>
@@ -870,7 +866,7 @@
   document.getElementById('request-form').addEventListener('submit', function(e){
     e.preventDefault();
     var f = e.target, status = document.getElementById('form-status');
-    var fields = [['Name','name','name'],['Betrieb','company','betrieb'],['E-Mail','email','email'],['Telefon','phone','telefon'],['Tarif','tarif','tarif'],['Bisherige Nummer des Betriebs','bizphone','bizphone'],['Anfrage betrifft','topic','thema'],['Nachricht','message','nachricht']];
+    var fields = [['Name','name','name'],['Betrieb','company','betrieb'],['E-Mail','email','email'],['Telefon','phone','telefon'],['Tarif','tarif','tarif'],['Anfrage betrifft','topic','thema'],['Nachricht','message','nachricht']];
     var data = {}, params = new URLSearchParams();
     fields.forEach(function(x){ var v = f.elements[x[1]].value; data[x[0]] = v; params.append(x[2], v); });
     params.append('website', f.elements['website'] ? f.elements['website'].value : '');

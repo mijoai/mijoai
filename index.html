@@ -762,6 +762,7 @@
         <label for="message">Nachricht (z. B. Öffnungszeiten, Anzahl Tische, Sonderwünsche)</label>
         <textarea id="message" name="message"></textarea>
       </div>
+      <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0;height:0;width:0;">
       <button type="submit" class="btn-primary" style="border:none;cursor:pointer;">Anfrage senden</button>
       <p class="form-note">Unverbindlich · Wir melden uns persönlich bei Ihnen. Mit dem Absenden stimmen Sie der Verarbeitung Ihrer Angaben laut Datenschutzerklärung zu.</p>
       <p class="form-status" id="form-status" role="status"></p>
@@ -848,22 +849,26 @@
     });
   });
 
-  // Formular: mit Formspree-Endpunkt (FORM_ENDPOINT) wird direkt gesendet, sonst öffnet sich das E-Mail-Programm mit allen Angaben
-  var FORM_ENDPOINT = '';
+  // Formular: sendet die Anfrage direkt an Mijo AI (n8n). Faellt bei einem Fehler auf das E-Mail-Programm zurueck.
+  var FORM_ENDPOINT = 'https://a4milan.app.n8n.cloud/webhook/mijo-anfrage';
   document.getElementById('request-form').addEventListener('submit', function(e){
     e.preventDefault();
     var f = e.target, status = document.getElementById('form-status');
-    var fields = [['Name','name'],['Betrieb','company'],['E-Mail','email'],['Telefon','phone'],['Tarif','tarif'],['Bisherige Nummer des Betriebs','bizphone'],['Anfrage betrifft','topic'],['Nachricht','message']];
-    var data = {}; fields.forEach(function(x){ data[x[0]] = f.elements[x[1]].value; });
-    if (FORM_ENDPOINT) {
-      fetch(FORM_ENDPOINT, {method:'POST', headers:{'Accept':'application/json','Content-Type':'application/json'}, body:JSON.stringify(data)})
-        .then(function(r){ if(!r.ok) throw new Error(); status.textContent = 'Danke! Ihre Anfrage ist angekommen, wir melden uns bei Ihnen.'; f.reset(); })
-        .catch(function(){ status.textContent = 'Das hat leider nicht geklappt. Bitte schreiben Sie uns an mijoai.kontakt@gmail.com.'; });
-    } else {
+    var fields = [['Name','name','name'],['Betrieb','company','betrieb'],['E-Mail','email','email'],['Telefon','phone','telefon'],['Tarif','tarif','tarif'],['Bisherige Nummer des Betriebs','bizphone','bizphone'],['Anfrage betrifft','topic','thema'],['Nachricht','message','nachricht']];
+    var data = {}, params = new URLSearchParams();
+    fields.forEach(function(x){ var v = f.elements[x[1]].value; data[x[0]] = v; params.append(x[2], v); });
+    params.append('website', f.elements['website'] ? f.elements['website'].value : '');
+    function viaMail(){
       var body = fields.map(function(x){ return x[0] + ': ' + data[x[0]]; }).join('\n');
       window.location.href = 'mailto:mijoai.kontakt@gmail.com?subject=' + encodeURIComponent('Anfrage Mijo AI: ' + data['Tarif']) + '&body=' + encodeURIComponent(body);
-      status.textContent = 'Ihr E-Mail-Programm öffnet sich mit Ihrer Anfrage. Bitte auf Senden klicken.';
+      status.textContent = 'Das automatische Senden hat nicht geklappt. Ihr E-Mail-Programm öffnet sich mit Ihrer Anfrage, oder schreiben Sie uns an mijoai.kontakt@gmail.com.';
     }
+    var btn = f.querySelector('button[type=submit]'); if (btn) { btn.disabled = true; }
+    status.textContent = 'Wird gesendet …';
+    fetch(FORM_ENDPOINT, {method:'POST', body: params})
+      .then(function(r){ if(!r.ok) throw new Error(); status.textContent = 'Danke! Ihre Anfrage ist angekommen, wir melden uns persönlich bei Ihnen.'; f.reset(); })
+      .catch(viaMail)
+      .then(function(){ if (btn) { btn.disabled = false; } });
   });
 
   function openModal(name){ document.getElementById('modal-'+name).classList.add('open'); }

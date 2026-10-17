@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark only">
+<title>Mijo AI — Salon Dashboard (Live-Demo)</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0E1A2B; --navy2:#16263D; --steel:#24374F;
+    --gold:#F2C14E; --white:#F5F6F8; --muted:#9FB0C3;
+    --ok:#5FD98A; --pending:#F2C14E; --cancel:#E0685A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--navy);color:var(--white);font-family:'Inter',sans-serif;color-scheme:dark;}
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;}
+  .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh;}
+  aside{background:var(--navy2);padding:26px 20px;border-right:1px solid rgba(255,255,255,0.06);}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:38px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--gold);}
+  .brand span{font-family:'Fraunces',serif;font-weight:700;font-size:17px;}
+  nav a{
+    display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;
+    color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;margin-bottom:4px;
+  }
+  nav a.active{background:var(--steel);color:var(--white);}
+  main{padding:30px 40px;}
+  header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:16px;}
+  header.top h1{font-size:26px;}
+  header.top .sub{color:var(--muted);font-size:13.5px;margin-top:4px;}
+  .privacy-toggle{
+    display:flex;align-items:center;gap:10px;background:var(--navy2);border:1px solid rgba(255,255,255,0.08);
+    padding:9px 16px;border-radius:999px;font-size:13.5px;cursor:pointer;user-select:none;
+  }
+  .switch{width:38px;height:21px;border-radius:999px;background:var(--steel);position:relative;transition:background .2s;}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:17px;height:17px;border-radius:50%;background:var(--muted);transition:.2s;}
+  .privacy-toggle.on .switch{background:var(--gold);}
+  .privacy-toggle.on .switch::after{left:19px;background:var(--navy);}
+
+  .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+  .stat-card{background:var(--navy2);border-radius:12px;padding:18px 20px;border:1px solid rgba(255,255,255,0.05);}
+  .stat-card .num{font-family:'Fraunces',serif;font-size:26px;color:var(--gold);}
+  .stat-card .lbl{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  .board{background:var(--navy2);border-radius:14px;border:1px solid rgba(255,255,255,0.05);overflow:hidden;}
+  .board-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.06);}
+  .board-head h2{font-size:17px;}
+  .day-tabs{display:flex;gap:6px;}
+  .day-tabs span{padding:6px 14px;border-radius:999px;font-size:12.5px;color:var(--muted);cursor:pointer;}
+  .day-tabs span.active{background:var(--steel);color:var(--white);}
+
+  table{width:100%;border-collapse:collapse;}
+  th{
+    text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+    padding:12px 22px;border-bottom:1px solid rgba(255,255,255,0.06);font-weight:600;
+  }
+  td{padding:15px 22px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:14px;vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .cust{display:flex;align-items:center;gap:10px;}
+  .avatar{
+    width:32px;height:32px;border-radius:50%;background:var(--steel);display:flex;align-items:center;
+    justify-content:center;font-family:'Fraunces',serif;font-size:13px;color:var(--gold);flex-shrink:0;
+  }
+  .cust-name{font-weight:600;}
+  .cust-phone{font-size:12px;color:var(--muted);}
+  .blurred .cust-name, .blurred .cust-phone{
+    filter:blur(5px); user-select:none; transition:filter .15s;
+  }
+  .badge{
+    display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600;
+  }
+  .badge.ok{background:rgba(95,217,138,0.14);color:var(--ok);}
+  .badge.pending{background:rgba(242,193,78,0.14);color:var(--pending);}
+  .badge.cancel{background:rgba(224,104,90,0.14);color:var(--cancel);}
+  .badge.free{background:rgba(159,176,195,0.14);color:var(--muted);}
+  .badge .d{width:6px;height:6px;border-radius:50%;background:currentColor;}
+  .service{color:var(--white);}
+  .service .stylist{display:block;font-size:12px;color:var(--muted);margin-top:2px;}
+  .price-col{color:var(--muted);font-size:13px;}
+  tbody tr[data-clickable]{cursor:pointer;transition:background .12s;}
+  tbody tr[data-clickable]:hover{background:rgba(255,255,255,0.03);}
+
+  .modal-overlay{
+    display:none;position:fixed;inset:0;background:rgba(6,10,18,0.65);z-index:100;
+    align-items:center;justify-content:center;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--navy2);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:28px;
+    width:360px;max-width:90vw;
+  }
+  .modal-box h3{font-size:19px;margin-bottom:16px;}
+  .modal-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:14px;}
+  .modal-row span:first-child{color:var(--muted);}
+  .modal-close-btn{
+    margin-top:20px;width:100%;padding:11px;border-radius:8px;background:var(--steel);color:var(--white);
+    border:none;font-size:14px;font-weight:600;cursor:pointer;
+  }
+
+  footer.note{
+    margin-top:20px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:8px;
+  }
+
+  /* Privacy clock screen */
+  .privacy-screen{
+    display:none;position:fixed;inset:0;background:#0a1120;
+    z-index:200;flex-direction:column;align-items:center;justify-content:center;color:var(--white);overflow:hidden;
+  }
+  .privacy-screen.open{display:flex;}
+  .privacy-bg{position:absolute;inset:0;width:100%;height:100%;}
+  .privacy-screen .pbrand{display:flex;align-items:center;gap:10px;position:absolute;top:40px;left:50%;transform:translateX(-50%);}
+  .privacy-screen .pbrand .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);}
+  .privacy-screen .pbrand span{font-family:'Fraunces',serif;font-weight:700;font-size:18px;letter-spacing:.02em;}
+  .privacy-weekday{font-size:17px;color:var(--gold);text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;position:relative;}
+  .privacy-clock-row{display:flex;align-items:flex-end;gap:8px;position:relative;}
+  .privacy-clock{font-family:'Fraunces',serif;font-size:104px;font-weight:600;letter-spacing:.02em;line-height:1;}
+  .privacy-seconds{font-family:'Fraunces',serif;font-size:18px;color:var(--muted);font-weight:600;margin-bottom:16px;opacity:.7;}
+  .privacy-date{font-size:16px;color:var(--muted);margin-top:12px;position:relative;}
+  .privacy-salon{margin-top:46px;font-size:15px;color:var(--muted);display:flex;align-items:center;gap:10px;position:relative;}
+  .privacy-salon .d{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+  .privacy-hint{position:absolute;bottom:36px;font-size:12.5px;color:var(--muted);opacity:.7;}
+  @media (max-width:640px){ .privacy-clock{font-size:60px;} }
+
+  .month-dropdown{position:relative;}
+  .dropdown-btn{
+    display:flex;align-items:center;gap:8px;background:var(--steel);color:var(--white);border:none;
+    padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;
+  }
+  .dropdown-menu{
+    display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--navy2);
+    border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:6px;width:200px;max-height:280px;
+    overflow-y:auto;z-index:20;box-shadow:0 12px 30px rgba(0,0,0,0.4);
+  }
+  .dropdown-menu.open{display:block;}
+  #pinModal{z-index:150;}
+  .dropdown-menu .opt{
+    padding:9px 12px;border-radius:6px;font-size:13.5px;color:var(--white);cursor:pointer;
+  }
+  .dropdown-menu .opt:hover{background:var(--steel);}
+  .dropdown-menu .opt.year-opt{color:var(--gold);font-weight:600;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:4px;padding-bottom:11px;}
+
+  tbody tr[data-day-row], tbody tr[data-month-row], tbody tr[data-cust-row], tbody tr[data-week-row]{cursor:pointer;transition:background .12s;}
+  tbody tr[data-day-row]:hover, tbody tr[data-month-row]:hover, tbody tr[data-cust-row]:hover, tbody tr[data-week-row]:hover{background:rgba(255,255,255,0.03);}
+
+  .chef-toggle{
+    display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;user-select:none;color:var(--muted);
+  }
+  .chef-toggle.on{color:var(--white);}
+  .chef-toggle .switch{width:38px;height:21px;}
+  .chef-toggle.on .switch{background:var(--gold);}
+  .chef-toggle.on .switch::after{left:19px;background:var(--navy);}
+
+  .del-btn{
+    background:none;border:none;color:var(--cancel);cursor:pointer;font-size:16px;padding:4px 8px;border-radius:6px;
+  }
+  .del-btn:hover{background:rgba(224,104,90,0.14);}
+  .svc-input{
+    width:100%;padding:8px 10px;border-radius:6px;border:1px solid rgba(255,255,255,0.12);
+    background:var(--navy);color:var(--white);font-size:13.5px;font-family:'Inter',sans-serif;
+  }
+  .svc-input:disabled{background:transparent;border-color:transparent;color:var(--white);opacity:.8;cursor:default;}
+  .field-row{margin-bottom:14px;}
+  .field-row label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;}
+
+  .team-chip{
+    display:flex;align-items:center;gap:8px;background:var(--navy);border:1px solid rgba(255,255,255,0.08);
+    padding:8px 14px;border-radius:999px;font-size:12.5px;
+  }
+  .team-chip .bar{width:60px;height:5px;border-radius:999px;background:rgba(255,255,255,0.1);overflow:hidden;}
+  .team-chip .bar-fill{height:100%;border-radius:999px;background:var(--ok);}
+  .team-chip .bar-fill.warn{background:var(--pending);}
+  .team-chip .bar-fill.over{background:var(--cancel);}
+</style>
+</head>
+<body>
+
+<div class="privacy-screen" id="privacyScreen">
+  <svg class="privacy-bg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <radialGradient id="pg1" cx="30%" cy="15%" r="70%">
+        <stop offset="0%" stop-color="#1c3252"/>
+        <stop offset="100%" stop-color="#0a1120"/>
+      </radialGradient>
+      <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#F2C14E" stop-opacity="0.5"/>
+        <stop offset="100%" stop-color="#F2C14E" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="800" fill="url(#pg1)"/>
+    <g opacity="0.5" stroke="url(#goldLine)" stroke-width="1.4" fill="none">
+      <path d="M-50 650 C 250 500, 350 750, 650 600 S 1050 450, 1250 550"/>
+      <path d="M-50 700 C 280 580, 380 800, 700 680 S 1080 520, 1250 620"/>
+    </g>
+    <g opacity="0.16" fill="none" stroke="#F2C14E" stroke-width="1">
+      <ellipse cx="980" cy="150" rx="230" ry="230"/>
+      <ellipse cx="980" cy="150" rx="160" ry="160"/>
+    </g>
+    <g opacity="0.35" stroke="#F2C14E" stroke-width="2" fill="none" stroke-linecap="round" transform="translate(120,560) rotate(-18)">
+      <path d="M0 0 L70 70"/>
+      <path d="M70 0 L0 70"/>
+      <circle cx="0" cy="0" r="9"/>
+      <circle cx="0" cy="70" r="9"/>
+      <path d="M70 35 L150 35" stroke-dasharray="0"/>
+    </g>
+    <g opacity="0.3" stroke="#F2C14E" stroke-width="1.6" fill="none" stroke-linecap="round" transform="translate(1020,610)">
+      <path d="M0 0 Q10 30 0 60 Q-10 90 0 120"/>
+      <path d="M18 0 Q28 30 18 60 Q8 90 18 120"/>
+      <path d="M36 0 Q46 30 36 60 Q26 90 36 120"/>
+      <path d="M54 0 Q64 30 54 60 Q44 90 54 120"/>
+    </g>
+  </svg>
+  <div class="pbrand"><span class="dot"></span><span>Mijo AI</span></div>
+  <div class="privacy-weekday" id="privacyWeekday">—</div>
+  <div class="privacy-clock-row">
+    <div class="privacy-clock" id="privacyClock">00:00</div>
+    <div class="privacy-seconds" id="privacySeconds">00</div>
+  </div>
+  <div class="privacy-date" id="privacyDate">—</div>
+  <div class="privacy-salon"><span class="d"></span>Salon Milano ist geöffnet</div>
+  <div class="privacy-hint">Sichtschutz-Modus aktiv — zum Beenden erneut antippen</div>
+</div>
+
+<div class="modal-overlay" id="pinModal">
+  <div class="modal-box">
+    <h3 id="pinModalTitle">PIN eingeben</h3>
+    <p style="color:var(--muted); font-size:13.5px; margin:-8px 0 16px;">Für den Zugriff auf diesen Bereich ist der 6-stellige Chef-PIN erforderlich.</p>
+    <input type="password" id="pinInput" maxlength="6" inputmode="numeric" pattern="[0-9]*"
+      style="width:100%; padding:14px; font-size:22px; letter-spacing:8px; text-align:center; border-radius:8px;
+      border:1px solid rgba(255,255,255,0.15); background:var(--navy); color:var(--white); margin-bottom:8px;">
+    <div id="pinError" style="color:var(--cancel); font-size:12.5px; height:16px; margin-bottom:8px;"></div>
+    <button class="modal-close-btn" style="background:var(--gold); color:var(--navy); margin-top:4px;" onclick="submitPin()">Bestätigen</button>
+    <button class="modal-close-btn" onclick="closePinModal()">Abbrechen</button>
+  </div>
+</div>
+
+<div class="app">
+  <aside>
+    <div class="brand"><span class="dot"></span><span>Mijo AI</span></div>
+    <nav id="mainNav">
+      <a class="active" data-view="termine">📅 Termine</a>
+      <a data-view="dienstleistungen">💇 Dienstleistungen</a>
+      <a data-view="kunden">👥 Kundenkartei</a>
+      <a data-view="auslastung">📊 Auslastung</a>
+      <a data-view="einstellungen">⚙️ Einstellungen</a>
+    </nav>
+  </aside>
+  <main>
+    <header class="top">
+      <div>
+        <h1>Salon Milano — Termine</h1>
+        <div class="sub"><span id="subDate">—</span> · <span id="liveState" style="color:var(--muted);">● verbinde …</span></div>
+      </div>
+      <div class="privacy-toggle" id="privacyToggle" onclick="togglePrivacy()">
+        <span>Sichtschutz-Modus</span>
+        <div class="switch"></div>
+      </div>
+    </header>
+
+    <div class="stat-row" id="statRow">
+      <div class="stat-card"><div class="num" id="statTermine">14</div><div class="lbl">Termine heute</div></div>
+      <div class="stat-card"><div class="num" id="statFrei">3</div><div class="lbl">Freie Slots</div></div>
+      <div class="stat-card"><div class="num" id="statStorno">2</div><div class="lbl">Stornierungen</div></div>
+      <div class="stat-card"><div class="num" id="statAuslastung">92%</div><div class="lbl">Auslastung</div></div>
+    </div>
+
+    <div id="view-termine">
+      <div class="board">
+        <div class="board-head">
+          <h2 id="boardTitle">Heutige Termine</h2>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="dropdown-btn" onclick="changeWeek(-1)" title="Vorige Woche">‹</button>
+            <div class="day-tabs">
+              <span data-day="montag">Mo</span>
+              <span data-day="dienstag">Di</span>
+              <span data-day="mittwoch">Mi</span>
+              <span class="active" data-day="donnerstag">Do</span>
+              <span data-day="freitag">Fr</span>
+              <span data-day="samstag">Sa</span>
+            </div>
+            <button class="dropdown-btn" onclick="changeWeek(1)" title="Nächste Woche">›</button>
+          </div>
+        </div>
+        <div id="teamLoadStrip" style="display:flex; gap:10px; padding:14px 22px 0; flex-wrap:wrap;"></div>
+        <div style="padding:14px 22px 0; display:flex; justify-content:flex-end;">
+          <button class="dropdown-btn" onclick="addWalkIn()">+ Spontanen Kunden eintragen</button>
+        </div>
+        <table id="apptTable">
+          <thead>
+            <tr>
+              <th>Uhrzeit</th>
+              <th>Kundin / Kunde</th>
+              <th>Dienstleistung</th>
+              <th>Preis</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="apptBody"></tbody>
+        </table>
+      </div>
+      <footer class="note">🔒 Im Sichtschutz-Modus werden Kundennamen und Telefonnummern unkenntlich gemacht — ideal, wenn das Dashboard offen im Salon sichtbar ist.</footer>
+    </div>
+
+    <div id="view-dienstleistungen" style="display:none;">
+      <div class="board">
+        <div class="board-head">
+          <h2>Dienstleistungen</h2>
+        </div>
+        <table>
+          <thead><tr><th>Dienstleistung</th><th>Dauer</th><th>Puffer</th><th>Preis</th></tr></thead>
+          <tbody id="dienstleistungenListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-kunden" style="display:none;">
+      <div class="board">
+        <div class="board-head">
+          <h2>Kundenkartei</h2>
+          <button class="dropdown-btn" onclick="openAddKundeModal()">+ Neuer Kunde</button>
+        </div>
+        <p style="padding:14px 22px 0; color:var(--muted); font-size:13px;">Löschen eines Kunden erfordert den Chef-PIN.</p>
+        <table>
+          <thead><tr><th>Name</th><th>Telefon</th><th>Letzter Besuch</th><th>Besuche gesamt</th><th></th></tr></thead>
+          <tbody id="kundenListBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-auslastung" style="display:none;">
+      <div class="board">
+        <div class="board-head">
+          <h2 id="auslastungTitle">Auslastung — September 2026</h2>
+          <div class="month-dropdown">
+            <button class="dropdown-btn" id="monthDropdownBtn" onclick="toggleMonthDropdown()">
+              <span id="monthDropdownLabel">September 2026</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+            <div class="dropdown-menu" id="monthDropdownMenu"></div>
+          </div>
+        </div>
+        <table>
+          <thead id="auslastungHead"></thead>
+          <tbody id="auslastungBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="view-einstellungen" style="display:none;">
+      <div class="board">
+        <div class="board-head"><h2>Einstellungen</h2></div>
+        <nav style="padding:14px;">
+          <a onclick="requestOpenServiceSettings()" style="cursor:pointer;">💇 Dienstleistungen bearbeiten</a>
+          <a onclick="requestOpenKundenSettings()" style="cursor:pointer;">👥 Kundenkartei bearbeiten</a>
+          <a onclick="requestOpenTeamSettings()" style="cursor:pointer;">🧑‍🤝‍🧑 Mitarbeiter verwalten</a>
+        </nav>
+        <div style="padding:0 22px 22px; color:var(--muted); font-size:13px;">
+          Preise, Dauer und neue Dienstleistungen ändern Sie über "Dienstleistungen bearbeiten" (Chef-PIN erforderlich). Termine kommen live vom KI-Telefonassistenten.
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box"></div>
+</div>
+
+<div class="modal-overlay" id="addKundeModal">
+  <div class="modal-box">
+    <h3>Neuer Kunde</h3>
+    <div class="field-row"><label>Name</label><input class="svc-input" id="newKundeName" placeholder="Vor- und Nachname"></div>
+    <div class="field-row"><label>Telefonnummer</label><input class="svc-input" id="newKundePhone" placeholder="+43 ..."></div>
+    <button class="modal-close-btn" style="background:var(--gold); color:var(--navy);" onclick="submitAddKunde()">Hinzufügen</button>
+    <button class="modal-close-btn" onclick="document.getElementById('addKundeModal').classList.remove('open')">Abbrechen</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="walkInModal">
+  <div class="modal-box">
+    <h3>Spontanen Kunden eintragen</h3>
+    <div class="field-row"><label>Name</label><input class="svc-input" id="walkInName" placeholder="Vor- und Nachname"></div>
+    <div class="field-row"><label>Uhrzeit</label><input class="svc-input" id="walkInTime" placeholder="z.B. 15:30"></div>
+    <div class="field-row"><label>Dienstleistung</label>
+      <select class="svc-input" id="walkInService"></select>
+    </div>
+    <div class="field-row"><label>Mitarbeiter</label>
+      <select class="svc-input" id="walkInStylist"></select>
+    </div>
+    <button class="modal-close-btn" style="background:var(--gold); color:var(--navy);" onclick="submitAddWalkIn()">Eintragen</button>
+    <button class="modal-close-btn" onclick="document.getElementById('walkInModal').classList.remove('open')">Abbrechen</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="kundenManageModal">
+  <div class="modal-box" style="width:640px;">
+    <h3>Kundenkartei verwalten</h3>
+    <table style="margin-bottom:16px;">
+      <thead><tr><th>Name</th><th>Telefon</th><th>Letzter Besuch</th><th>Besuche</th><th></th></tr></thead>
+      <tbody id="kundenManageBody"></tbody>
+    </table>
+    <button class="dropdown-btn" onclick="addKundeRow()">+ Neuer Kunde</button>
+    <button class="modal-close-btn" style="background:var(--gold); color:var(--navy); margin-top:16px;" onclick="saveKundenChanges()">Änderungen speichern</button>
+    <button class="modal-close-btn" onclick="document.getElementById('kundenManageModal').classList.remove('open')">Schließen</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="teamManageModal">
+  <div class="modal-box" style="width:560px;">
+    <h3>Mitarbeiter verwalten</h3>
+    <p style="color:var(--muted); font-size:13px; margin:-8px 0 16px;">Kapazität = maximale Termine pro Tag für diesen Mitarbeiter.</p>
+    <table style="margin-bottom:16px;">
+      <thead><tr><th>Name</th><th>Kapazität / Tag</th><th></th></tr></thead>
+      <tbody id="teamManageBody"></tbody>
+    </table>
+    <button class="dropdown-btn" onclick="addTeamRow()">+ Neuer Mitarbeiter</button>
+    <button class="modal-close-btn" style="background:var(--gold); color:var(--navy); margin-top:16px;" onclick="saveTeamChanges()">Änderungen speichern</button>
+    <button class="modal-close-btn" onclick="document.getElementById('teamManageModal').classList.remove('open')">Schließen</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="serviceModal">
+  <div class="modal-box" style="width:600px;">
+    <h3>Dienstleistungen verwalten</h3>
+    <table style="margin-bottom:16px;">
+      <thead><tr><th>Name</th><th>Dauer</th><th>Puffer</th><th>Preis</th><th></th></tr></thead>
+      <tbody id="serviceManageBody"></tbody>
+    </table>
+    <button class="dropdown-btn" onclick="addServiceRow()">+ Neue Dienstleistung</button>
+    <button class="modal-close-btn" style="background:var(--gold); color:var(--navy); margin-top:16px;" onclick="saveServiceChanges()">Änderungen speichern</button>
+    <button class="modal-close-btn" onclick="document.getElementById('serviceModal').classList.remove('open')">Schließen</button>
+  </div>
+</div>
+
+<script>
+    /* ================= Live-Daten aus n8n ================= */
+  var API = 'https://a4milan.app.n8n.cloud/webhook/';
+  var DAYKEYS = ['montag','dienstag','mittwoch','donnerstag','freitag','samstag'];
+  var DAYSHORT = ['Mo','Di','Mi','Do','Fr','Sa'];
+  var DAYLONG = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  var weekOffset = 0, weekDates = {}, liveItems = [], data = {}, activeDay = 'dienstag';
+  var lastAction = 0, firstLoad = true;
+  var titles = {};
+  DAYKEYS.forEach(function(k, i){ titles[k] = 'Termine ' + DAYLONG[i]; data[k] = []; });
+
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function isoDate(d){ return d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()); }
+  function todayIso(){ return isoDate(new Date()); }
+  function normName(s){ return String(s||'').toLowerCase().replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss').trim(); }
+  function toMin(t){ var p = String(t||'0:0').split(':'); return (parseInt(p[0],10)||0)*60 + (parseInt(p[1],10)||0); }
+
+  function computeWeek(){
+    var base = new Date();
+    if(base.getDay() === 0) base.setDate(base.getDate() + 1);
+    var dow = base.getDay();
+    var mon = new Date(base.getFullYear(), base.getMonth(), base.getDate() - (dow - 1) + 7 * weekOffset);
+    DAYKEYS.forEach(function(k, i){
+      var d = new Date(mon.getFullYear(), mon.getMonth(), mon.getDate() + i);
+      weekDates[k] = isoDate(d);
+      var tab = document.querySelector('.day-tabs span[data-day="'+k+'"]');
+      if(tab) tab.textContent = DAYSHORT[i] + ' ' + d.getDate() + '.';
+    });
+  }
+  function changeWeek(delta){
+    weekOffset += delta;
+    computeWeek();
+    refreshAll();
+  }
+
+  function svcInfo(name){
+    var n = normName(name);
+    for(var i=0;i<services.length;i++){ if(normName(services[i].name) === n) return services[i]; }
+    return { name: name || '—', price: '—', duration: '30 Min.' };
+  }
+
+  function buildData(){
+    DAYKEYS.forEach(function(k){
+      var date = weekDates[k];
+      var items = liveItems.filter(function(i){ return i.date === date; })
+        .sort(function(a,b){ return a.time.localeCompare(b.time); });
+      var staffEnd = mitarbeiter.map(function(){ return 0; });
+      data[k] = items.map(function(i){
+        var s = svcInfo(i.service);
+        var cancelled = i.status === 'storniert';
+        var start = toMin(i.time), end = start + (parseInt(i.duration,10) || 30);
+        var idx = 0;
+        if(!cancelled && mitarbeiter.length){
+          var best = -1;
+          for(var m=0;m<mitarbeiter.length;m++){ if(staffEnd[m] <= start){ best = m; break; } }
+          if(best < 0){ best = 0; for(var q=1;q<mitarbeiter.length;q++){ if(staffEnd[q] < staffEnd[best]) best = q; } }
+          idx = best; staffEnd[idx] = end;
+        }
+        var st = cancelled ? 'cancel' : (i.status === 'abgeschlossen' ? 'free' : 'ok');
+        var label = cancelled ? 'Storniert' : (i.status === 'abgeschlossen' ? 'Abgeschlossen — Termin wieder frei' : (String(i.phone) === 'spontan' ? 'Bestätigt (spontan)' : 'Bestätigt'));
+        return { id: i.id, time: i.time, name: i.who, phone: (i.phone && i.phone !== 'spontan') ? i.phone : '—',
+          service: s.name, stylist: mitarbeiter.length ? mitarbeiter[idx].name : '—', price: s.price,
+          status: st, statusLabel: label, transcript: i.transcript };
+      });
+    });
+  }
+
+  function renderAppointments(day){
+    activeDay = day;
+    var rows = data[day] || [];
+    var tbody = document.getElementById('apptBody');
+    document.getElementById('boardTitle').textContent = titles[day];
+    var dd = new Date(weekDates[day] + 'T12:00:00');
+    document.getElementById('subDate').textContent = dd.toLocaleDateString('de-AT', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    document.querySelectorAll('.day-tabs span').forEach(function(t){ t.classList.toggle('active', t.getAttribute('data-day') === day); });
+    tbody.innerHTML = '';
+    if(!rows.length){
+      tbody.innerHTML = '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:28px;">Keine Termine an diesem Tag.</td></tr>';
+    }
+    rows.forEach(function(r){
+      var initial = (r.name || '?').charAt(0);
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-clickable', 'true');
+      tr.innerHTML =
+        '<td>' + esc(r.time) + '</td>' +
+        '<td><div class="cust"><div class="avatar">' + esc(initial) + '</div><div><div class="cust-name">' + esc(r.name) + '</div><div class="cust-phone">' + esc(r.phone) + '</div></div></div></td>' +
+        '<td class="service">' + esc(r.service) + '<span class="stylist">bei ' + esc(r.stylist) + '</span></td>' +
+        '<td class="price-col">' + esc(r.price) + '</td>' +
+        '<td><span class="badge ' + r.status + '"><span class="d"></span>' + esc(r.statusLabel) + '</span></td>';
+      tr.addEventListener('click', function(){ openDetail(r, day); });
+      tbody.appendChild(tr);
+    });
+    var cap = mitarbeiter.reduce(function(s,m){ return s + (m.capacity||0); }, 0) || 1;
+    var booked = rows.filter(function(r){ return r.status !== 'cancel'; }).length;
+    var storno = rows.filter(function(r){ return r.status === 'cancel'; }).length;
+    document.getElementById('statTermine').textContent = booked;
+    document.getElementById('statFrei').textContent = Math.max(0, cap - booked);
+    document.getElementById('statStorno').textContent = storno;
+    document.getElementById('statAuslastung').textContent = Math.min(100, Math.round(booked / cap * 100)) + '%';
+    renderTeamLoad();
+  }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  function openDetail(r, day){
+    var box = document.querySelector('#detailModal .modal-box');
+    var active = day && r.status === 'ok';
+    box.innerHTML =
+      '<h3>'+esc(r.name)+'</h3>' +
+      '<div class="modal-row"><span>Telefon</span><span>'+esc(r.phone)+'</span></div>' +
+      '<div class="modal-row"><span>Uhrzeit</span><span>'+esc(r.time)+'</span></div>' +
+      '<div class="modal-row"><span>Dienstleistung</span><span>'+esc(r.service)+'</span></div>' +
+      '<div class="modal-row"><span>Stylist</span><span>'+esc(r.stylist)+'</span></div>' +
+      '<div class="modal-row"><span>Preis</span><span>'+esc(r.price)+'</span></div>' +
+      '<div class="modal-row"><span>Status</span><span>'+esc(r.statusLabel)+'</span></div>' +
+      (active ? '<button class="modal-close-btn" id="completeBtn" style="background:var(--ok); color:var(--navy);">✓ Termin abschließen</button>' : '') +
+      (active ? '<button class="modal-close-btn" id="cancelBtn" style="background:transparent; color:var(--cancel); border:1px solid var(--cancel);">Termin stornieren</button>' : '') +
+      '<button class="modal-close-btn" onclick="document.getElementById(\'detailModal\').classList.remove(\'open\')">Schließen</button>';
+    if(active){
+      document.getElementById('completeBtn').addEventListener('click', function(){ changeStatus(day, r, 'abgeschlossen'); });
+      document.getElementById('cancelBtn').addEventListener('click', function(){ changeStatus(day, r, 'storniert'); });
+    }
+    document.getElementById('detailModal').classList.add('open');
+  }
+
+  function postForm(endpoint, obj){
+    var body = new URLSearchParams();
+    Object.keys(obj).forEach(function(k){ body.append(k, obj[k]); });
+    return fetch(API + endpoint, { method: 'POST', body: body });
+  }
+
+  function loadData(){
+    fetch(API + 'salon-dashboard-data').then(function(r){ return r.text(); }).then(function(t){
+      var arr = [];
+      try { arr = JSON.parse(t); } catch(e) { arr = []; }
+      if(arr && !Array.isArray(arr) && arr.items) arr = arr.items;
+      if(!Array.isArray(arr)) arr = [];
+      setLive(true);
+      if(Date.now() - lastAction < 4000) return;
+      liveItems = arr;
+      if(firstLoad){ firstLoad = false; pickStartView(); }
+      refreshAll();
+    }).catch(function(){ setLive(false); });
+  }
+  function setLive(ok){
+    var el = document.getElementById('liveState');
+    el.textContent = ok ? '● Live' : '● keine Verbindung';
+    el.style.color = ok ? 'var(--ok)' : 'var(--cancel)';
+  }
+  function pickStartView(){
+    var now = new Date();
+    if(now.getDay() === 6 && now.getHours() >= 14) weekOffset = 1;
+    computeWeek();
+    var today = todayIso();
+    var found = null;
+    DAYKEYS.forEach(function(k){ if(weekDates[k] === today) found = k; });
+    if(!found){
+      DAYKEYS.forEach(function(k){ if(!found && liveItems.some(function(i){ return i.date === weekDates[k]; })) found = k; });
+    }
+    activeDay = found || 'dienstag';
+  }
+  function refreshAll(){
+    buildData();
+    rebuildKunden();
+    renderAppointments(activeDay);
+    renderKundenList();
+    renderAuslastung();
+  }
+
+  document.getElementById('detailModal').addEventListener('click', function(e){
+    if(e.target === this){ this.classList.remove('open'); }
+  });
+
+  document.querySelectorAll('.day-tabs span').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.day-tabs span').forEach(function(t){ t.classList.remove('active'); });
+      tab.classList.add('active');
+      renderAppointments(tab.getAttribute('data-day'));
+    });
+  });
+
+  /* ================= Navigation (mit PIN-Schutz für Einstellungen) ================= */
+  var CHEF_PIN = "123456";
+  var pinCallback = null;
+
+  function switchView(view){
+    document.querySelectorAll('#mainNav a').forEach(function(l){ l.classList.remove('active'); });
+    var mainLink = document.querySelector('#mainNav a[data-view="'+view+'"]');
+    if(mainLink) mainLink.classList.add('active');
+    ['termine','dienstleistungen','kunden','auslastung','einstellungen'].forEach(function(v){
+      document.getElementById('view-' + v).style.display = (v === view) ? 'block' : 'none';
+    });
+    document.getElementById('statRow').style.display = (view === 'termine') ? 'grid' : 'none';
+  }
+
+  document.querySelectorAll('#mainNav a[data-view]').forEach(function(link){
+    link.addEventListener('click', function(){
+      switchView(link.getAttribute('data-view'));
+    });
+  });
+
+  function openPinModal(title, callback){
+    pinCallback = callback;
+    document.getElementById('pinModalTitle').textContent = title;
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinError').textContent = '';
+    document.getElementById('pinModal').classList.add('open');
+    setTimeout(function(){ document.getElementById('pinInput').focus(); }, 50);
+  }
+  function closePinModal(){
+    document.getElementById('pinModal').classList.remove('open');
+    pinCallback = null;
+  }
+  function submitPin(){
+    var val = document.getElementById('pinInput').value;
+    if(val === CHEF_PIN){
+      var cb = pinCallback;
+      closePinModal();
+      if(cb) cb();
+    } else {
+      document.getElementById('pinError').textContent = 'Falscher PIN, bitte erneut versuchen.';
+    }
+  }
+  document.getElementById('pinInput').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') submitPin();
+  });
+
+  /* ================= Sichtschutz ================= */
+  function togglePrivacy(){
+    document.getElementById('privacyToggle').classList.toggle('on');
+    document.getElementById('privacyScreen').classList.toggle('open');
+  }
+  document.getElementById('privacyScreen').addEventListener('click', togglePrivacy);
+
+  function updateClock(){
+    var now = new Date();
+    var hh = String(now.getHours()).padStart(2,'0');
+    var mm = String(now.getMinutes()).padStart(2,'0');
+    var ss = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('privacyClock').textContent = hh + ':' + mm;
+    document.getElementById('privacySeconds').textContent = ss;
+    document.getElementById('privacyWeekday').textContent = now.toLocaleDateString('de-AT', { weekday: 'long' });
+    document.getElementById('privacyDate').textContent = now.toLocaleDateString('de-AT', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  /* ================= Kundenkartei (hinzufügen/löschen) ================= */
+  var kunden = [];
+  var kundenExtra = [];
+  var kundenHidden = {};
+  var derivedNames = [];
+  function fmtDe(iso){ var p = iso.split('-'); return p[2] + '.' + p[1] + '.' + p[0]; }
+  function rebuildKunden(){
+    if(document.getElementById('kundenManageModal').classList.contains('open')) return;
+    var map = {}, today = todayIso();
+    liveItems.filter(function(i){ return i.status !== 'storniert'; }).forEach(function(i){
+      var hasPhone = i.phone && i.phone !== 'spontan' && i.phone !== 'nicht angegeben';
+      var key = hasPhone ? i.phone : normName(i.who);
+      var k = map[key] || (map[key] = { name: i.who, phone: hasPhone ? i.phone : '—', last: '—', total: 0, _d: '' });
+      k.total++;
+      if(i.date <= today && i.date > k._d){ k._d = i.date; k.last = fmtDe(i.date); }
+    });
+    var derived = Object.keys(map).map(function(x){ return map[x]; });
+    derivedNames = derived.map(function(k){ return k.name; });
+    derived = derived.filter(function(k){ return !kundenHidden[k.name]; });
+    derived.sort(function(a,b){ return a.name.localeCompare(b.name, 'de'); });
+    kunden = derived.concat(kundenExtra);
+  }
+  function deleteKunde(idx){
+    var k = kunden[idx];
+    kundenHidden[k.name] = true;
+    kundenExtra = kundenExtra.filter(function(x){ return x !== k; });
+    kunden.splice(idx, 1);
+  }
+
+  /* ================= Dienstleistungen (Datenquelle) ================= */
+  var services = [
+    {name:"Herrenschnitt", duration:"30 Min.", buffer:"10 Min.", price:"32 €"},
+    {name:"Damenschnitt", duration:"60 Min.", buffer:"10 Min.", price:"55 €"},
+    {name:"Kinderschnitt", duration:"30 Min.", buffer:"5 Min.", price:"20 €"},
+    {name:"Bartpflege", duration:"20 Min.", buffer:"5 Min.", price:"18 €"},
+    {name:"Färben", duration:"120 Min.", buffer:"15 Min.", price:"120 €"}
+  ];
+
+  /* ================= Mitarbeiter (Datenquelle) ================= */
+  var mitarbeiter = [
+    {name:"Vanessa", capacity:8},
+    {name:"Kevin", capacity:6}
+  ];
+
+  /* ---- Dienstleistungen: read-only Liste für alle Mitarbeiter ---- */
+  function renderDienstleistungenList(){
+    var tbody = document.getElementById('dienstleistungenListBody');
+    tbody.innerHTML = services.map(function(s){
+      return '<tr><td>'+s.name+'</td><td>'+s.duration+'</td><td class="price-col">+'+s.buffer+'</td><td class="price-col">'+s.price+'</td></tr>';
+    }).join('');
+  }
+
+  /* ---- Dienstleistungen verwalten (nur via Einstellungen, PIN-geschützt) ---- */
+  function requestOpenServiceSettings(){
+    openPinModal('Chef-PIN erforderlich', function(){
+      renderServiceManage();
+      document.getElementById('serviceModal').classList.add('open');
+    });
+  }
+
+  function renderServiceManage(){
+    var tbody = document.getElementById('serviceManageBody');
+    tbody.innerHTML = services.map(function(s, i){
+      return '<tr>' +
+        '<td><input class="svc-input" value="'+s.name+'" data-idx="'+i+'" data-field="name"></td>' +
+        '<td><input class="svc-input" value="'+s.duration+'" data-idx="'+i+'" data-field="duration" placeholder="z.B. ca. 30 Min."></td>' +
+        '<td><input class="svc-input" value="'+s.buffer+'" data-idx="'+i+'" data-field="buffer" placeholder="z.B. 10 Min."></td>' +
+        '<td><input class="svc-input" value="'+s.price+'" data-idx="'+i+'" data-field="price"></td>' +
+        '<td><button class="del-btn" data-del-idx="'+i+'" title="Dienstleistung löschen">✕</button></td>' +
+        '</tr>';
+    }).join('');
+    tbody.querySelectorAll('.del-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = btn.getAttribute('data-del-idx');
+        if(confirm('Dienstleistung "'+services[idx].name+'" wirklich löschen?')){
+          services.splice(idx, 1);
+          renderServiceManage();
+        }
+      });
+    });
+  }
+
+  function addServiceRow(){
+    services.push({ name: "Neue Dienstleistung", duration: "ca. 30 Min.", buffer: "10 Min.", price: "0 €" });
+    renderServiceManage();
+  }
+
+  function saveServiceChanges(){
+    document.querySelectorAll('#serviceManageBody .svc-input').forEach(function(input){
+      var idx = input.getAttribute('data-idx');
+      var field = input.getAttribute('data-field');
+      services[idx][field] = input.value;
+    });
+    renderDienstleistungenList();
+    document.getElementById('serviceModal').classList.remove('open');
+  }
+
+  /* ---- Kundenkartei: volle Details für alle, Löschen mit Chef-PIN ---- */
+  function renderKundenList(){
+    var tbody = document.getElementById('kundenListBody');
+    tbody.innerHTML = kunden.map(function(k, i){
+      return '<tr><td>'+k.name+'</td><td>'+k.phone+'</td><td>'+k.last+'</td><td>'+k.total+'</td>' +
+        '<td><button class="del-btn" data-kunde-del="'+i+'" title="Kunde löschen">✕</button></td></tr>';
+    }).join('');
+    tbody.querySelectorAll('.del-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = btn.getAttribute('data-kunde-del');
+        openPinModal('Chef-PIN erforderlich', function(){
+          if(confirm('Kunde "'+kunden[idx].name+'" wirklich löschen?')){
+            deleteKunde(idx);
+            renderKundenList();
+          }
+        });
+      });
+    });
+  }
+
+  function openAddKundeModal(){
+    document.getElementById('newKundeName').value = '';
+    document.getElementById('newKundePhone').value = '';
+    document.getElementById('addKundeModal').classList.add('open');
+  }
+  function submitAddKunde(){
+    var name = document.getElementById('newKundeName').value.trim();
+    if(!name) return;
+    var phone = document.getElementById('newKundePhone').value.trim() || '—';
+    var nk = { name: name, phone: phone, last: '—', total: 0 };
+    kundenExtra.push(nk); kunden.push(nk);
+    renderKundenList();
+    document.getElementById('addKundeModal').classList.remove('open');
+  }
+
+  /* ---- Kundenkartei verwalten (nur via Einstellungen, PIN-geschützt) ---- */
+  function requestOpenKundenSettings(){
+    openPinModal('Chef-PIN erforderlich', function(){
+      renderKundenManage();
+      document.getElementById('kundenManageModal').classList.add('open');
+    });
+  }
+
+  function renderKundenManage(){
+    var tbody = document.getElementById('kundenManageBody');
+    tbody.innerHTML = kunden.map(function(k, i){
+      return '<tr>' +
+        '<td><input class="svc-input" value="'+k.name+'" data-idx="'+i+'" data-field="name"></td>' +
+        '<td><input class="svc-input" value="'+k.phone+'" data-idx="'+i+'" data-field="phone"></td>' +
+        '<td><input class="svc-input" value="'+k.last+'" data-idx="'+i+'" data-field="last"></td>' +
+        '<td><input class="svc-input" value="'+k.total+'" data-idx="'+i+'" data-field="total"></td>' +
+        '<td><button class="del-btn" data-del-idx="'+i+'" title="Kunde löschen">✕</button></td>' +
+        '</tr>';
+    }).join('');
+    tbody.querySelectorAll('.del-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = btn.getAttribute('data-del-idx');
+        if(confirm('Kunde "'+kunden[idx].name+'" wirklich löschen?')){
+          deleteKunde(idx);
+          renderKundenManage();
+        }
+      });
+    });
+  }
+
+  function addKundeRow(){
+    kunden.push({ name: "Neuer Kunde", phone: "—", last: "—", total: 0 });
+    renderKundenManage();
+  }
+
+  function saveKundenChanges(){
+    document.querySelectorAll('#kundenManageBody .svc-input').forEach(function(input){
+      var idx = input.getAttribute('data-idx');
+      var field = input.getAttribute('data-field');
+      kunden[idx][field] = field === 'total' ? (parseInt(input.value,10) || 0) : input.value;
+    });
+    derivedNames.forEach(function(n){ kundenHidden[n] = true; });
+    kundenExtra = kunden.slice();
+    renderKundenList();
+    document.getElementById('kundenManageModal').classList.remove('open');
+  }
+
+  /* ---- Mitarbeiter verwalten (nur via Einstellungen, PIN-geschützt) ---- */
+  function requestOpenTeamSettings(){
+    openPinModal('Chef-PIN erforderlich', function(){
+      renderTeamManage();
+      document.getElementById('teamManageModal').classList.add('open');
+    });
+  }
+
+  function renderTeamManage(){
+    var tbody = document.getElementById('teamManageBody');
+    tbody.innerHTML = mitarbeiter.map(function(m, i){
+      return '<tr>' +
+        '<td><input class="svc-input" value="'+m.name+'" data-idx="'+i+'" data-field="name"></td>' +
+        '<td><input class="svc-input" value="'+m.capacity+'" data-idx="'+i+'" data-field="capacity"></td>' +
+        '<td><button class="del-btn" data-del-idx="'+i+'" title="Mitarbeiter löschen">✕</button></td>' +
+        '</tr>';
+    }).join('');
+    tbody.querySelectorAll('.del-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var idx = btn.getAttribute('data-del-idx');
+        if(confirm('Mitarbeiter "'+mitarbeiter[idx].name+'" wirklich löschen?')){
+          mitarbeiter.splice(idx, 1);
+          renderTeamManage();
+        }
+      });
+    });
+  }
+
+  function addTeamRow(){
+    mitarbeiter.push({ name: "Neuer Mitarbeiter", capacity: 6 });
+    renderTeamManage();
+  }
+
+  function saveTeamChanges(){
+    document.querySelectorAll('#teamManageBody .svc-input').forEach(function(input){
+      var idx = input.getAttribute('data-idx');
+      var field = input.getAttribute('data-field');
+      mitarbeiter[idx][field] = field === 'capacity' ? (parseInt(input.value,10) || 1) : input.value;
+    });
+    renderTeamLoad();
+    document.getElementById('teamManageModal').classList.remove('open');
+  }
+
+  /* ---- Team-Auslastung: zeigt Buchungen pro Mitarbeiter für den aktiven Tag ---- */
+  function renderTeamLoad(){
+    var activeTab = document.querySelector('.day-tabs span.active');
+    if(!activeTab) return;
+    var day = activeTab.getAttribute('data-day');
+    var rows = data[day] || [];
+    var strip = document.getElementById('teamLoadStrip');
+    strip.innerHTML = mitarbeiter.map(function(m){
+      var booked = rows.filter(function(r){ return r.stylist === m.name && r.status !== 'cancel' && r.status !== 'free'; }).length;
+      var pct = Math.min(100, Math.round((booked / m.capacity) * 100));
+      var cls = pct >= 100 ? 'over' : (pct >= 75 ? 'warn' : '');
+      return '<div class="team-chip"><span>'+m.name+': '+booked+'/'+m.capacity+'</span><div class="bar"><div class="bar-fill '+cls+'" style="width:'+pct+'%;"></div></div></div>';
+    }).join('');
+  }
+
+    /* ================= Termin abschließen / stornieren / Spontane Kunden ================= */
+  function changeStatus(day, r, newStatus){
+    lastAction = Date.now();
+    liveItems.forEach(function(i){ if(String(i.id) === String(r.id)) i.status = newStatus; });
+    document.getElementById('detailModal').classList.remove('open');
+    buildData(); renderAppointments(day);
+    if(r.id != null && String(r.id).indexOf('tmp') !== 0){
+      postForm('salon-termin-status', { id: r.id, status: newStatus }).catch(function(){});
+    }
+    setTimeout(loadData, 4500);
+  }
+
+  function addWalkIn(){
+    var select = document.getElementById('walkInService');
+    select.innerHTML = services.map(function(s){ return '<option value="'+s.name+'">'+s.name+' ('+s.price+')</option>'; }).join('');
+    var stylistSelect = document.getElementById('walkInStylist');
+    stylistSelect.innerHTML = mitarbeiter.map(function(m){ return '<option value="'+m.name+'">'+m.name+'</option>'; }).join('');
+    document.getElementById('walkInName').value = '';
+    document.getElementById('walkInTime').value = '';
+    document.getElementById('walkInModal').classList.add('open');
+  }
+
+  function submitAddWalkIn(){
+    var day = activeDay;
+    var name = document.getElementById('walkInName').value.trim();
+    if(!name) return;
+    var time = document.getElementById('walkInTime').value.trim().replace('.', ':');
+    if(!/^\d{1,2}:\d{2}$/.test(time)){ alert('Bitte Uhrzeit als HH:MM eintragen, z. B. 15:30'); return; }
+    if(time.length === 4) time = '0' + time;
+    var serviceName = document.getElementById('walkInService').value;
+    var matched = services.find(function(s){ return s.name === serviceName; }) || services[0];
+    var dur = parseInt(matched.duration, 10) || 30;
+    lastAction = Date.now();
+    liveItems.push({ id: 'tmp' + Date.now(), who: name, phone: 'spontan', date: weekDates[day], time: time,
+      service: matched.name, duration: dur, status: 'bestaetigt' });
+    buildData(); renderAppointments(day);
+    document.getElementById('walkInModal').classList.remove('open');
+    postForm('salon-walkin', { name: name, datum: weekDates[day], uhrzeit: time, dienstleistung: matched.name, dauer_min: dur }).catch(function(){});
+    setTimeout(loadData, 4500);
+  }
+
+  /* ================= Auslastung: Jahr / Monat / 4 Wochen ================= */
+  var monthNames = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+  var currentYear = new Date().getFullYear();
+  var currentMonthIndex = new Date().getMonth();
+  var viewMode = 'month';
+
+  var salonCustomers = ["Anna Moser","Thomas Bär","Sarah Kaufmann","Julia Fritz","Michael Ganahl","Lisa Beck","Elena Fink","David Loacker","Nina Sohm","Petra Ölz","Simon Rauch","Jonas Marte"];
+
+  function seededRandom(seed){
+    var x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+  function daysInMonth(year, monthIndex){ return new Date(year, monthIndex + 1, 0).getDate(); }
+  function priceToNumber(p){ return parseInt(p.replace(/\D/g,''),10) || 0; }
+
+  function getDayData(year, monthIndex, day){
+    var ds = year + '-' + pad(monthIndex + 1) + '-' + pad(day);
+    var its = liveItems.filter(function(i){ return i.date === ds && i.status !== 'storniert'; });
+    var cap = mitarbeiter.reduce(function(s,m){ return s + (m.capacity||0); }, 0) || 1;
+    return {
+      termine: its.length,
+      auslastung: Math.min(100, Math.round(its.length / cap * 100)),
+      customers: its.map(function(i){ var s = svcInfo(i.service); return { name: i.who, service: s.name, price: s.price, time: i.time }; })
+    };
+  }
+
+  function getMonthAggregate(year, monthIndex){
+    var dim = daysInMonth(year, monthIndex);
+    var totalTermine = 0, totalAuslastung = 0;
+    for(var d=1; d<=dim; d++){
+      var dd = getDayData(year, monthIndex, d);
+      totalTermine += dd.termine;
+      totalAuslastung += dd.auslastung;
+    }
+    return { termine: totalTermine, auslastung: Math.round(totalAuslastung / dim) };
+  }
+
+  function getWeekRanges(year, monthIndex){
+    var dim = daysInMonth(year, monthIndex);
+    var ranges = [[1,7],[8,14],[15,21],[22,dim]];
+    return ranges.map(function(r, i){
+      var start = r[0], end = Math.min(r[1], dim);
+      var termine = 0, auslastungSum = 0, days = 0, customers = [];
+      for(var d=start; d<=end; d++){
+        var dd = getDayData(year, monthIndex, d);
+        termine += dd.termine;
+        auslastungSum += dd.auslastung;
+        days++;
+        customers = customers.concat(dd.customers);
+      }
+      return {
+        label: 'Woche ' + (i+1),
+        range: start + '.–' + end + '. ' + monthNames[monthIndex],
+        termine: termine,
+        auslastung: Math.round(auslastungSum / days),
+        customers: customers
+      };
+    });
+  }
+
+  function renderAuslastung(){
+    var head = document.getElementById('auslastungHead');
+    var body = document.getElementById('auslastungBody');
+    var title = document.getElementById('auslastungTitle');
+    var label = document.getElementById('monthDropdownLabel');
+
+    if(viewMode === 'year'){
+      title.textContent = 'Auslastung — Jahr ' + currentYear;
+      label.textContent = 'Ganzes Jahr ' + currentYear;
+      head.innerHTML = '<tr><th>Monat</th><th>Termine</th><th>Ø Auslastung</th></tr>';
+      body.innerHTML = '';
+      monthNames.forEach(function(m, idx){
+        var agg = getMonthAggregate(currentYear, idx);
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-month-row','true');
+        tr.innerHTML = '<td>'+m+'</td><td>'+agg.termine+'</td><td class="price-col">'+agg.auslastung+'%</td>';
+        tr.addEventListener('click', function(){
+          currentMonthIndex = idx; viewMode = 'month'; renderAuslastung();
+        });
+        body.appendChild(tr);
+      });
+    } else {
+      title.textContent = 'Auslastung — ' + monthNames[currentMonthIndex] + ' ' + currentYear;
+      label.textContent = monthNames[currentMonthIndex] + ' ' + currentYear;
+      head.innerHTML = '<tr><th>Woche</th><th>Zeitraum</th><th>Termine</th><th>Auslastung</th></tr>';
+      body.innerHTML = '';
+      var weeks = getWeekRanges(currentYear, currentMonthIndex);
+      weeks.forEach(function(w){
+        var tr = document.createElement('tr');
+        tr.setAttribute('data-week-row','true');
+        tr.innerHTML = '<td>'+w.label+'</td><td>'+w.range+'</td><td>'+w.termine+'</td><td class="price-col">'+w.auslastung+'%</td>';
+        tr.addEventListener('click', function(){ openWeekCustomers(w); });
+        body.appendChild(tr);
+      });
+    }
+  }
+
+  function openWeekCustomers(w){
+    var box = document.querySelector('#detailModal .modal-box');
+    var totalPrice = w.customers.reduce(function(sum, c){ return sum + priceToNumber(c.price); }, 0);
+    var rows = w.customers.map(function(c, i){
+      return '<div class="modal-row" data-cust-idx="'+i+'" style="cursor:pointer;"><span>'+c.name+'</span><span>'+c.time+' · '+c.service+' · '+c.price+'</span></div>';
+    }).join('') || '<div class="modal-row"><span>Keine Termine in dieser Woche</span></div>';
+    box.innerHTML =
+      '<h3>'+w.label+' ('+w.range+') — '+w.termine+' Termine</h3>' +
+      '<div class="modal-row"><span>Gesamtumsatz</span><span>'+totalPrice+' €</span></div>' +
+      '<div style="max-height:320px; overflow-y:auto; margin-top:8px;">' + rows + '</div>' +
+      '<button class="modal-close-btn" onclick="document.getElementById(\'detailModal\').classList.remove(\'open\')">Schließen</button>';
+    box.querySelectorAll('[data-cust-idx]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var c = w.customers[el.getAttribute('data-cust-idx')];
+        openDetail({ name:c.name, phone:'—', time:c.time, service:c.service, stylist:'—', price:c.price, statusLabel:'Bestätigt' });
+      });
+    });
+    document.getElementById('detailModal').classList.add('open');
+  }
+
+  function toggleMonthDropdown(){
+    var menu = document.getElementById('monthDropdownMenu');
+    if(!menu.classList.contains('open')){
+      menu.innerHTML = '';
+      var yearOpt = document.createElement('div');
+      yearOpt.className = 'opt year-opt';
+      yearOpt.textContent = 'Ganzes Jahr ' + currentYear;
+      yearOpt.addEventListener('click', function(){ viewMode='year'; renderAuslastung(); menu.classList.remove('open'); });
+      menu.appendChild(yearOpt);
+      monthNames.forEach(function(m, idx){
+        var opt = document.createElement('div');
+        opt.className = 'opt';
+        opt.textContent = m + ' ' + currentYear;
+        opt.addEventListener('click', function(){ currentMonthIndex = idx; viewMode='month'; renderAuslastung(); menu.classList.remove('open'); });
+        menu.appendChild(opt);
+      });
+    }
+    menu.classList.toggle('open');
+  }
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.month-dropdown')){
+      document.getElementById('monthDropdownMenu').classList.remove('open');
+    }
+  });
+
+  computeWeek();
+  renderDienstleistungenList();
+  refreshAll();
+  loadData();
+  setInterval(loadData, 5000);
+</script>
+
+</body>
+</html>

@@ -315,6 +315,38 @@
   .modal-close{
     position:absolute;top:20px;right:20px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--ink-soft);
   }
+
+  /* ROI-RECHNER */
+  .calc{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:start;}
+  @media (max-width:860px){ .calc{grid-template-columns:1fr;} }
+  .calc-box{background:#fff;border:1px solid var(--stone-line);border-radius:var(--radius-m);padding:30px;}
+  .calc-switch{display:inline-flex;background:var(--stone);border-radius:999px;padding:4px;margin-bottom:24px;}
+  .calc-switch button{border:0;background:none;padding:9px 20px;border-radius:999px;font:600 14px 'Inter',sans-serif;color:var(--ink-soft);cursor:pointer;}
+  .calc-switch button.on{background:var(--navy);color:var(--ivory);}
+  .calc-row{margin-bottom:22px;}
+  .calc-row label{display:flex;justify-content:space-between;gap:12px;font-size:14px;font-weight:600;margin-bottom:8px;}
+  .calc-row label output{color:var(--navy);font-family:'Fraunces',serif;font-size:17px;}
+  .calc-row input[type=range]{width:100%;accent-color:var(--navy);}
+  .calc-row small{display:block;color:var(--ink-soft);font-size:12.5px;margin-top:4px;}
+  .calc-result{background:var(--navy-deep);color:var(--ivory);border-radius:var(--radius-m);padding:32px;}
+  .calc-result h3{color:var(--ivory);font-size:20px;margin-bottom:6px;}
+  .calc-big{font-family:'Fraunces',serif;font-size:clamp(36px,5vw,52px);color:var(--gold);line-height:1.1;margin:10px 0 4px;}
+  .calc-result p{color:#B9C6D8;font-size:15px;margin:6px 0;}
+  .calc-lines{margin:20px 0;border-top:1px solid rgba(255,255,255,.14);}
+  .calc-lines div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.14);font-size:15px;}
+  .calc-lines b{color:var(--ivory);}
+  .calc-note{font-size:12.5px;color:#9FB2C8;margin-top:14px;}
+  /* VERGLEICH */
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media (max-width:800px){ .compare{grid-template-columns:1fr;} }
+  .compare .col{background:#fff;border:1px solid var(--stone-line);border-radius:var(--radius-m);padding:30px;}
+  .compare .col.mijo{border:2px solid var(--navy);}
+  .compare h3{font-size:22px;margin-bottom:4px;}
+  .compare .col>p{color:var(--ink-soft);font-size:14.5px;margin:0 0 18px;}
+  .compare ul{list-style:none;padding:0;margin:0;}
+  .compare li{display:flex;gap:10px;padding:8px 0;font-size:15px;}
+  .compare li svg{width:18px;height:18px;flex-shrink:0;margin-top:3px;color:var(--navy);}
+  .compare .col:not(.mijo) li svg{color:var(--ink-soft);}
 </style>
 </head>
 <body>
@@ -326,6 +358,7 @@
       <a href="#features">Funktionen</a>
       <a href="#industries">Branchen</a>
       <a href="#how">Ablauf</a>
+      <a href="#rechner">Rechner</a>
       <a href="#pricing">Preise</a>
     </div>
     <a href="#contact" class="nav-cta">Demo anfragen</a>
@@ -529,6 +562,53 @@
   </div>
 </section>
 
+<section id="rechner">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Was kostet Sie jeder verpasste Anruf?</h2>
+      <p>Rechnen Sie mit Ihren eigenen Zahlen. Das Ergebnis ist eine Schätzung, kein Versprechen. Es zeigt, ab wann sich ein Telefonassistent für Ihren Betrieb lohnt.</p>
+    </div>
+    <div class="calc">
+      <div class="calc-box">
+        <div class="calc-switch" role="tablist" aria-label="Branche">
+          <button type="button" id="calcRest" class="on" onclick="calcBranche('rest')">Restaurant</button>
+          <button type="button" id="calcSalon" onclick="calcBranche('salon')">Friseursalon</button>
+        </div>
+        <div class="calc-row">
+          <label for="cCalls">Anrufe pro Woche <output id="oCalls">80</output></label>
+          <input type="range" id="cCalls" min="10" max="300" step="5" value="80" oninput="calcUpdate()">
+        </div>
+        <div class="calc-row">
+          <label for="cMiss">Davon nicht angenommen <output id="oMiss">25 %</output></label>
+          <input type="range" id="cMiss" min="0" max="80" step="5" value="25" oninput="calcUpdate()">
+          <small>Stoßzeiten, Arbeit am Gast, Ruhetag, nach Feierabend.</small>
+        </div>
+        <div class="calc-row">
+          <label for="cBook">Davon wollten buchen <output id="oBook">50 %</output></label>
+          <input type="range" id="cBook" min="10" max="100" step="5" value="50" oninput="calcUpdate()">
+        </div>
+        <div class="calc-row" style="margin-bottom:0;">
+          <label for="cValue"><span id="lValue">Umsatz pro Reservierung</span> <output id="oValue">80 €</output></label>
+          <input type="range" id="cValue" min="20" max="300" step="5" value="80" oninput="calcUpdate()">
+        </div>
+      </div>
+      <div class="calc-result" aria-live="polite">
+        <h3>Ihre Schätzung pro Monat</h3>
+        <p>Dieser Umsatz geht durch nicht angenommene Anrufe möglicherweise verloren:</p>
+        <div class="calc-big" id="rLost">0 €</div>
+        <div class="calc-lines">
+          <div><span>Verpasste Buchungen</span><b id="rMissed">0</b></div>
+          <div><span>Geschätzte Gesprächsminuten</span><b id="rMin">0</b></div>
+          <div><span>Passender Tarif</span><b id="rTariff">–</b></div>
+          <div><span>Schon nach</span><b id="rBreak">–</b></div>
+        </div>
+        <a href="#contact" class="btn-primary">Persönliche Beratung anfragen</a>
+        <p class="calc-note">Annahmen: ca. 1,2 Minuten pro Anruf, 4,3 Wochen pro Monat. Alle Werte sind Ihre eigenen Schätzungen.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section id="pricing" style="background:var(--stone);">
   <div class="wrap">
     <div class="section-head">
@@ -669,6 +749,37 @@
           <b>Komplett</b>
           <span>Mehrseitige Website mit interaktiven Funktionen, z. B. Online-Speisekarte mit Bestellsystem.</span>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="vergleich">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Selbst einrichten oder einrichten lassen?</h2>
+      <p>Es gibt Telefonassistenten zum Selbermachen. Wir sind für Betriebe da, die sich um nichts kümmern möchten.</p>
+    </div>
+    <div class="compare">
+      <div class="col">
+        <h3>Selbst einrichten</h3>
+        <p>Passt, wenn Sie gerne selbst konfigurieren.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Registrierung und Einrichtung in Eigenregie</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Texte, Abläufe und Kalender selbst anpassen</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Standardlösung für alle Branchen</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Abrechnung nach tatsächlicher Nutzung</li>
+        </ul>
+      </div>
+      <div class="col mijo">
+        <h3>Mijo AI, von uns eingerichtet</h3>
+        <p>Passt, wenn Sie sich auf Ihr Geschäft konzentrieren wollen.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Einrichtung komplett durch uns, auf Wunsch persönlich vor Ort</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Gebaut für Restaurants und Friseursalons, mit Live-Dashboard für Ihre Termine</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Ansprechpartner aus Vorarlberg, direkt erreichbar</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Feste Monatspreise mit Freiminuten, keine Einrichtungsgebühr</li>
+        </ul>
       </div>
     </div>
   </div>
@@ -906,6 +1017,46 @@
       detailText.textContent = industryText[chip.getAttribute('data-industry')];
     });
   });
+
+  /* ROI-Rechner */
+  var calcMode = 'rest';
+  var CALC_T = {
+    rest:  [['Basis',300,200],['Standard',400,300],['Premium',700,350],['Exklusiv',1500,500]],
+    salon: [['Basis',200,150],['Standard',350,250],['Premium',500,300],['Exklusiv',1000,400]]
+  };
+  function calcBranche(m){
+    calcMode = m;
+    document.getElementById('calcRest').classList.toggle('on', m === 'rest');
+    document.getElementById('calcSalon').classList.toggle('on', m === 'salon');
+    document.getElementById('lValue').textContent = m === 'rest' ? 'Umsatz pro Reservierung' : 'Umsatz pro Termin';
+    var v = document.getElementById('cValue');
+    v.value = m === 'rest' ? 80 : 45;
+    calcUpdate();
+  }
+  function calcUpdate(){
+    var calls = +document.getElementById('cCalls').value;
+    var miss = +document.getElementById('cMiss').value;
+    var book = +document.getElementById('cBook').value;
+    var val = +document.getElementById('cValue').value;
+    document.getElementById('oCalls').textContent = calls;
+    document.getElementById('oMiss').textContent = miss + ' %';
+    document.getElementById('oBook').textContent = book + ' %';
+    document.getElementById('oValue').textContent = val + ' €';
+    var perMonth = calls * 4.3;
+    var missed = Math.round(perMonth * miss / 100 * book / 100);
+    var lost = missed * val;
+    var minutes = Math.round(perMonth * 1.2);
+    var list = CALC_T[calcMode], t = list[list.length - 1];
+    for(var i = 0; i < list.length; i++){ if(minutes <= list[i][1]){ t = list[i]; break; } }
+    var over = minutes > t[1];
+    document.getElementById('rLost').textContent = lost.toLocaleString('de-AT') + ' €';
+    document.getElementById('rMissed').textContent = missed;
+    document.getElementById('rMin').textContent = '~' + minutes;
+    document.getElementById('rTariff').textContent = t[0] + ' (' + t[2] + ' €/Monat)' + (over ? ', Zusatzminuten möglich' : '');
+    var need = Math.ceil(t[2] / val);
+    document.getElementById('rBreak').textContent = need + (need === 1 ? ' zurückgewonnenen Buchung' : ' zurückgewonnenen Buchungen') + ' im Monat';
+  }
+  calcUpdate();
 </script>
 
 </body>

@@ -52,6 +52,32 @@
   section{padding:104px 0;}
   @media (max-width:720px){ section{padding:64px 0;} }
 
+
+  /* KI LIVE */
+  #ki-live{background:var(--ivory);padding:72px 0;}
+  .kl-panel{position:relative;overflow:hidden;border-radius:28px;background:radial-gradient(120% 120% at 70% 40%,#10294a 0%,#0a1a30 55%,#07111f 100%);border:1px solid rgba(120,200,255,.18);box-shadow:0 30px 80px rgba(7,17,31,.35);display:grid;grid-template-columns:1.05fr 1fr;align-items:center;gap:8px;padding:56px 56px 56px 60px;}
+  .kl-panel::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(120,200,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(120,200,255,.06) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(70% 80% at 72% 50%,#000 0%,transparent 75%);mask-image:radial-gradient(70% 80% at 72% 50%,#000 0%,transparent 75%);pointer-events:none;}
+  .kl-copy{position:relative;z-index:1;}
+  .kl-tag{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#7fdcff;margin-bottom:16px;}
+  .kl-tag i{width:8px;height:8px;border-radius:50%;background:#7fdcff;box-shadow:0 0 12px #7fdcff;}
+  .kl-copy h2{color:#fff;font-size:clamp(28px,3.6vw,44px);line-height:1.1;}
+  .kl-copy p{color:#a9bbd3;margin:16px 0 28px;max-width:44ch;font-size:17px;}
+  .kl-btn{border:none;cursor:pointer;background:linear-gradient(135deg,#f0c660,#C89B3C);color:#10233d;font:700 16px 'Inter',sans-serif;padding:16px 30px;border-radius:999px;display:inline-flex;align-items:center;gap:10px;box-shadow:0 0 0 0 rgba(240,198,96,.5),0 10px 30px rgba(200,155,60,.3);transition:transform .15s,box-shadow .2s;}
+  .kl-btn:hover{transform:translateY(-1px);box-shadow:0 0 0 6px rgba(240,198,96,.14),0 12px 34px rgba(200,155,60,.4);}
+  .kl-btn:disabled{opacity:.65;cursor:wait;transform:none;}
+  .kl-btn.end{background:linear-gradient(135deg,#ff8a8a,#c24b4b);color:#fff;}
+  .kl-status{min-height:22px;margin-top:16px;font-size:14px;color:#8fe3ff;}
+  .kl-hint{margin-top:10px;font-size:12.5px;color:#7488a3;}
+  .kl-orbwrap{position:relative;z-index:1;display:flex;justify-content:center;}
+  #kl-orb{width:min(100%,420px);aspect-ratio:1/1;display:block;}
+  @media (max-width:860px){
+    .kl-panel{grid-template-columns:1fr;padding:36px 22px 40px;gap:0;text-align:center;border-radius:22px;}
+    .kl-orbwrap{order:-1;}
+    #kl-orb{width:min(78%,320px);}
+    .kl-copy p{margin-left:auto;margin-right:auto;}
+    .kl-tag{justify-content:center;}
+  }
+
   /* NAV */
   header{
     position:sticky;top:0;z-index:50;
@@ -375,6 +401,9 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
           Demo anfragen
         </a>
+        <a href="#ki-live" class="btn-secondary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="display:inline-block;vertical-align:-3px;margin-right:6px"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>KI live testen
+        </a>
         <a href="#how" class="btn-secondary">So funktioniert's</a>
       </div>
     </div>
@@ -409,6 +438,25 @@
       <div class="stat"><b>&lt;3s</b><span>Antwortzeit</span></div>
       <div class="stat"><b>100%</b><span>Automatisch</span></div>
       <div class="stat"><b>0</b><span>Verpasste Anrufe</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="ki-live">
+  <div class="wrap">
+    <div class="kl-panel">
+      <div class="kl-copy">
+        <div class="kl-tag"><i></i> Live-Demo</div>
+        <h2>Sprechen Sie jetzt mit unserer KI.</h2>
+        <p>Hören Sie selbst, wie ein Anruf in Ihrem Restaurant oder Salon klingen kann. Ein Klick, Mikrofon erlauben, losreden.</p>
+        <button class="kl-btn" id="kl-btn" type="button">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0014 0M12 18v3"/></svg>
+          <span id="kl-btn-t">Gespräch starten</span>
+        </button>
+        <div class="kl-status" id="kl-status" aria-live="polite"></div>
+        <div class="kl-hint">Maximal 3 Minuten &middot; Es wird nichts gespeichert &middot; Mikrofon erforderlich</div>
+      </div>
+      <div class="kl-orbwrap"><canvas id="kl-orb" aria-hidden="true"></canvas></div>
     </div>
   </div>
 </section>
@@ -1059,5 +1107,124 @@
   calcUpdate();
 </script>
 
+<script type="module">
+(function(){
+  var API="https://a4milan.app.n8n.cloud/webhook/mijo-web-call";
+  var SDK="https://cdn.jsdelivr.net/npm/retell-client-js-sdk@3.0.2/+esm";
+  var cv=document.getElementById("kl-orb"),btn=document.getElementById("kl-btn"),bt=document.getElementById("kl-btn-t"),st=document.getElementById("kl-status");
+  if(!cv)return;
+  var ctx=cv.getContext("2d"),S=420,dpr=Math.min(window.devicePixelRatio||1,2);
+  function size(){var w=cv.clientWidth||S;cv.width=w*dpr;cv.height=w*dpr;S=w;}
+  size();window.addEventListener("resize",size);
+  var reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var state="idle",level=0,target=0,t0=performance.now(),micLevel=0;
+  var rings=[
+    {r:.50,a:.10,k:3,sp:.7,ph:0,c:"127,220,255",w:2.2},
+    {r:.46,a:.12,k:4,sp:-.9,ph:1.7,c:"240,198,96",w:2},
+    {r:.42,a:.14,k:5,sp:1.1,ph:3.1,c:"160,140,255",w:1.6},
+    {r:.38,a:.12,k:3,sp:-1.3,ph:4.4,c:"127,220,255",w:1.4},
+    {r:.34,a:.10,k:6,sp:1.6,ph:2.2,c:"240,198,96",w:1.2}
+  ];
+  var parts=[];for(var i=0;i<70;i++)parts.push({a:Math.random()*6.283,r:.42+Math.random()*.2,s:(Math.random()*.4+.1)*(Math.random()<.5?-1:1),z:Math.random()*1.6+.5,o:Math.random()*.6+.3});
+
+  function draw(now){
+    var t=(now-t0)/1000*(reduce?.25:1);
+    // Zielpegel je Zustand
+    if(state==="talk"){target=.45+.35*Math.abs(Math.sin(t*5.1)*Math.sin(t*2.3+1))+.15*Math.sin(t*9);}
+    else if(state==="live"){target=.08+micLevel*1.6;}
+    else if(state==="connect"){target=.2+.1*Math.sin(t*6);}
+    else{target=.05+.03*Math.sin(t*1.4);}
+    level+=(target-level)*.12;
+    var W=cv.width,c=W/2;
+    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,W,W);
+    ctx.translate(c,c);ctx.scale(W/S,W/S);
+    var R=S/2,L=Math.max(0,level);
+    ctx.globalCompositeOperation="lighter";
+    // Kern-Glow
+    var g=ctx.createRadialGradient(0,0,0,0,0,R*(.85+L*.3));
+    g.addColorStop(0,"rgba(255,255,255,"+(.55+L*.4)+")");
+    g.addColorStop(.18,"rgba(127,220,255,"+(.5+L*.3)+")");
+    g.addColorStop(.5,"rgba(60,120,255,"+(.2+L*.15)+")");
+    g.addColorStop(1,"rgba(10,26,48,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,R*(.9+L*.3),0,6.283);ctx.fill();
+    // goldener Gegenschein
+    var g2=ctx.createRadialGradient(R*.12,R*.1,0,R*.12,R*.1,R*.42);
+    g2.addColorStop(0,"rgba(240,198,96,"+(.35+L*.3)+")");g2.addColorStop(1,"rgba(240,198,96,0)");
+    ctx.fillStyle=g2;ctx.beginPath();ctx.arc(R*.12,R*.1,R*.42,0,6.283);ctx.fill();
+    // verformte Ringe
+    for(var i=0;i<rings.length;i++){
+      var rg=rings[i],amp=rg.a*(.35+L*3.2),base=R*rg.r*1.55*(1+L*.16);
+      ctx.beginPath();
+      for(var j=0;j<=120;j++){
+        var th=j/120*6.283,
+            d=Math.sin(th*rg.k+t*rg.sp+rg.ph)*amp+Math.sin(th*(rg.k+2)-t*rg.sp*1.3+rg.ph)*amp*.55,
+            rr=base*(1+d);
+        var x=Math.cos(th)*rr,y=Math.sin(th)*rr;
+        j?ctx.lineTo(x,y):ctx.moveTo(x,y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle="rgba("+rg.c+","+(.35+L*.5)+")";ctx.lineWidth=rg.w;
+      ctx.shadowColor="rgba("+rg.c+",.9)";ctx.shadowBlur=14;ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+    // Partikel
+    for(var p=0;p<parts.length;p++){
+      var q=parts[p];q.a+=q.s*.004*(1+L*6);
+      var rr=R*q.r*1.45*(1+L*.25),x=Math.cos(q.a)*rr,y=Math.sin(q.a)*rr*.92;
+      ctx.fillStyle="rgba(200,235,255,"+q.o*(.5+L)+")";
+      ctx.beginPath();ctx.arc(x,y,q.z*(1+L*.8),0,6.283);ctx.fill();
+    }
+    // Außenring (fein, rotierend)
+    ctx.save();ctx.rotate(t*.25);ctx.setLineDash([2,10]);ctx.strokeStyle="rgba(127,220,255,.35)";ctx.lineWidth=1.2;
+    ctx.beginPath();ctx.arc(0,0,R*.93,0,6.283);ctx.stroke();ctx.restore();
+    ctx.save();ctx.rotate(-t*.18);ctx.setLineDash([40,24]);ctx.strokeStyle="rgba(240,198,96,.3)";ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.arc(0,0,R*.87,0,6.283);ctx.stroke();ctx.restore();
+    ctx.globalCompositeOperation="source-over";
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  // ---- Gespräch ----
+  var client=null,active=false,stream=null,actx=null,an=null,buf=null,busy=false;
+  function setUi(label,cls,msg){bt.textContent=label;btn.className="kl-btn"+(cls?" "+cls:"");st.textContent=msg||"";}
+  function stopMic(){try{if(stream)stream.getTracks().forEach(function(x){x.stop();});}catch(e){}try{if(actx)actx.close();}catch(e){}stream=null;actx=null;an=null;micLevel=0;}
+  function idle(msg){active=false;busy=false;state="idle";btn.disabled=false;stopMic();setUi("Gespräch starten","",msg);}
+  function micTick(){
+    if(!an)return;an.getByteTimeDomainData(buf);var sum=0;
+    for(var i=0;i<buf.length;i++){var v=(buf[i]-128)/128;sum+=v*v;}
+    var rms=Math.sqrt(sum/buf.length);micLevel+=(Math.min(1,rms*4)-micLevel)*.3;
+    requestAnimationFrame(micTick);
+  }
+  async function getClient(){
+    if(client)return client;
+    var m=await import(SDK);client=new m.RetellWebClient();
+    client.on("call_started",function(){active=true;busy=false;state="live";btn.disabled=false;setUi("Gespräch beenden","end","Verbunden. Sie können sprechen.");});
+    client.on("call_ended",function(){idle("Gespräch beendet. Danke fürs Testen!");});
+    client.on("agent_start_talking",function(){if(active)state="talk";});
+    client.on("agent_stop_talking",function(){if(active)state="live";});
+    client.on("error",function(e){console.error(e);try{client.stopCall();}catch(_){}idle("Verbindung fehlgeschlagen. Bitte erneut versuchen.");});
+    return client;
+  }
+  btn.addEventListener("click",async function(){
+    if(active){try{client.stopCall();}catch(e){}return;}
+    if(busy)return;busy=true;btn.disabled=true;state="connect";setUi("Verbinde …","","Verbindung wird aufgebaut …");
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    }catch(e){idle("Bitte erlauben Sie den Zugriff auf das Mikrofon.");return;}
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext;actx=new AC();var src=actx.createMediaStreamSource(stream);
+      an=actx.createAnalyser();an.fftSize=512;buf=new Uint8Array(an.fftSize);src.connect(an);micTick();
+    }catch(e){}
+    try{
+      var cl=await getClient();
+      var r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});
+      if(!r.ok)throw new Error("HTTP "+r.status);
+      var d=await r.json();
+      await cl.startCall({callId:d.call_id,accessToken:d.access_token,transport:d.transport,iceServers:d.ice_servers});
+    }catch(e){console.error(e);idle("Das hat leider nicht geklappt. Bitte später erneut versuchen.");}
+  });
+})();
+</script>
 </body>
 </html>

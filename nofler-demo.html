@@ -593,7 +593,7 @@ body.chef-mode .sp-del{display:inline-block}
 
     <div id="view-speisekarte" class="view" hidden>
       <div class="topbar"><div><h1>Speisekarte</h1><p>Tisch wählen, Gerichte anklicken, bei Bedarf Notiz eintragen, dann an die Küche senden.</p></div></div>
-      <div class="proto-badge" style="background:var(--sage-bg);color:var(--sage)">● Live — verbunden mit Airtable/n8n</div>
+      <div class="proto-badge" style="background:var(--sage-bg);color:var(--sage)">● Live — verbunden mit n8n</div>
       <div class="table-picker" id="protoTablePicker"></div>
       <div class="order-layout">
         <div id="protoMenuColumns"></div>
@@ -608,7 +608,7 @@ body.chef-mode .sp-del{display:inline-block}
 
     <div id="view-kueche" class="view" hidden>
       <div class="topbar"><div><h1>Küche</h1><p>Eingehende Bestellungen — Status hier direkt umschalten. Der Mitarbeiter wird benachrichtigt, sobald ein Tisch fertig ist.</p></div></div>
-      <div class="proto-badge" style="background:var(--sage-bg);color:var(--sage)">● Live — verbunden mit Airtable/n8n</div>
+      <div class="proto-badge" style="background:var(--sage-bg);color:var(--sage)">● Live — verbunden mit n8n</div>
 
       <div class="stats stats-solo">
         <div class="stat-card"><div class="n" id="kuecheStatHeute">0</div><div class="l">Bestellungen heute</div><div class="delta" id="kuecheStatHeuteDelta">&nbsp;</div></div>
@@ -756,7 +756,7 @@ body.chef-mode .sp-del{display:inline-block}
         <div class="settings-row"><span>Restaurant</span><b class="settings-editable" contenteditable="false" data-field="restaurant">Nofler, Feldkirch</b></div>
         <div class="settings-row"><span>Telefonnummer</span><b class="settings-editable" contenteditable="false" data-field="phone">+43 5522 12345</b></div>
         <div class="settings-row"><span>Telefonassistent</span><b class="settings-live">● Aktiv seit 07:00 Uhr</b></div>
-        <div class="settings-row"><span>Verbunden über</span><b>n8n &middot; Airtable</b></div>
+        <div class="settings-row"><span>Verbunden über</span><b>n8n</b></div>
         <div class="settings-row"><span>Tischbestand</span><b class="settings-editable" contenteditable="false" data-field="tables">5&times; 2er &middot; 5&times; 4er &middot; 4&times; 6er</b></div>
         <div class="settings-row"><span>Benachrichtigungen</span><b class="settings-editable" contenteditable="false" data-field="notify">Per E-Mail bei neuer Reservierung</b></div>
         <p class="detail-note settings-lock-note" style="margin-top:18px;text-align:left">Nur im Chef-Modus bearbeitbar.</p>
@@ -1959,7 +1959,7 @@ body.chef-mode .sp-del{display:inline-block}
       .catch(function(err){ console.warn('Küchenbestellungen konnten nicht geladen werden:', err); });
   }
   loadKuecheOrders(function(){ if(typeof renderProtoTickets === 'function') renderProtoTickets(); });
-  setInterval(function(){ loadKuecheOrders(function(){ if(typeof renderProtoTickets === 'function') renderProtoTickets(); }); checkForDayChange(); }, 15000);
+  setInterval(function(){ if(document.hidden) return; loadKuecheOrders(function(){ if(typeof renderProtoTickets === 'function') renderProtoTickets(); }); checkForDayChange(); }, 30000);
 
   function initProtoSpeisekarte(){
     if(protoInitDone) return;
@@ -3055,7 +3055,7 @@ body.chef-mode .sp-del{display:inline-block}
   }
   updateGauge();
 
-  /* ---------------- LIVE DATEN VON AIRTABLE ---------------- */
+  /* ---------------- LIVE DATEN ---------------- */
   (function loadLiveData(){
     var LIVE_ENDPOINT = 'https://a4milan.app.n8n.cloud/webhook/nofler-dashboard-data';
     fetch(LIVE_ENDPOINT)
@@ -3098,6 +3098,7 @@ body.chef-mode .sp-del{display:inline-block}
       });
     setInterval(function(){
       checkForDayChange();
+      if(document.hidden) return;
       fetch(LIVE_ENDPOINT)
         .then(function(r){ return r.json(); })
         .then(function(items){
@@ -3114,7 +3115,7 @@ body.chef-mode .sp-del{display:inline-block}
           refreshCurrentView();
         })
         .catch(function(){});
-    }, 15000);
+    }, 30000);
   })();
 })();
 </script>

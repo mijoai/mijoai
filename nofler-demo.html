@@ -391,6 +391,25 @@ body.chef-mode .settings-editable:hover{box-shadow:inset 0 0 0 1px var(--amber)}
 body.chef-mode .settings-editable:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--amber);background:var(--amber-bg)}
 .settings-save-btn{background:var(--amber);color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--ff-body)}
 .settings-save-btn:hover{opacity:.88}
+
+/* BETRIEBSURLAUB & SONDERTAGE */
+.sp-note{font-size:13px;color:var(--slate);margin:0 0 16px;line-height:1.5;text-align:left}
+body.chef-mode .sp-lock{display:none}
+.sp-form{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;margin-bottom:18px}
+.sp-form label{display:flex;flex-direction:column;gap:4px;font-size:11.5px;font-weight:600;color:var(--slate)}
+.sp-form input{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13.5px;font-family:var(--ff-body);color:var(--ink);background:#fff}
+.sp-form input[type=text]{min-width:200px}
+.sp-add{background:var(--amber);color:#fff;border:none;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--ff-body)}
+.sp-add:disabled{opacity:.6;cursor:default}
+.sp-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.sp-item:last-child{border-bottom:none}
+.sp-item b{font-weight:600}
+.sp-item span{color:var(--slate)}
+.sp-del{display:none;border:none;background:var(--rust-bg);color:var(--rust);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--ff-body)}
+body.chef-mode .sp-del{display:inline-block}
+.sp-msg{font-size:12.5px;margin-top:8px;min-height:18px;color:var(--slate)}
+.sp-msg.err{color:var(--rust)}
+.sp-empty{color:var(--slate-dim);font-size:13px;padding:6px 0}
 </style>
 </head>
 <body>
@@ -742,6 +761,21 @@ body.chef-mode .settings-editable:focus{outline:none;box-shadow:inset 0 0 0 1.5p
         <div class="settings-row"><span>Benachrichtigungen</span><b class="settings-editable" contenteditable="false" data-field="notify">Per E-Mail bei neuer Reservierung</b></div>
         <p class="detail-note settings-lock-note" style="margin-top:18px;text-align:left">Nur im Chef-Modus bearbeitbar.</p>
         <p class="detail-note settings-unlock-note" style="margin-top:18px;text-align:left;display:none">Chef-Modus aktiv — Felder antippen und bearbeiten. <button id="settingsSaveBtn" class="settings-save-btn">Speichern</button></p>
+      </div>
+      <div class="panel" style="padding:26px 28px" id="sperrtagePanel">
+        <div class="panel-head" style="padding:0 0 10px;border:none"><h2 style="font-size:1.1rem">Betriebsurlaub &amp; Sondertage</h2></div>
+        <p class="sp-note">An diesen Tagen nimmt der Telefonassistent keine Reservierungen an und nennt den nächsten offenen Tag. Neujahr, Christtag und Stefanitag kennt er bereits.</p>
+        <div class="chef-only">
+          <form class="sp-form" id="spForm" autocomplete="off">
+            <label>Von<input type="date" id="spVon" required></label>
+            <label>Bis (optional)<input type="date" id="spBis"></label>
+            <label>Grund (optional)<input type="text" id="spGrund" maxlength="80" placeholder="z. B. Betriebsurlaub"></label>
+            <button type="submit" class="sp-add" id="spAdd">Eintragen</button>
+          </form>
+        </div>
+        <div id="spList"><div class="sp-empty">Wird geladen …</div></div>
+        <div class="sp-msg" id="spMsg"></div>
+        <p class="sp-note sp-lock" style="margin-top:12px">Eintragen und Löschen nur im Chef-Modus.</p>
       </div>
       <div class="panel" style="padding:26px 28px">
         <div class="panel-head" style="padding:0 0 16px;border:none"><h2 style="font-size:1.1rem">Chef-PIN ändern</h2></div>
@@ -3082,6 +3116,106 @@ body.chef-mode .settings-editable:focus{outline:none;box-shadow:inset 0 0 0 1.5p
         .catch(function(){});
     }, 15000);
   })();
+})();
+</script>
+<script>
+(function(){
+  var BASE = 'https://a4milan.app.n8n.cloud/webhook/';
+  var listEl = document.getElementById('spList');
+  var msgEl = document.getElementById('spMsg');
+  var form = document.getElementById('spForm');
+  var addBtn = document.getElementById('spAdd');
+  if(!listEl || !msgEl || !form || !addBtn) return;
+
+  function fmt(d){
+    var p = String(d || '').slice(0, 10).split('-');
+    return p.length === 3 ? p[2] + '.' + p[1] + '.' + p[0] : String(d || '');
+  }
+  function say(t, err){ msgEl.textContent = t || ''; msgEl.className = 'sp-msg' + (err ? ' err' : ''); }
+  function emptyNote(text){
+    listEl.textContent = '';
+    var e = document.createElement('div');
+    e.className = 'sp-empty';
+    e.textContent = text;
+    listEl.appendChild(e);
+  }
+  function render(items){
+    if(!items.length){ emptyNote('Keine Sondertage eingetragen.'); return; }
+    listEl.textContent = '';
+    items.forEach(function(it){
+      var row = document.createElement('div');
+      row.className = 'sp-item';
+      var left = document.createElement('div');
+      var b = document.createElement('b');
+      b.textContent = (it.bis && it.bis !== it.von) ? fmt(it.von) + ' – ' + fmt(it.bis) : fmt(it.von);
+      left.appendChild(b);
+      if(it.grund){
+        var s = document.createElement('span');
+        s.textContent = '  ·  ' + it.grund;
+        left.appendChild(s);
+      }
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'sp-del';
+      del.textContent = 'Löschen';
+      del.addEventListener('click', function(){ removeItem(it, del); });
+      row.appendChild(left);
+      row.appendChild(del);
+      listEl.appendChild(row);
+    });
+  }
+  function load(){
+    fetch(BASE + 'nofler-sperrtage')
+      .then(function(r){ return r.json(); })
+      .then(function(items){
+        if(Array.isArray(items)) render(items); else emptyNote('Die Liste konnte gerade nicht geladen werden.');
+      })
+      .catch(function(){ emptyNote('Die Liste konnte gerade nicht geladen werden.'); });
+  }
+  function removeItem(it, btn){
+    if(!window.confirm('Eintrag wirklich löschen?')) return;
+    btn.disabled = true;
+    say('Wird gelöscht …');
+    fetch(BASE + 'nofler-sperrtag-loeschen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: it.id })
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.success){ say('Gelöscht.'); load(); }
+        else { btn.disabled = false; say('Löschen hat nicht geklappt.', true); }
+      })
+      .catch(function(){ btn.disabled = false; say('Löschen hat nicht geklappt.', true); });
+  }
+  form.addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var von = document.getElementById('spVon').value;
+    var bis = document.getElementById('spBis').value || von;
+    var grund = document.getElementById('spGrund').value.trim();
+    if(!von){ say('Bitte ein Startdatum wählen.', true); return; }
+    if(bis < von){ say('Das Ende liegt vor dem Beginn.', true); return; }
+    addBtn.disabled = true;
+    say('Wird gespeichert …');
+    fetch(BASE + 'nofler-sperrtag-neu', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ von: von, bis: bis, grund: grund })
+    })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        addBtn.disabled = false;
+        if(res && res.success){
+          form.reset();
+          say('Eingetragen. Der Telefonassistent kennt den Zeitraum ab sofort.');
+          load();
+        } else {
+          say((res && res.error) || 'Speichern hat nicht geklappt.', true);
+        }
+      })
+      .catch(function(){ addBtn.disabled = false; say('Speichern hat nicht geklappt.', true); });
+  });
+  load();
 })();
 </script>
 </body>

@@ -742,7 +742,7 @@
       <div class="price-card">
         <h3>Basis</h3>
         <div class="amount"><b>100 €</b> / Monat</div>
-        <p class="tariff-meta">bis 1000 Freiminuten</p>
+        <p class="tariff-meta">bis 600 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
@@ -754,7 +754,7 @@
       <div class="price-card">
         <h3>Standard</h3>
         <div class="amount"><b>150 €</b> / Monat</div>
-        <p class="tariff-meta">bis 1500 Freiminuten</p>
+        <p class="tariff-meta">bis 1000 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
@@ -766,8 +766,8 @@
       </div>
       <div class="price-card">
         <h3>Premium</h3>
-        <div class="amount"><b>200 €</b> / Monat</div>
-        <p class="tariff-meta">bis 2500 Freiminuten</p>
+        <div class="amount"><b>250 €</b> / Monat</div>
+        <p class="tariff-meta">bis 1600 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
@@ -776,12 +776,12 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kostenlose laufende Updates</li>
         </ul>
         <p class="tariff-ideal">Ideal für stark frequentierte Salons</p>
-        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Premium (200 €/Monat)">Tarif wählen</button>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Premium (250 €/Monat)">Tarif wählen</button>
       </div>
       <div class="price-card">
         <h3>Exklusiv</h3>
-        <div class="amount"><b>300 €</b> / Monat</div>
-        <p class="tariff-meta">bis 4000 Freiminuten</p>
+        <div class="amount"><b>400 €</b> / Monat</div>
+        <p class="tariff-meta">bis 2600 Freiminuten</p>
         <ul>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> 24/7 Terminannahme</li>
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Kundenkartei-Anbindung</li>
@@ -791,7 +791,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6L9 17l-5-5"/></svg> Individuelle Sonderwünsche &amp; Vor-Ort-Betreuung</li>
         </ul>
         <p class="tariff-ideal">Ideal für Premium-Salons</p>
-        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Exklusiv (300 €/Monat)">Tarif wählen</button>
+        <button type="button" class="btn-secondary tariff-btn" data-tarif="Friseursalon · Exklusiv (400 €/Monat)">Tarif wählen</button>
       </div>
     </div>
     <p class="tariff-note">Mindestlaufzeit 3 Monate, danach monatlich kündbar. Jederzeit upgradebar: Reicht Ihr Paket nicht mehr aus, wechseln wir in die nächsthöhere Stufe (einmalige Umstellungsgebühr 20 €). Mehrere Standorte oder besondere Anforderungen? Individuell nach Vereinbarung.</p>
@@ -915,8 +915,8 @@
           <optgroup label="Friseursalons">
             <option>Friseursalon · Basis (100 €/Monat)</option>
             <option>Friseursalon · Standard (150 €/Monat)</option>
-            <option>Friseursalon · Premium (200 €/Monat)</option>
-            <option>Friseursalon · Exklusiv (300 €/Monat)</option>
+            <option>Friseursalon · Premium (250 €/Monat)</option>
+            <option>Friseursalon · Exklusiv (400 €/Monat)</option>
           </optgroup>
         </select>
       </div>
@@ -1085,7 +1085,7 @@
   var calcMode = 'rest';
   var CALC_T = {
     rest:  [['Basis',1000,150],['Standard',1500,250],['Premium',2500,400],['Exklusiv',4000,600]],
-    salon: [['Basis',1000,100],['Standard',1500,150],['Premium',2500,200],['Exklusiv',4000,300]]
+    salon: [['Basis',600,100],['Standard',1000,150],['Premium',1600,250],['Exklusiv',2600,400]]
   };
   function calcBranche(m){
     calcMode = m;

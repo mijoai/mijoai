@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light only">
+<title>Mijo AI — Studio Dashboard (Live-Demo für Kristina Beauty)</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#FFFFFF; --navy2:#FAF7F0; --steel:#EFE8D6;
+    --gold:#B8902A; --white:#16140F; --muted:#6B6558;
+    --ok:#B8902A; --new:#B8902A; --call:#16140F; --cancel:#E0685A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;background:var(--navy);color:var(--white);font-family:'Inter',sans-serif;color-scheme:light;}
+  h1,h2,h3{font-family:'Fraunces',serif;margin:0;}
+  .app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh;}
+  aside.nav{background:var(--navy2);padding:26px 20px;border-right:1px solid rgba(0,0,0,0.06);}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .brand .dot{width:10px;height:10px;border-radius:50%;background:var(--gold);}
+  .brand span{font-family:'Fraunces',serif;font-weight:700;font-size:17px;}
+  .studio{color:var(--muted);font-size:12.5px;margin:0 0 30px 20px;}
+  nav a{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:14px;font-weight:500;margin-bottom:4px;cursor:pointer;}
+  nav a.active{background:var(--steel);color:var(--white);}
+  .demo-badge{margin-top:30px;font-size:12px;color:var(--muted);border:1px dashed rgba(0,0,0,0.18);border-radius:10px;padding:10px 12px;line-height:1.5;}
+  main{padding:30px 40px;max-width:1280px;min-width:0;}
+  header.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;flex-wrap:wrap;gap:16px;}
+  header.top h1{font-size:26px;}
+  header.top .sub{color:var(--muted);font-size:13.5px;margin-top:4px;}
+  .live{display:flex;align-items:center;gap:8px;background:var(--navy2);border:1px solid rgba(0,0,0,0.08);padding:9px 16px;border-radius:999px;font-size:13.5px;}
+  .live i{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(184,144,42,.5);animation:p 1.8s infinite;}
+  @keyframes p{70%{box-shadow:0 0 0 9px rgba(212,175,55,0)}100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}}
+  .stat-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:26px;}
+  .stat-card{background:var(--navy2);border-radius:12px;padding:18px 20px;border:1px solid rgba(0,0,0,0.05);}
+  .stat-card .num{font-family:'Fraunces',serif;font-size:28px;color:var(--gold);}
+  .stat-card .lbl{font-size:12.5px;color:var(--muted);margin-top:2px;line-height:1.4;}
+  .stat-card.hl{border-color:rgba(212,175,55,.45);}
+  .grid2{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start;}
+  .board{background:var(--navy2);border-radius:14px;border:1px solid rgba(0,0,0,0.05);overflow-x:auto;}
+  .board-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid rgba(0,0,0,0.06);gap:10px;flex-wrap:wrap;}
+  .board-head h2{font-size:17px;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .tabs span{padding:6px 14px;border-radius:999px;font-size:12.5px;color:var(--muted);cursor:pointer;}
+  .tabs span.active{background:var(--steel);color:var(--white);}
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:12px 22px;border-bottom:1px solid rgba(0,0,0,0.06);font-weight:600;}
+  td{padding:14px 22px;border-bottom:1px solid rgba(0,0,0,0.04);font-size:14px;vertical-align:middle;}
+  tbody tr{cursor:pointer;transition:background .15s;}
+  tbody tr:hover{background:rgba(0,0,0,0.03);}
+  tbody tr.sel{background:rgba(212,175,55,0.07);}
+  tr:last-child td{border-bottom:none;}
+  .cust{display:flex;align-items:center;gap:10px;}
+  .av{width:32px;height:32px;border-radius:50%;background:var(--steel);display:grid;place-items:center;font-size:12.5px;font-weight:600;}
+  .chip{display:inline-block;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600;}
+  .chip.neu{background:rgba(212,175,55,.15);color:var(--new);}
+  .chip.rueck{background:rgba(22,20,15,.08);color:var(--call);}
+  .chip.fix{background:var(--gold);color:#fff;}
+  .when{color:var(--muted);font-size:12.5px;}
+  .side{display:flex;flex-direction:column;gap:20px;}
+  .card{background:var(--navy2);border-radius:14px;border:1px solid rgba(0,0,0,0.05);padding:20px 22px;}
+  .card h3{font-size:16px;margin-bottom:12px;}
+  .kv{display:grid;grid-template-columns:96px 1fr;gap:8px 12px;font-size:13.5px;}
+  .kv dt{color:var(--muted);} .kv dd{margin:0;}
+  .talk{margin-top:14px;border-top:1px solid rgba(0,0,0,0.07);padding-top:14px;display:flex;flex-direction:column;gap:9px;max-height:260px;overflow:auto;}
+  .b{padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.45;max-width:92%;}
+  .b.ai{background:var(--steel);align-self:flex-start;}
+  .b.me{background:rgba(212,175,55,.14);align-self:flex-end;}
+  .btn{display:inline-block;background:var(--gold);color:#fff;border:0;font-weight:700;font-size:13.5px;padding:10px 16px;border-radius:10px;cursor:pointer;margin-top:14px;font-family:inherit;}
+  .btn.ghost{background:transparent;border:1px solid rgba(0,0,0,.18);color:var(--white);margin-left:8px;}
+  .btn[disabled]{opacity:.5;cursor:default;}
+  .ok-note{color:var(--gold);font-size:13px;margin-top:10px;min-height:18px;}
+  .view{display:none;} .view.on{display:block;}
+  .treat{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:22px;}
+  .treat div{background:var(--steel);border-radius:12px;padding:16px 18px;font-size:14px;line-height:1.5;}
+  .treat b{display:block;font-family:'Fraunces',serif;font-size:15.5px;margin-bottom:4px;}
+  .treat small{color:var(--muted);}
+  .week{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:22px;}
+  .day{background:var(--steel);border-radius:12px;padding:12px;min-height:190px;font-size:12.5px;}
+  .day h4{margin:0 0 10px;font-size:13px;color:var(--muted);font-weight:600;}
+  .slot{background:rgba(212,175,55,.14);border-left:3px solid var(--gold);padding:7px 9px;border-radius:6px;margin-bottom:8px;line-height:1.4;}
+  .slot.b2{background:rgba(250,250,247,.14);border-color:var(--call);}
+  .try{background:linear-gradient(135deg,#FFFBEF,#F6EFD9);border:1px solid rgba(212,175,55,.35);}
+  .try .big{font-family:'Fraunces',serif;font-size:21px;color:var(--gold);margin:6px 0 4px;}
+  .try p{color:var(--muted);font-size:13px;line-height:1.5;margin:6px 0 0;}
+  @media(max-width:1000px){.app{grid-template-columns:minmax(0,1fr);}.grid2{grid-template-columns:minmax(0,1fr);}header.top h1{font-size:22px;}th,td{padding:12px 14px;}.stat-card .num{font-size:24px;}aside.nav{padding:14px 16px;border-right:0;border-bottom:1px solid rgba(0,0,0,.08);position:sticky;top:0;z-index:5;}.studio,.demo-badge{display:none;}.brand{margin-bottom:10px;}nav{display:flex;gap:6px;overflow-x:auto;}nav a{white-space:nowrap;margin-bottom:0;padding:9px 14px;}.grid2{grid-template-columns:1fr;}.stat-row{grid-template-columns:repeat(2,minmax(0,1fr));}main{padding:20px;}.week{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px;}.treat{padding:14px;}.board-head{padding:14px;}th:nth-child(4),td:nth-child(4){display:none;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="nav">
+    <div class="brand"><div class="dot"></div><span>Mijo AI</span></div>
+    <div class="studio">Kristina Beauty · Feldkirch</div>
+    <nav>
+      <a class="active" data-v="anfragen">Anfragen</a>
+      <a data-v="beratung">Beratungstermine</a>
+      <a data-v="behandlungen">Behandlungen</a>
+      <a data-v="ki">KI ausprobieren</a>
+    </nav>
+    <div class="demo-badge"><b>Demo mit Beispieldaten.</b><br>Alle Namen und Anrufe hier sind frei erfunden und zeigen, wie dein Studio-Dashboard aussehen kann.</div>
+  </aside>
+  <main>
+    <header class="top">
+      <div>
+        <h1 id="title">Anfragen</h1>
+        <div class="sub" id="subtitle">Jeder Anruf, den deine Assistentin angenommen hat, in einem Blick.</div>
+      </div>
+      <div class="live"><i></i> Assistentin ist online</div>
+    </header>
+
+    <div class="stat-row">
+      <div class="stat-card hl"><div class="num" id="s1">14</div><div class="lbl">Anfragen diese Woche</div></div>
+      <div class="stat-card hl"><div class="num" id="s2">9</div><div class="lbl">davon während einer Behandlung oder nach Feierabend, sonst verpasst</div></div>
+      <div class="stat-card"><div class="num" id="s3">6</div><div class="lbl">Beratungen vereinbart</div></div>
+      <div class="stat-card"><div class="num">1:40</div><div class="lbl">Ø Gesprächsdauer (Min.)</div></div>
+    </div>
+
+    <!-- Anfragen -->
+    <section class="view on" id="v-anfragen">
+      <div class="grid2">
+        <div class="board">
+          <div class="board-head">
+            <h2>Eingegangene Anfragen</h2>
+            <div class="tabs" id="tabs"><span class="active" data-f="alle">Alle</span><span data-f="neu">Neu</span><span data-f="rueck">Zurückgerufen</span><span data-f="fix">Termin fix</span></div>
+          </div>
+          <table>
+            <thead><tr><th>Name</th><th>Behandlung</th><th>Wunsch</th><th>Eingang</th><th>Status</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="side">
+          <div class="card" id="detail"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Beratungstermine -->
+    <section class="view" id="v-beratung">
+      <div class="board">
+        <div class="board-head"><h2>Beratungstermine diese Woche</h2><div class="when">kostenlose Erstberatung</div></div>
+        <div class="week" id="week"></div>
+      </div>
+    </section>
+
+    <!-- Behandlungen -->
+    <section class="view" id="v-behandlungen">
+      <div class="board">
+        <div class="board-head"><h2>Behandlungen, die deine Assistentin kennt</h2><div class="when">Preise und Medizinisches nennt sie nie, sie verweist auf die Beratung</div></div>
+        <div class="treat">
+          <div><b>Permanent Make-up</b><small>z. B. Lippen</small></div>
+          <div><b>Dauerhafte Haarentfernung</b></div>
+          <div><b>Ozon- und Coldplasma</b></div>
+          <div><b>Plasma Pen</b></div>
+          <div><b>HairVitalizer</b></div>
+          <div><b>LIPOSANA 3 PLUS</b></div>
+          <div><b>Intimbleaching und Straffung</b></div>
+          <div><b>Kostenlose Beratung</b><small>wird jedem Neukunden angeboten</small></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KI ausprobieren -->
+    <section class="view" id="v-ki">
+      <div class="grid2">
+        <div class="card try">
+          <h3>Erlebe einen eingehenden Anruf</h3>
+          <p>Drück den Knopf: Es kommt eine neue Anfrage herein, genau so, wie wenn eine Kundin anruft, während du behandelst.</p>
+          <div class="big">„Ich hätte gern eine Beratung zu Permanent Make-up."</div>
+          <button class="btn" id="simBtn">Testanruf simulieren</button>
+          <div class="ok-note" id="simNote"></div>
+          <p>Die echte Assistentin hörst du live am Telefon mit Milan.</p>
+        </div>
+        <div class="card">
+          <h3>So läuft ein Anruf</h3>
+          <dl class="kv">
+            <dt>1</dt><dd>Die Assistentin meldet sich mit dem Namen deines Studios.</dd>
+            <dt>2</dt><dd>Sie fragt nach Behandlung und Wunschtermin.</dd>
+            <dt>3</dt><dd>Sie notiert Name und Rückrufnummer.</dd>
+            <dt>4</dt><dd>Du bekommst die Anfrage hier und bestätigst persönlich.</dd>
+          </dl>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+var DATA=[
+ {id:1,n:"Anna M.",t:"Permanent Make-up (Lippen)",w:"Do, vormittags",e:"vor 12 Min.",s:"neu",tel:"+43 660 1234567",
+  why:"Anruf kam, während du behandelst",
+  talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich interessiere mich für Permanent Make-up an den Lippen."],["ai","Sehr gerne. Wann würde es Ihnen am besten passen?"],["me","Donnerstag vormittags, wenn möglich."],["ai","Auf welchen Namen darf ich den Wunsch notieren?"],["me","Anna Meier."],["ai","Danke, Anna. Kristina meldet sich persönlich bei Ihnen zur Bestätigung."]]},
+ {id:2,n:"Sabine K.",t:"Plasma Pen",w:"Fr, nachmittags",e:"vor 1 Std.",s:"neu",tel:"+43 664 5551234",why:"Anruf nach Feierabend",
+  talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich möchte wissen, ob ich zu einer Beratung kommen kann. Es geht um die Augenpartie."],["ai","Gerne. Das erste Beratungsgespräch ist kostenlos. Wann würde es Ihnen passen?"],["me","Freitag am Nachmittag."],["ai","Notiert. Kristina meldet sich zur Bestätigung bei Ihnen."]]},
+ {id:3,n:"Julia R.",t:"Dauerhafte Haarentfernung",w:"nächste Woche",e:"gestern",s:"rueck",tel:"+43 650 9876543",why:"Anruf während einer Behandlung",
+  talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Wie läuft das bei der Haarentfernung ab, und was kostet das?"],["ai","Das bespricht Kristina gerne persönlich mit Ihnen im kostenlosen Beratungsgespräch. Wann hätten Sie Zeit?"],["me","Nächste Woche, irgendwann nachmittags."]]},
+ {id:4,n:"Marina T.",t:"Ozon- und Coldplasma",w:"Mi, 18.11.",e:"gestern",s:"fix",tel:"+43 660 7654321",why:"Anruf am Wochenende",
+  talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich hätte gern eine Beratung zu Ozon- und Coldplasma."],["ai","Sehr gerne. Wann würde es Ihnen passen?"],["me","Mittwoch in einer Woche am Nachmittag."],["ai","Notiert. Kristina meldet sich bei Ihnen."]]},
+ {id:5,n:"Elena P.",t:"HairVitalizer",w:"flexibel",e:"vor 2 Tagen",s:"fix",tel:"+43 676 1112233",why:"Anruf während einer Behandlung",
+  talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich möchte mich zum HairVitalizer beraten lassen."],["ai","Gerne. Das Beratungsgespräch ist kostenlos. Wann hätten Sie Zeit?"],["me","Ich bin flexibel."]]},
+ {id:6,n:"Nina S.",t:"Intimbleaching und Straffung",w:"Sa, vormittags",e:"vor 3 Tagen",s:"rueck",tel:"+43 699 4445566",why:"Anruf nach Feierabend",
+  talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich hätte gern eine diskrete Beratung."],["ai","Natürlich, das bleibt unter uns. Wann würde es Ihnen passen?"],["me","Samstag vormittags."]]}
+];
+var CH={neu:["Neu","neu"],rueck:["Zurückgerufen","rueck"],fix:["Termin fix","fix"]};
+var filter="alle",sel=1;
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function rows(){
+  var h="";
+  DATA.filter(function(d){return filter==="alle"||d.s===filter}).forEach(function(d){
+    h+='<tr tabindex="0" data-id="'+d.id+'" class="'+(d.id===sel?"sel":"")+'"><td><div class="cust"><div class="av">'+esc(d.n.split(" ").map(function(x){return x[0]}).join(""))+'</div>'+esc(d.n)+'</div></td><td>'+esc(d.t)+'</td><td>'+esc(d.w)+'</td><td class="when">'+esc(d.e)+'</td><td><span class="chip '+CH[d.s][1]+'">'+CH[d.s][0]+'</span></td></tr>';
+  });
+  document.getElementById("rows").innerHTML=h||'<tr><td colspan="5" class="when">Keine Anfragen in dieser Ansicht.</td></tr>';
+}
+function detail(){
+  var d=DATA.filter(function(x){return x.id===sel})[0];if(!d)return;
+  var t=d.talk.map(function(m){return '<div class="b '+m[0]+'">'+esc(m[1])+'</div>'}).join("");
+  document.getElementById("detail").innerHTML='<h3>'+esc(d.n)+'</h3><dl class="kv"><dt>Behandlung</dt><dd>'+esc(d.t)+'</dd><dt>Wunsch</dt><dd>'+esc(d.w)+'</dd><dt>Rückruf</dt><dd>'+esc(d.tel)+'</dd><dt>Anlass</dt><dd>'+esc(d.why)+'</dd><dt>Status</dt><dd><span class="chip '+CH[d.s][1]+'">'+CH[d.s][0]+'</span></dd></dl>'+
+  '<div class="talk">'+t+'</div>'+
+  (d.s==="neu"?'<button class="btn" id="act">Zurückgerufen</button>':(d.s==="rueck"?'<button class="btn" id="act">Termin fixieren</button>':''))+'<div class="ok-note" id="okn"></div>';
+  var b=document.getElementById("act");
+  if(b)b.onclick=function(){d.s=d.s==="neu"?"rueck":"fix";rows();detail();document.getElementById("okn").textContent="Status gespeichert (Demo).";bind();};
+}
+function bind(){
+  Array.prototype.forEach.call(document.querySelectorAll("#rows tr[data-id]"),function(tr){tr.onkeydown=function(e){if(e.key==="Enter"||e.key===" "){e.preventDefault();tr.onclick();}};tr.onclick=function(){sel=+tr.getAttribute("data-id");rows();detail();bind();if(window.innerWidth<=1000){document.getElementById("detail").scrollIntoView({behavior:"smooth",block:"start"});}}});
+}
+Array.prototype.forEach.call(document.querySelectorAll("#tabs span"),function(s){s.onclick=function(){filter=s.getAttribute("data-f");Array.prototype.forEach.call(document.querySelectorAll("#tabs span"),function(x){x.classList.toggle("active",x===s)});rows();bind();}});
+var TITLES={anfragen:["Anfragen","Jeder Anruf, den deine Assistentin angenommen hat, in einem Blick."],beratung:["Beratungstermine","Deine kostenlosen Erstberatungen für diese Woche."],behandlungen:["Behandlungen","Das weiß deine Assistentin über dein Studio."],ki:["KI ausprobieren","Hör selbst, wie deine Assistentin klingt."]};
+Array.prototype.forEach.call(document.querySelectorAll("nav a"),function(a){a.onclick=function(){
+  var v=a.getAttribute("data-v");
+  Array.prototype.forEach.call(document.querySelectorAll("nav a"),function(x){x.classList.toggle("active",x===a)});
+  Array.prototype.forEach.call(document.querySelectorAll(".view"),function(x){x.classList.toggle("on",x.id==="v-"+v)});
+  document.getElementById("title").textContent=TITLES[v][0];document.getElementById("subtitle").textContent=TITLES[v][1];
+};});
+var days=[["Mo",[]],["Di",[["10:00","Anna M. · Permanent Make-up"]]],["Mi",[["14:30","Marina T. · Ozon- und Coldplasma"]]],["Do",[["09:30","Anna M. · Lippen","b2"],["11:00","Sabine K. · Plasma Pen"]]],["Fr",[["15:00","Sabine K. · Augenpartie"]]],["Sa",[["10:00","Nina S. · Beratung"]]]];
+document.getElementById("week").innerHTML=days.map(function(d){return '<div class="day"><h4>'+d[0]+'</h4>'+(d[1].length?d[1].map(function(s){return '<div class="slot '+(s[2]||"")+'"><b>'+s[0]+'</b><br>'+esc(s[1])+'</div>'}).join(""):'<span class="when">frei</span>')+'</div>'}).join("");
+var SIM=[
+ {n:"Laura B.",t:"Permanent Make-up (Lippen)",w:"Di, vormittags",tel:"+43 660 2223344",why:"Anruf während einer Behandlung",talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich hätte gern eine Beratung zu Permanent Make-up."],["ai","Sehr gerne. Wann würde es Ihnen am besten passen?"],["me","Dienstag vormittags."],["ai","Notiert. Kristina meldet sich persönlich bei Ihnen zur Bestätigung."]]},
+ {n:"Katharina W.",t:"Plasma Pen",w:"Do, nachmittags",tel:"+43 664 3334455",why:"Anruf nach Feierabend",talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich interessiere mich für den Plasma Pen."],["ai","Gerne. Das erste Beratungsgespräch ist kostenlos. Wann hätten Sie Zeit?"],["me","Donnerstag am Nachmittag."],["ai","Notiert. Kristina meldet sich bei Ihnen."]]},
+ {n:"Miriam H.",t:"Dauerhafte Haarentfernung",w:"flexibel",tel:"+43 650 4445566",why:"Anruf am Wochenende",talk:[["ai","Guten Tag, Kristina Beauty in Feldkirch, ich bin die digitale Assistentin. Wie kann ich Ihnen helfen?"],["me","Ich möchte mich zur Haarentfernung beraten lassen."],["ai","Sehr gerne. Wann würde es Ihnen passen?"],["me","Ich bin flexibel."],["ai","Danke. Kristina meldet sich persönlich bei Ihnen."]]}
+];
+var simI=0,nextId=100;
+function stats(){
+  document.getElementById("s1").textContent=DATA.length+8;
+  document.getElementById("s2").textContent=Math.max(0,DATA.length+3);
+  document.getElementById("s3").textContent=DATA.filter(function(d){return d.s==="fix"}).length+4;
+}
+var _detail=detail;detail=function(){_detail();stats();};
+document.getElementById("simBtn").onclick=function(){
+  var x=SIM[simI%SIM.length];simI++;
+  var d={id:nextId++,n:x.n,t:x.t,w:x.w,e:"gerade eben",s:"neu",tel:x.tel,why:x.why,talk:x.talk};
+  DATA.unshift(d);sel=d.id;filter="alle";
+  Array.prototype.forEach.call(document.querySelectorAll("#tabs span"),function(z){z.classList.toggle("active",z.getAttribute("data-f")==="alle")});
+  rows();detail();bind();
+  document.getElementById("simNote").textContent="Neue Anfrage von "+x.n+" ist eingegangen. Sieh sie dir unter „Anfragen“ an.";
+};
+rows();detail();bind();
+</script>
+</body>
+</html>

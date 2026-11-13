@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="color-scheme" content="light only">
+<title>Alle Guthaben</title>
+<style>
+:root{--bg:#fff;--card:#FAF7F0;--line:#E6DFCC;--gold:#B8902A;--ink:#16140F;--mut:#6B6558;--ok:#2F7D4F;--warn:#C9801A;--bad:#B3361F}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:20px 16px 60px}
+.w{max-width:900px;margin:0 auto}h1{font-size:24px;margin:0 0 4px}h2{font-size:17px;margin:28px 0 10px}.sub{color:var(--mut);font-size:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.row{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline}.nm{font-weight:700}.mut{color:var(--mut);font-size:13px}
+.bar{height:10px;background:#EFE8D6;border-radius:6px;overflow:hidden;margin:10px 0 6px}.bar i{display:block;height:100%;background:var(--ok)}
+.chip{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;color:#fff;background:var(--ok)}.chip.w{background:var(--warn)}.chip.b{background:var(--bad)}
+input,select,button{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}button{background:var(--gold);color:#fff;border:0;font-weight:700;cursor:pointer}
+.msg{padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;margin:10px 0;font-size:14px}.msg.b{border-color:var(--bad)}
+</style></head><body><div class="w">
+<h1>Alle Guthaben</h1><div class="sub">Minuten pro Kunde und Anbieter-Stand. Aktualisiert beim Öffnen.</div>
+<div id="keybox" class="msg" style="display:none">Zugangsschlüssel eingeben: <input id="key" type="password" autocomplete="off"> <button id="keybtn">Speichern</button></div>
+<div id="msg"></div>
+<h2>Kunden</h2><div id="kunden"></div>
+<h2>Anbieter (Stimme)</h2><div id="prov" class="card"></div>
+<p class="mut">Regel: Jeder Kunde hat sein eigenes Minutenkonto. Ist es leer, wird nur dieser Kunde gesperrt, alle anderen laufen weiter.</p>
+</div>
+<script>
+var BASE="https://a4milan.app.n8n.cloud/webhook/",HEALTH="https://2-29-104-111.sslip.io/health";
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+var h=location.hash.match(/key=([^&]+)/);if(h){store("gk",decodeURIComponent(h[1]));history.replaceState(null,"",location.pathname)}
+var KEY=store("gk");
+function msg(t,b){document.getElementById("msg").innerHTML=t?'<div class="msg'+(b?' b':'')+'">'+esc(t)+'</div>':""}
+function farbe(p,g){return g||p>=100?"b":(p>=80?"w":"")}
+function kunden(){
+  fetch(BASE+"mijo-kunden-liste?key="+encodeURIComponent(KEY)).then(function(r){if(!r.ok)throw 1;return r.json()}).then(function(j){
+    var k=j.kunden||[];
+    document.getElementById("kunden").innerHTML=k.map(function(c){
+      var p=Math.min(100,c.prozent),cl=farbe(c.prozent,c.gesperrt);
+      var st=c.gesperrt?"GESPERRT":(c.warn80||c.prozent>=80?"80 % erreicht":"aktiv");
+      return '<div class="card"><div class="row"><span class="nm">'+esc(c.kundennr)+' · '+esc(c.betrieb)+'</span><span class="chip '+cl+'">'+st+'</span></div>'+
+      '<div class="bar"><i style="width:'+p+'%;background:'+(cl==="b"?"var(--bad)":cl==="w"?"var(--warn)":"var(--ok)")+'"></i></div>'+
+      '<div class="row mut"><span>'+c.minuten_verbraucht+' von '+c.minuten_gesamt+' Min. verbraucht ('+c.prozent+' %)</span><span>Rest '+c.minuten_rest+' Min. · '+esc(c.tarif)+'</span></div></div>';
+    }).join("")||'<div class="card">Noch keine Kunden.</div>';
+    var warn=k.filter(function(c){return c.gesperrt||c.prozent>=80}).map(function(c){return c.kundennr});
+    if(warn.length)msg("Achtung: "+warn.join(", ")+" haben 80 % oder mehr verbraucht.",true);
+  }).catch(function(){document.getElementById("kunden").innerHTML="";document.getElementById("keybox").style.display="block";msg("Kein Zugang zu den Kundendaten. Schlüssel prüfen.",true)});
+}
+function prov(){
+  var lim=parseInt(store("lim"))||100000;
+  fetch(HEALTH).then(function(r){return r.json()}).then(function(j){
+    var n=j.zeichen_monat||0,p=Math.round(n/lim*100),cl=farbe(p,false);
+    document.getElementById("prov").innerHTML='<div class="row"><span class="nm">Cartesia (Stimme)</span><span class="chip '+cl+'">'+(j.cartesia_ausfall?"AUSFALL, Ersatzstimme aktiv":(p>=80?"80 % erreicht":"ok"))+'</span></div>'+
+    '<div class="bar"><i style="width:'+Math.min(100,p)+'%;background:'+(cl==="b"?"var(--bad)":cl==="w"?"var(--warn)":"var(--ok)")+'"></i></div>'+
+    '<div class="row mut"><span>'+n.toLocaleString("de-AT")+' von '+lim.toLocaleString("de-AT")+' Zeichen seit dem letzten Neustart ('+p+' %)</span><span>Ersatzstimme: '+(j.ersatz_zeichen||0).toLocaleString("de-AT")+' Zeichen</span></div>'+
+    '<div class="row" style="margin-top:12px"><span class="mut">Monatsgrenze deines Plans:</span><select id="lim"><option value="100000">Pro, 100.000</option><option value="1250000">Start-up, 1.250.000</option><option value="8000000">Scale, 8.000.000</option><option value="20000">Gratis, 20.000</option></select></div>'+
+    '<div class="mut" style="margin-top:8px">Der Zähler startet bei jedem Neustart des Servers neu und ist eine Schätzung. Der echte Stand steht in deinem Cartesia-Konto.</div>';
+    var s=document.getElementById("lim");s.value=String(lim);s.onchange=function(){store("lim",s.value);prov()};
+  }).catch(function(){document.getElementById("prov").textContent="Server nicht erreichbar."});
+}
+document.getElementById("keybtn").onclick=function(){var v=document.getElementById("key").value.trim();if(v){store("gk",v);KEY=v;document.getElementById("keybox").style.display="none";msg("");kunden()}};
+if(!KEY){document.getElementById("keybox").style.display="block"}else kunden();
+prov();
+</script></body></html>

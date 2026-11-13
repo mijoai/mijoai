@@ -253,6 +253,69 @@ document.getElementById("simBtn").onclick=function(){
   document.getElementById("simNote").textContent="Neue Anfrage von "+x.n+" ist eingegangen. Sieh sie dir unter „Anfragen“ an.";
 };
 rows();detail();bind();
+
+/* ===== Live-Modus: nur mit ?k=KUNDENNR&t=CODE in der Adresse ===== */
+(function(){
+  var P=new URLSearchParams(location.search),K=P.get("k"),T=P.get("t");
+  if(!K||!T)return;
+  var BASE="https://a4milan.app.n8n.cloud/webhook/";
+  var API2UI={neu:"neu",rueckruf:"rueck",erledigt:"fix"},UI2API={neu:"neu",rueck:"rueckruf",fix:"erledigt"};
+  CH.rueck=["Zurückgerufen","rueck"];CH.fix=["Erledigt","fix"];
+  var live=true,MIN=null;
+  Array.prototype.forEach.call(document.querySelectorAll(".demo-badge"),function(x){x.style.display="none"});
+  Array.prototype.forEach.call(document.querySelectorAll('nav a[data-v="beratung"],nav a[data-v="ki"]'),function(x){x.style.display="none"});
+  var th=document.querySelectorAll("#v-anfragen thead th");
+  ["Anrufer","Anliegen","Dauer","Eingang","Status"].forEach(function(t,i){if(th[i])th[i].textContent=t;});if(th[2])th[2].style.display="none";
+  var tabs=document.querySelectorAll("#tabs span");
+  if(tabs[2])tabs[2].textContent="Zurückgerufen";if(tabs[3]){tabs[3].textContent="Erledigt";}
+  function zeit(z){try{return new Intl.DateTimeFormat("de-AT",{timeZone:"Europe/Vienna",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}).format(new Date(z));}catch(e){return String(z||"");}}
+  function banner(t){var b=document.getElementById("liveNote");if(!b){b=document.createElement("div");b.id="liveNote";b.style.cssText="margin:0 0 16px;padding:12px 16px;border:1px solid #B8902A;border-radius:10px;background:#FAF7F0;color:#16140F;font-size:14px";var m=document.querySelector("main");m.insertBefore(b,m.children[1]);}b.textContent=t;}
+  function stats(){
+    var n=DATA.length,neu=DATA.filter(function(d){return d.s==="neu"}).length,fix=DATA.filter(function(d){return d.s==="fix"}).length;
+    document.getElementById("s1").textContent=n;document.getElementById("s2").textContent=neu;document.getElementById("s3").textContent=fix;
+    var l=document.querySelectorAll(".stat-card .lbl");
+    if(l[0])l[0].textContent="Anfragen insgesamt";if(l[1])l[1].textContent="noch offen (neu)";if(l[2])l[2].textContent="erledigt";
+    var c=document.querySelectorAll(".stat-card")[3];
+    if(c&&MIN){c.querySelector(".num").textContent=MIN.rest;c.querySelector(".lbl").textContent="Freiminuten übrig von "+MIN.gesamt;}
+  }
+  var _d=detail;
+  detail=function(){
+    _d();stats();
+    var d=DATA.filter(function(x){return x.id===sel})[0];if(!d)return;
+    Array.prototype.forEach.call(document.querySelectorAll("#detail dt"),function(dt){if(dt.textContent==="Behandlung")dt.textContent="Anliegen";else if(dt.textContent==="Wunsch")dt.textContent="Dauer";});
+    var dds=document.querySelectorAll("#detail dd");
+    Array.prototype.forEach.call(dds,function(dd){if(d.tel&&dd.textContent===d.tel){dd.innerHTML='<a href="tel:'+esc(d.tel.replace(/[^+0-9]/g,""))+'" style="color:#B8902A;font-weight:600">'+esc(d.tel)+'</a>';}});
+    var b=document.getElementById("act");
+    if(b){b.onclick=function(){
+      var neu=d.s==="neu"?"rueck":"fix";b.disabled=true;
+      fetch(BASE+"mijo-dashboard-status?k="+encodeURIComponent(K)+"&t="+encodeURIComponent(T)+"&id="+d.id+"&status="+UI2API[neu]).then(function(r){
+        if(!r.ok)throw new Error("x");d.s=neu;rows();detail();bind();var o=document.getElementById("okn");if(o)o.textContent="Status gespeichert.";
+      }).catch(function(){b.disabled=false;var o=document.getElementById("okn");if(o)o.textContent="Konnte nicht gespeichert werden. Bitte noch einmal versuchen.";});
+    };}
+  };
+  rows=function(){
+    var h="";
+    DATA.filter(function(d){return filter==="alle"||d.s===filter}).forEach(function(d){
+      h+='<tr tabindex="0" data-id="'+d.id+'" class="'+(d.id===sel?"sel":"")+'"><td><div class="cust"><div class="av">☎</div>'+esc(d.n)+'</div></td><td>'+esc(d.t)+'</td><td class="when">'+esc(d.e)+'</td><td><span class="chip '+CH[d.s][1]+'">'+CH[d.s][0]+'</span></td></tr>';
+    });
+    document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="when">Noch keine Anfragen.</td></tr>';
+  };
+  fetch(BASE+"mijo-dashboard-daten?k="+encodeURIComponent(K)+"&t="+encodeURIComponent(T)).then(function(r){
+    if(!r.ok)throw new Error("zugang");return r.json();
+  }).then(function(j){
+    MIN=j.minuten;
+    DATA=(j.anrufe||[]).map(function(a){
+      var sum=a.zusammenfassung||"Keine Zusammenfassung.";
+      return {id:a.id,n:a.von||"Unbekannte Nummer",t:sum.length>60?sum.slice(0,57)+"…":sum,w:a.dauer_min+" Min.",e:zeit(a.zeit),s:API2UI[a.status]||"neu",tel:a.von||"",why:a.erfolgreich?"Anruf von der Assistentin angenommen":"Anruf mit Problem, bitte zurückrufen",talk:[["ai",sum]]};
+    });
+    sel=DATA.length?DATA[0].id:0;
+    banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Freiminuten aufgebraucht":""));
+    rows();detail();bind();stats();
+  }).catch(function(){
+    DATA=[];sel=0;rows();document.getElementById("detail").innerHTML="";
+    banner("Kein Zugang. Bitte den persönlichen Link von Milan verwenden.");
+  });
+})();
 </script>
 </body>
 </html>

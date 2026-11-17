@@ -262,8 +262,23 @@ rows();detail();bind();
   var API2UI={neu:"neu",rueckruf:"rueck",erledigt:"fix"},UI2API={neu:"neu",rueck:"rueckruf",fix:"erledigt"};
   CH.rueck=["Zurückgerufen","rueck"];CH.fix=["Erledigt","fix"];
   var live=true,MIN=null;
+  TITLES.beratung=["Termine","Alle gebuchten Termine, live aus den Anrufen."];
+  (function(){var a=document.querySelector('nav a[data-v="beratung"]');if(a)a.textContent="Termine";
+    var hd=document.querySelector("#v-beratung .board-head");if(hd)hd.innerHTML='<h2>Gebuchte Termine</h2><div class="when">live</div>';})();
+  var WT=["So","Mo","Di","Mi","Do","Fr","Sa"];
+  function wochenansicht(list){
+    var h="",n=0,d=new Date();
+    var wien=function(x){return new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Vienna"}).format(x);};
+    for(var i=0;i<14&&n<6;i++){
+      var x=new Date(d.getTime()+i*86400000),iso=wien(x),wd=new Date(iso+"T12:00:00").getDay();
+      if(wd===0||wd===1)continue;n++;
+      var s=(list||[]).filter(function(t){return t.datum===iso;});
+      h+='<div class="day"><h4>'+WT[wd]+" "+iso.slice(8,10)+"."+iso.slice(5,7)+".</h4>"+(s.length?s.map(function(t){return '<div class="slot"><b>'+esc(t.uhrzeit)+"</b><br>"+esc((t.name||"Kunde")+(t.dienst?" · "+t.dienst:""))+"</div>";}).join(""):'<span class="when">frei</span>')+"</div>";
+    }
+    document.getElementById("week").innerHTML=h;
+  }
   Array.prototype.forEach.call(document.querySelectorAll(".demo-badge"),function(x){x.style.display="none"});
-  Array.prototype.forEach.call(document.querySelectorAll('nav a[data-v="beratung"],nav a[data-v="ki"]'),function(x){x.style.display="none"});
+  Array.prototype.forEach.call(document.querySelectorAll('nav a[data-v="ki"]'),function(x){x.style.display="none"});
   var th=document.querySelectorAll("#v-anfragen thead th");
   ["Anrufer","Anliegen","Dauer","Eingang","Status"].forEach(function(t,i){if(th[i])th[i].textContent=t;});if(th[2])th[2].style.display="none";
   var tabs=document.querySelectorAll("#tabs span");
@@ -301,21 +316,29 @@ rows();detail();bind();
     });
     document.getElementById("rows").innerHTML=h||'<tr><td colspan="4" class="when">Noch keine Anfragen.</td></tr>';
   };
-  fetch(BASE+"mijo-dashboard-daten?k="+encodeURIComponent(K)+"&t="+encodeURIComponent(T)).then(function(r){
+  var erst=true;
+  function laden(){
+  fetch(BASE+"mijo-dashboard-daten?k="+encodeURIComponent(K)+"&t="+encodeURIComponent(T)+"&_="+Date.now(),{cache:"no-store"}).then(function(r){
     if(!r.ok)throw new Error("zugang");return r.json();
   }).then(function(j){
-    MIN=j.minuten;
+    MIN=j.minuten;wochenansicht(j.termine);
+    var alt=sel;
     DATA=(j.anrufe||[]).map(function(a){
       var sum=a.zusammenfassung||"Keine Zusammenfassung.";
       return {id:a.id,n:a.name||a.von||"Unbekannte Nummer",t:a.behandlung||(sum.length>60?sum.slice(0,57)+"…":sum),w:a.termin||(a.dauer_min+" Min."),e:zeit(a.zeit),s:API2UI[a.status]||"neu",tel:a.telefon||a.von||"",why:a.erfolgreich?"Anruf von der Assistentin angenommen":"Anruf mit Problem, bitte zurückrufen",talk:[["ai",sum]]};
     });
-    sel=DATA.length?DATA[0].id:0;
+    sel=(!erst&&DATA.some(function(d){return d.id===alt;}))?alt:(DATA.length?DATA[0].id:0);
+    erst=false;
     banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Freiminuten aufgebraucht":""));
     rows();detail();bind();stats();
   }).catch(function(){
+    if(!erst)return;
     DATA=[];sel=0;rows();stats();document.getElementById("detail").innerHTML="";
     banner("Kein Zugang. Bitte den persönlichen Link von Milan verwenden.");
   });
+  }
+  laden();
+  setInterval(function(){if(!document.hidden)laden();},10000);
 })();
 </script>
 </body>

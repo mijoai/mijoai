@@ -277,6 +277,7 @@ rows();detail();bind();
     if(l[0])l[0].textContent="Anfragen insgesamt";if(l[1])l[1].textContent="noch offen (neu)";if(l[2])l[2].textContent="erledigt";
     var c=document.querySelectorAll(".stat-card")[3];
     if(c&&MIN){c.querySelector(".num").textContent=MIN.rest;c.querySelector(".lbl").textContent="Freiminuten übrig von "+MIN.gesamt;}
+    else if(c){c.querySelector(".num").textContent="–";c.querySelector(".lbl").textContent="Freiminuten (keine Daten)";}
   }
   var _d=detail;
   detail=function(){
@@ -312,7 +313,7 @@ rows();detail();bind();
     banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Freiminuten aufgebraucht":""));
     rows();detail();bind();stats();
   }).catch(function(){
-    DATA=[];sel=0;rows();document.getElementById("detail").innerHTML="";
+    DATA=[];sel=0;rows();stats();document.getElementById("detail").innerHTML="";
     banner("Kein Zugang. Bitte den persönlichen Link von Milan verwenden.");
   });
 })();

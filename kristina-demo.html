@@ -306,7 +306,7 @@ rows();detail();bind();
     MIN=j.minuten;
     DATA=(j.anrufe||[]).map(function(a){
       var sum=a.zusammenfassung||"Keine Zusammenfassung.";
-      return {id:a.id,n:a.von||"Unbekannte Nummer",t:sum.length>60?sum.slice(0,57)+"…":sum,w:a.dauer_min+" Min.",e:zeit(a.zeit),s:API2UI[a.status]||"neu",tel:a.von||"",why:a.erfolgreich?"Anruf von der Assistentin angenommen":"Anruf mit Problem, bitte zurückrufen",talk:[["ai",sum]]};
+      return {id:a.id,n:a.name||a.von||"Unbekannte Nummer",t:a.behandlung||(sum.length>60?sum.slice(0,57)+"…":sum),w:a.termin||(a.dauer_min+" Min."),e:zeit(a.zeit),s:API2UI[a.status]||"neu",tel:a.telefon||a.von||"",why:a.erfolgreich?"Anruf von der Assistentin angenommen":"Anruf mit Problem, bitte zurückrufen",talk:[["ai",sum]]};
     });
     sel=DATA.length?DATA[0].id:0;
     banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Freiminuten aufgebraucht":""));

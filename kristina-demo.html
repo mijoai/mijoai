@@ -331,6 +331,7 @@ rows();detail();bind();
     erst=false;
     banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Freiminuten aufgebraucht":""));
     rows();detail();bind();stats();
+    if(!DATA.length)document.getElementById("detail").innerHTML='<p class="when" style="padding:20px">Noch kein Anruf. Sobald deine Assistentin einen Anruf annimmt, erscheint er hier mit allen Details.</p>';
   }).catch(function(){
     if(!erst)return;
     DATA=[];sel=0;rows();stats();document.getElementById("detail").innerHTML="";

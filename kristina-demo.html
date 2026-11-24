@@ -189,8 +189,13 @@
   .dl .add label{font-size:13px;color:var(--muted);display:grid;gap:5px}
   .dl .hint{font-size:13px;color:var(--muted);line-height:1.5}
   .dl .okm{font-size:13.5px;color:#7a5f14;min-height:18px}
+
+  .tl{padding:8px 22px 22px}.tday{margin:10px 0 0;font-family:'Fraunces',serif;font-size:15px}
+  .tslot{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--steel);border-radius:12px;padding:12px 16px}
+  .tslot small{color:var(--muted)}
+  #tadd{padding-bottom:0}
   .dl .row .nm{flex:1 1 110px}
-  @media(max-width:640px){.mtab{display:table!important}.mtab thead{display:table-header-group!important}.mtab tbody{display:table-row-group!important}.mtab tbody tr{display:table-row!important;padding:0!important;border:0!important;min-height:0!important}.mtab tbody td{display:table-cell!important;padding:10px 6px!important;border-bottom:1px solid rgba(0,0,0,.07)!important;font-size:13.5px!important;order:0!important;margin:0!important;font-weight:400!important;color:inherit!important;text-align:right}.mtab tbody td:first-child{text-align:left}.dl button{padding:9px 10px}.stats-wrap,.dl{padding:14px}.tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tile{padding:12px 10px}.tile .n{font-size:24px}.tile .l{font-size:12px}.chart{gap:3px;height:170px}.chart .bar{width:44%}.chart .bar i{font-size:9.5px}.chart .m{font-size:10px}body.live nav a{font-size:12px}}
+  @media(max-width:640px){.tl{padding:8px 14px 14px}.mtab{display:table!important}.mtab thead{display:table-header-group!important}.mtab tbody{display:table-row-group!important}.mtab tbody tr{display:table-row!important;padding:0!important;border:0!important;min-height:0!important}.mtab tbody td{display:table-cell!important;padding:10px 6px!important;border-bottom:1px solid rgba(0,0,0,.07)!important;font-size:13.5px!important;order:0!important;margin:0!important;font-weight:400!important;color:inherit!important;text-align:right}.mtab tbody td:first-child{text-align:left}.dl button{padding:9px 10px}.stats-wrap,.dl{padding:14px}.tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tile{padding:12px 10px}.tile .n{font-size:24px}.tile .l{font-size:12px}.chart{gap:3px;height:170px}.chart .bar{width:44%}.chart .bar i{font-size:9.5px}.chart .m{font-size:10px}body.live nav a{font-size:12px}}
 </style>
 </head>
 <body>
@@ -528,6 +533,41 @@ rows();detail();bind();
       senden("loeschen",{id:id}).then(function(){fertig("Behandlung gelöscht. Deine Assistentin kennt sie nicht mehr.");}).catch(function(){msg="Konnte nicht gelöscht werden.";zeigen();});}
   });
   window.__live=function(j){statistik(j.statistik);if(j.dienste&&!window.__edit){LIST=j.dienste;zeigen();}};
+  /* Termine: stornieren und selbst eintragen */
+  var WTG=["So","Mo","Di","Mi","Do","Fr","Sa"],TL=[],tmsg="";
+  var tb=document.querySelector("#v-beratung .board");
+  var ta=document.createElement("div");ta.className="dl";ta.id="tadd";
+  ta.innerHTML='<div class="hint">Hier siehst du alle gebuchten Termine. Stornierst du einen, ist die Zeit sofort wieder frei und deine Assistentin kann sie neu vergeben. Du kannst auch selbst Termine eintragen, dann bucht die Assistentin nichts doppelt.</div><div class="add"><h3>Termin selbst eintragen</h3><label>Name<input id="tn" placeholder="Name der Kundin"></label><label>Tag<input id="tdat" type="date"></label><label>Uhrzeit<input id="tz" type="time" step="900" value="10:00"></label><label>Behandlung<select id="tdi"></select></label><button class="go" data-a="tneu">Termin eintragen</button></div><div class="okm" id="tm" role="status"></div>';
+  tb.insertBefore(ta,tb.children[1]);
+  var wk=document.getElementById("week");
+  function wien(x){return new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Vienna"}).format(x);}
+  function terminListe(list){
+    TL=list||[];var h="",last="";
+    if(!TL.length)h='<span class="when">Keine kommenden Termine.</span>';
+    TL.forEach(function(t){
+      if(t.datum!==last){last=t.datum;var wd=new Date(t.datum+"T12:00:00").getDay();h+='<h4 class="tday">'+WTG[wd]+" "+t.datum.slice(8,10)+"."+t.datum.slice(5,7)+".</h4>";}
+      h+='<div class="tslot"><div><b>'+E(t.uhrzeit)+'</b> · '+E(t.name||"Kunde")+(t.dienst?'<br><small>'+E(t.dienst)+(t.dauer_min?' · '+t.dauer_min+' Min.':'')+'</small>':'')+'</div><button class="del" data-a="tstorno" data-id="'+t.id+'">Stornieren</button></div>';
+    });
+    wk.className="dl tl";wk.innerHTML=h;
+    var sel=document.getElementById("tdi");
+    if(sel&&LIST){var cur=sel.value;sel.innerHTML=LIST.map(function(x){return '<option>'+E(x.name)+'</option>';}).join("");if(cur)sel.value=cur;}
+  }
+  function tsend(aktion,d){d.k=K;d.t=T;d.aktion=aktion;return fetch(BASE+"mijo-dashboard-termin",{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(d)}).then(function(r){if(!r.ok)throw 0;});}
+  function tinfo(m){document.getElementById("tm").textContent=m;}
+  tb.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-a]");if(!b)return;var act=b.getAttribute("data-a");
+    if(act==="tstorno"){
+      if(b.getAttribute("data-sure")!=="1"){b.setAttribute("data-sure","1");b.textContent="Wirklich stornieren?";window.__edit=true;setTimeout(function(){window.__edit=false;},8000);return;}
+      tsend("storno",{id:+b.getAttribute("data-id")}).then(function(){window.__edit=false;tinfo("Termin storniert. Die Zeit ist wieder frei.");window.__laden();}).catch(function(){tinfo("Konnte nicht storniert werden. Bitte noch einmal versuchen.");});
+    }else if(act==="tneu"){
+      var n=document.getElementById("tn").value.trim(),dt=document.getElementById("tdat").value,z=document.getElementById("tz").value;
+      if(!n||!dt||!z){tinfo("Bitte Name, Tag und Uhrzeit ausfüllen.");return;}
+      tsend("neu",{name:n,datum:dt,uhrzeit:z,dienst:document.getElementById("tdi").value}).then(function(){tinfo("Termin für "+n+" eingetragen.");document.getElementById("tn").value="";window.__laden();}).catch(function(){tinfo("Konnte nicht eingetragen werden.");});
+    }
+  });
+  var dd=document.getElementById("tdat");if(dd){dd.value=wien(new Date());dd.min=wien(new Date());}
+  var _lv=window.__live;
+  window.__live=function(j){_lv(j);if(!window.__edit)terminListe(j.termine);};
 })();
 
 /* ===== Handy: Detail als Vollbild-Blatt ===== */

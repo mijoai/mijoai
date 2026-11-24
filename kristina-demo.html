@@ -156,6 +156,42 @@
   }
   @media(prefers-reduced-motion:reduce){.live i{animation:none;}}
 </style>
+<style>
+  .stats-wrap{padding:22px;display:grid;gap:22px}
+  .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+  .tile{background:var(--steel);border-radius:12px;padding:16px 18px}
+  .tile .n{font-family:'Fraunces',serif;font-size:30px;color:#B8902A;line-height:1.1}
+  .tile .l{font-size:13px;color:var(--muted);margin-top:4px}
+  .chart{display:flex;align-items:flex-end;gap:6px;height:190px;padding-top:22px}
+  .chart .col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .chart .bars{display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center;flex:1}
+  .chart .bar{width:42%;max-width:20px;border-radius:4px 4px 0 0;position:relative;min-height:2px}
+  .chart .bar.t{background:#B8902A}.chart .bar.a{background:#D9CDB0}
+  .chart .bar i{width:auto;height:auto;border-radius:0;background:none;box-shadow:none;animation:none;position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-style:normal;font-size:10.5px;color:#16140F;font-weight:600}
+  .chart .m{font-size:11px;color:var(--muted);margin-top:6px}
+  .legend{display:flex;gap:16px;font-size:13px;color:var(--muted)}
+  .legend span:before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:#B8902A}
+  .legend span.a:before{background:#D9CDB0}
+  .mtab{width:100%;border-collapse:collapse;font-size:14px}
+  .mtab th,.mtab td{padding:10px 8px;text-align:right;border-bottom:1px solid rgba(0,0,0,.07)}
+  .mtab th:first-child,.mtab td:first-child{text-align:left}
+  .mtab th{font-weight:600;color:var(--muted);font-size:12.5px}
+  .dl{padding:8px 22px 22px;display:grid;gap:10px}
+  .dl .row{display:flex;align-items:center;gap:12px;background:var(--steel);border-radius:12px;padding:12px 16px;flex-wrap:wrap}
+  .dl .row .nm{flex:1 1 160px;min-width:0}.dl .row .nm b{display:block;font-family:'Fraunces',serif;font-size:15.5px}
+  .dl .row .nm small{color:var(--muted)}
+  .dl button,.dl .add button{font:inherit;font-size:13.5px;border:1px solid rgba(0,0,0,.18);background:#fff;border-radius:9px;padding:9px 14px;cursor:pointer;min-height:40px;color:#16140F}
+  .dl button.go{background:#B8902A;border-color:#B8902A;color:#fff;font-weight:600}
+  .dl button.del{color:#9a2f2f}
+  .dl input,.dl select{font:inherit;font-size:16px;border:1px solid rgba(0,0,0,.2);border-radius:9px;padding:10px 12px;background:#fff;min-width:0;width:100%;box-sizing:border-box}
+  .dl .add{background:#fff;border:1px dashed #B8902A;border-radius:12px;padding:16px;display:grid;gap:10px}
+  .dl .add h3{margin:0;font-family:'Fraunces',serif;font-size:16px}
+  .dl .add label{font-size:13px;color:var(--muted);display:grid;gap:5px}
+  .dl .hint{font-size:13px;color:var(--muted);line-height:1.5}
+  .dl .okm{font-size:13.5px;color:#7a5f14;min-height:18px}
+  .dl .row .nm{flex:1 1 110px}
+  @media(max-width:640px){.mtab{display:table!important}.mtab thead{display:table-header-group!important}.mtab tbody{display:table-row-group!important}.mtab tbody tr{display:table-row!important;padding:0!important;border:0!important;min-height:0!important}.mtab tbody td{display:table-cell!important;padding:10px 6px!important;border-bottom:1px solid rgba(0,0,0,.07)!important;font-size:13.5px!important;order:0!important;margin:0!important;font-weight:400!important;color:inherit!important;text-align:right}.mtab tbody td:first-child{text-align:left}.dl button{padding:9px 10px}.stats-wrap,.dl{padding:14px}.tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tile{padding:12px 10px}.tile .n{font-size:24px}.tile .l{font-size:12px}.chart{gap:3px;height:170px}.chart .bar{width:44%}.chart .bar i{font-size:9.5px}.chart .m{font-size:10px}body.live nav a{font-size:12px}}
+</style>
 </head>
 <body>
 <div class="app">
@@ -402,7 +438,7 @@ rows();detail();bind();
     sel=(!erst&&DATA.some(function(d){return d.id===alt;}))?alt:(DATA.length?DATA[0].id:0);
     erst=false;
     banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Freiminuten aufgebraucht":""));
-    rows();detail();bind();stats();
+    rows();detail();bind();stats();if(window.__live)window.__live(j);
     if(!DATA.length)document.getElementById("detail").innerHTML='<p class="when" style="padding:20px">Noch kein Anruf. Sobald deine Assistentin einen Anruf annimmt, erscheint er hier mit allen Details.</p>';
   }).catch(function(){
     if(!erst)return;
@@ -410,8 +446,88 @@ rows();detail();bind();
     banner("Kein Zugang. Bitte den persönlichen Link von Milan verwenden.");
   });
   }
+  window.__laden=laden;window.__K=K;window.__T=T;window.__BASE=BASE;
   laden();
-  setInterval(function(){if(!document.hidden)laden();},10000);
+  setInterval(function(){if(!document.hidden&&!window.__edit)laden();},10000);
+})();
+
+/* ===== Live: Statistik (Woche + 12 Monate) und Behandlungen selbst pflegen ===== */
+(function(){
+  if(!document.body.classList.contains("live"))return;
+  var BASE=window.__BASE,K=window.__K,T=window.__T;
+  function E(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  var nav=document.querySelector("nav"),main=document.querySelector("main");
+  var a=document.createElement("a");a.setAttribute("data-v","statistik");a.textContent="Statistik";
+  var ref=nav.querySelector('[data-v="behandlungen"]');nav.insertBefore(a,ref);
+  TITLES.statistik=["Statistik","So viel hat deine Assistentin für dich gearbeitet."];
+  var sec=document.createElement("section");sec.className="view";sec.id="v-statistik";
+  sec.innerHTML='<div class="board"><div class="board-head"><h2>Die letzten 12 Monate</h2><div class="when">live</div></div><div class="stats-wrap" id="statBody"><div class="when">Lädt…</div></div></div>';
+  main.appendChild(sec);
+  a.onclick=function(){
+    Array.prototype.forEach.call(document.querySelectorAll("nav a"),function(x){x.classList.toggle("active",x===a)});
+    Array.prototype.forEach.call(document.querySelectorAll(".view"),function(x){x.classList.toggle("on",x.id==="v-statistik")});
+    document.getElementById("title").textContent=TITLES.statistik[0];document.getElementById("subtitle").textContent=TITLES.statistik[1];
+  };
+  var MN=["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  function statistik(st){
+    if(!st)return;
+    var m=st.monate||[],mx=1,sa=0,stt=0;
+    m.forEach(function(x){mx=Math.max(mx,x.anrufe,x.termine);sa+=x.anrufe;stt+=x.termine;});
+    var cur=m[m.length-1]||{anrufe:0,termine:0};
+    var h='<div class="tiles"><div class="tile"><div class="n">'+st.woche.anrufe+'</div><div class="l">Anrufe diese Woche</div></div>'+
+      '<div class="tile"><div class="n">'+st.woche.termine+'</div><div class="l">Termine diese Woche</div></div>'+
+      '<div class="tile"><div class="n">'+cur.termine+'</div><div class="l">Termine diesen Monat</div></div></div>';
+    h+='<div><div class="legend"><span>Termine gebucht</span><span class="a">Anrufe</span></div><div class="chart">'+m.map(function(x){
+      var ta=Math.round(x.termine/mx*100),aa=Math.round(x.anrufe/mx*100);
+      return '<div class="col"><div class="bars"><div class="bar t" style="height:'+ta+'%">'+(x.termine?'<i>'+x.termine+'</i>':'')+'</div><div class="bar a" style="height:'+aa+'%">'+(x.anrufe?'<i>'+x.anrufe+'</i>':'')+'</div></div><div class="m">'+MN[+x.monat.slice(5)-1]+'</div></div>';
+    }).join("")+'</div></div>';
+    h+='<table class="mtab"><thead><tr><th>Monat</th><th>Anrufe</th><th>Termine</th><th>Minuten</th></tr></thead><tbody>'+m.slice().reverse().map(function(x){
+      return '<tr><td>'+MN[+x.monat.slice(5)-1]+' '+x.monat.slice(0,4)+'</td><td>'+x.anrufe+'</td><td>'+x.termine+'</td><td>'+x.minuten+'</td></tr>';}).join("")+
+      '<tr><td><b>Gesamt</b></td><td><b>'+sa+'</b></td><td><b>'+stt+'</b></td><td><b>'+Math.round(m.reduce(function(s,x){return s+x.minuten},0)*10)/10+'</b></td></tr></tbody></table>';
+    document.getElementById("statBody").innerHTML=h;
+    var c=document.querySelectorAll(".stat-card");
+    if(c[0]){c[0].querySelector(".num").textContent=st.woche.anrufe;c[0].querySelector(".lbl").textContent="Anrufe diese Woche";}
+    if(c[1]){c[1].querySelector(".num").textContent=st.woche.termine;c[1].querySelector(".lbl").textContent="Termine diese Woche gebucht";}
+  }
+  /* Behandlungen */
+  var box=document.querySelector("#v-behandlungen .treat");
+  var hd=document.querySelector("#v-behandlungen .board-head");
+  if(hd)hd.innerHTML='<h2>Deine Behandlungen</h2><div class="when">Änderungen kennt deine Assistentin sofort</div>';
+  box.className="dl";box.id="dl";
+  var LIST=null,editId=0,msg="";
+  function dauerOpt(v){var o="";for(var i=15;i<=240;i+=15){o+='<option value="'+i+'"'+(i===v?" selected":"")+'>'+(i>=60?Math.floor(i/60)+" Std "+(i%60?i%60+" Min":""):i+" Min")+'</option>';}return o;}
+  function zeigen(){
+    if(!LIST){box.innerHTML='<div class="hint">Lädt…</div>';return;}
+    var h='<div class="hint">Hier pflegst du, welche Behandlungen deine Assistentin am Telefon kennt und wie lange ein Termin dauert. Preise und Medizinisches nennt sie nie, sie verweist auf die Beratung.</div>';
+    LIST.forEach(function(x){
+      if(x.id===editId){
+        h+='<div class="row" style="display:grid"><input id="en" value="'+E(x.name)+'" aria-label="Name"><select id="ed" aria-label="Dauer">'+dauerOpt(x.dauer_min)+'</select><input id="es" value="'+E(x.stichworte)+'" placeholder="Wie Kundinnen sie noch nennen (optional)" aria-label="Stichworte"><div style="display:flex;gap:8px"><button class="go" data-a="save" data-id="'+x.id+'">Speichern</button><button data-a="cancel">Abbrechen</button></div></div>';
+      }else{
+        h+='<div class="row"><div class="nm"><b>'+E(x.name)+'</b><small>Termin dauert '+x.dauer_min+' Min.</small></div><button data-a="edit" data-id="'+x.id+'">Ändern</button><button class="del" data-a="del" data-id="'+x.id+'">Löschen</button></div>';
+      }
+    });
+    h+='<div class="add"><h3>Neue Behandlung hinzufügen</h3><label>Name<input id="nn" placeholder="z. B. Wimpernlifting"></label><label>Dauer<select id="nd">'+dauerOpt(60)+'</select></label><label>So nennen Kundinnen sie am Telefon (optional, mit Komma trennen)<input id="ns" placeholder="z. B. wimpern, lashlift"></label><button class="go" data-a="add">Hinzufügen</button></div><div class="okm" id="dm" role="status">'+E(msg)+'</div>';
+    box.innerHTML=h;
+  }
+  function senden(aktion,d){
+    d.k=K;d.t=T;d.aktion=aktion;
+    return fetch(BASE+"mijo-dashboard-dienst",{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(d)}).then(function(r){if(!r.ok)throw 0;return r;});
+  }
+  function fertig(t){msg=t;editId=0;window.__edit=false;window.__laden();}
+  box.addEventListener("click",function(e){
+    var b=e.target.closest("button[data-a]");if(!b)return;
+    var act=b.getAttribute("data-a"),id=+b.getAttribute("data-id")||0;
+    if(act==="edit"){editId=id;window.__edit=true;msg="";zeigen();}
+    else if(act==="cancel"){editId=0;window.__edit=false;zeigen();}
+    else if(act==="save"){senden("speichern",{id:id,name:document.getElementById("en").value,dauer_min:+document.getElementById("ed").value,stichworte:document.getElementById("es").value}).then(function(){fertig("Gespeichert. Deine Assistentin kennt die Änderung sofort.");}).catch(function(){msg="Konnte nicht gespeichert werden. Bitte noch einmal versuchen.";zeigen();});}
+    else if(act==="add"){
+      var n=document.getElementById("nn").value.trim();if(!n){msg="Bitte einen Namen eingeben.";zeigen();return;}
+      senden("speichern",{name:n,dauer_min:+document.getElementById("nd").value,stichworte:document.getElementById("ns").value}).then(function(){fertig("„"+n+"“ ist hinzugefügt. Deine Assistentin kennt sie ab sofort.");}).catch(function(){msg="Konnte nicht gespeichert werden. Bitte noch einmal versuchen.";zeigen();});}
+    else if(act==="del"){
+      if(b.getAttribute("data-sure")!=="1"){b.setAttribute("data-sure","1");b.textContent="Wirklich löschen?";return;}
+      senden("loeschen",{id:id}).then(function(){fertig("Behandlung gelöscht. Deine Assistentin kennt sie nicht mehr.");}).catch(function(){msg="Konnte nicht gelöscht werden.";zeigen();});}
+  });
+  window.__live=function(j){statistik(j.statistik);if(j.dienste&&!window.__edit){LIST=j.dienste;zeigen();}};
 })();
 
 /* ===== Handy: Detail als Vollbild-Blatt ===== */

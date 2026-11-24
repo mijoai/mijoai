@@ -179,10 +179,11 @@
   .dl{padding:8px 22px 22px;display:grid;gap:10px}
   .dl .row{display:flex;align-items:center;gap:12px;background:var(--steel);border-radius:12px;padding:12px 16px;flex-wrap:wrap}
   .dl .row .nm{flex:1 1 160px;min-width:0}.dl .row .nm b{display:block;font-family:'Fraunces',serif;font-size:15.5px}
-  .dl .row .nm small{color:var(--muted)}
+  .dl .row .nm small{color:var(--muted);display:block;margin-top:2px}
   .dl button,.dl .add button{font:inherit;font-size:13.5px;border:1px solid rgba(0,0,0,.18);background:#fff;border-radius:9px;padding:9px 14px;cursor:pointer;min-height:40px;color:#16140F}
   .dl button.go{background:#B8902A;border-color:#B8902A;color:#fff;font-weight:600}
   .dl button.del{color:#9a2f2f}
+  .dl textarea{font:inherit;font-size:16px;border:1px solid rgba(0,0,0,.2);border-radius:9px;padding:10px 12px;background:#fff;min-width:0;width:100%;box-sizing:border-box;resize:vertical}
   .dl input,.dl select{font:inherit;font-size:16px;border:1px solid rgba(0,0,0,.2);border-radius:9px;padding:10px 12px;background:#fff;min-width:0;width:100%;box-sizing:border-box}
   .dl .add{background:#fff;border:1px dashed #B8902A;border-radius:12px;padding:16px;display:grid;gap:10px}
   .dl .add h3{margin:0;font-family:'Fraunces',serif;font-size:16px}
@@ -537,7 +538,7 @@ rows();detail();bind();
   var WTG=["So","Mo","Di","Mi","Do","Fr","Sa"],TL=[],tmsg="";
   var tb=document.querySelector("#v-beratung .board");
   var ta=document.createElement("div");ta.className="dl";ta.id="tadd";
-  ta.innerHTML='<div class="hint">Hier siehst du alle gebuchten Termine. Stornierst du einen, ist die Zeit sofort wieder frei und deine Assistentin kann sie neu vergeben. Du kannst auch selbst Termine eintragen, dann bucht die Assistentin nichts doppelt.</div><div class="add"><h3>Termin selbst eintragen</h3><label>Name<input id="tn" placeholder="Name der Kundin"></label><label>Tag<input id="tdat" type="date"></label><label>Uhrzeit<input id="tz" type="time" step="900" value="10:00"></label><label>Behandlung<select id="tdi"></select></label><button class="go" data-a="tneu">Termin eintragen</button></div><div class="okm" id="tm" role="status"></div>';
+  ta.innerHTML='<div class="hint">Hier siehst du alle gebuchten Termine. Stornierst du einen, ist die Zeit sofort wieder frei und deine Assistentin kann sie neu vergeben. Du kannst auch selbst Termine eintragen, dann bucht die Assistentin nichts doppelt.</div><div class="add"><h3>Termin selbst eintragen</h3><label>Name<input id="tn" placeholder="Name der Kundin" list="kl" autocomplete="off"></label><datalist id="kl"></datalist><label>Telefon (optional)<input id="tt" type="tel" placeholder="+43 …"></label><label>Tag<input id="tdat" type="date"></label><label>Uhrzeit<input id="tz" type="time" step="900" value="10:00"></label><label>Behandlung<select id="tdi"></select></label><label>Notiz, z. B. „Sitzung 2 von 4" (optional)<input id="tno" placeholder="Sitzung, Wunsch …"></label><button class="go" data-a="tneu">Termin eintragen</button></div><div class="okm" id="tm" role="status"></div>';
   tb.insertBefore(ta,tb.children[1]);
   var wk=document.getElementById("week");
   function wien(x){return new Intl.DateTimeFormat("sv-SE",{timeZone:"Europe/Vienna"}).format(x);}
@@ -546,7 +547,7 @@ rows();detail();bind();
     if(!TL.length)h='<span class="when">Keine kommenden Termine.</span>';
     TL.forEach(function(t){
       if(t.datum!==last){last=t.datum;var wd=new Date(t.datum+"T12:00:00").getDay();h+='<h4 class="tday">'+WTG[wd]+" "+t.datum.slice(8,10)+"."+t.datum.slice(5,7)+".</h4>";}
-      h+='<div class="tslot"><div><b>'+E(t.uhrzeit)+'</b> · '+E(t.name||"Kunde")+(t.dienst?'<br><small>'+E(t.dienst)+(t.dauer_min?' · '+t.dauer_min+' Min.':'')+'</small>':'')+'</div><button class="del" data-a="tstorno" data-id="'+t.id+'">Stornieren</button></div>';
+      h+='<div class="tslot"><div><b>'+E(t.uhrzeit)+'</b> · '+E(t.name||"Kunde")+(t.dienst?'<br><small>'+E(t.dienst)+(t.dauer_min?' · '+t.dauer_min+' Min.':'')+'</small>':'')+(t.notiz?'<br><small>📝 '+E(t.notiz)+'</small>':'')+'</div><button class="del" data-a="tstorno" data-id="'+t.id+'">Stornieren</button></div>';
     });
     wk.className="dl tl";wk.innerHTML=h;
     var sel=document.getElementById("tdi");
@@ -562,12 +563,63 @@ rows();detail();bind();
     }else if(act==="tneu"){
       var n=document.getElementById("tn").value.trim(),dt=document.getElementById("tdat").value,z=document.getElementById("tz").value;
       if(!n||!dt||!z){tinfo("Bitte Name, Tag und Uhrzeit ausfüllen.");return;}
-      tsend("neu",{name:n,datum:dt,uhrzeit:z,dienst:document.getElementById("tdi").value}).then(function(){tinfo("Termin für "+n+" eingetragen.");document.getElementById("tn").value="";window.__laden();}).catch(function(){tinfo("Konnte nicht eingetragen werden.");});
+      tsend("neu",{name:n,datum:dt,uhrzeit:z,dienst:document.getElementById("tdi").value,telefon:document.getElementById("tt").value,notiz:document.getElementById("tno").value}).then(function(){tinfo("Termin für "+n+" eingetragen.");document.getElementById("tn").value="";document.getElementById("tt").value="";document.getElementById("tno").value="";window.__laden();}).catch(function(){tinfo("Konnte nicht eingetragen werden.");});
     }
   });
   var dd=document.getElementById("tdat");if(dd){dd.value=wien(new Date());dd.min=wien(new Date());}
   var _lv=window.__live;
   window.__live=function(j){_lv(j);if(!window.__edit)terminListe(j.termine);};
+
+  /* Kundinnenbuch */
+  var KL=[],kedit=0,kmsg="",kq="";
+  var ka=document.createElement("a");ka.setAttribute("data-v","kundinnen");ka.textContent="Kundinnen";
+  nav.insertBefore(ka,document.querySelector('nav [data-v="statistik"]'));
+  TITLES.kundinnen=["Kundinnen","Dein Kundinnenbuch mit Notizen und Folgeterminen."];
+  var ks=document.createElement("section");ks.className="view";ks.id="v-kundinnen";
+  ks.innerHTML='<div class="board"><div class="board-head"><h2>Deine Kundinnen</h2><div class="when">Deine Assistentin erkennt sie am Anruf</div></div><div class="dl" id="kbody"></div></div>';
+  main.appendChild(ks);
+  ka.onclick=function(){
+    Array.prototype.forEach.call(document.querySelectorAll("nav a"),function(x){x.classList.toggle("active",x===ka)});
+    Array.prototype.forEach.call(document.querySelectorAll(".view"),function(x){x.classList.toggle("on",x.id==="v-kundinnen")});
+    document.getElementById("title").textContent=TITLES.kundinnen[0];document.getElementById("subtitle").textContent=TITLES.kundinnen[1];
+  };
+  function dt(z){return z?z.slice(8,10)+"."+z.slice(5,7)+"."+z.slice(0,4):"";}
+  function kzeigen(){
+    var kb=document.getElementById("kbody");
+    var h='<div class="hint">Wer bei dir schon Kundin ist, steht hier. Ruft sie an, erkennt deine Assistentin sie an der Nummer und bietet gleich einen Folgetermin an. Deine Notiz sieht nur die Assistentin, sie liest sie nie vor.</div>';
+    h+='<input id="kq" type="search" placeholder="Kundin suchen" value="'+E(kq)+'" aria-label="Suchen">';
+    var q=kq.trim().toLowerCase();
+    KL.filter(function(x){return !q||(x.name+" "+x.telefon).toLowerCase().indexOf(q)>-1;}).forEach(function(x){
+      if(x.id===kedit){
+        h+='<div class="row" style="display:grid"><input id="kn" value="'+E(x.name)+'" aria-label="Name"><input id="kt" type="tel" value="'+E(x.telefon)+'" placeholder="Telefon" aria-label="Telefon"><textarea id="ko" rows="3" placeholder="Notiz, z. B. Sitzung 2 von 4" aria-label="Notiz">'+E(x.notiz)+'</textarea><div style="display:flex;gap:8px"><button class="go" data-a="ksave" data-id="'+x.id+'">Speichern</button><button data-a="kcancel">Abbrechen</button></div></div>';
+      }else{
+        h+='<div class="row" style="display:grid"><div class="nm"><b>'+E(x.name)+'</b><small>'+(x.telefon?'<a href="tel:'+E(x.telefon.replace(/[^+0-9]/g,""))+'" style="color:#B8902A">'+E(x.telefon)+'</a> · ':'')+x.termine+' Termin(e)'+(x.letzter?' · zuletzt '+dt(x.letzter):'')+(x.naechster?' · nächster '+dt(x.naechster.slice(0,10))+' '+E(x.naechster.slice(11)):'')+'</small>'+(x.notiz?'<small>📝 '+E(x.notiz)+'</small>':'')+'</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="go" data-a="kterm" data-id="'+x.id+'">Termin eintragen</button><button data-a="kedit" data-id="'+x.id+'">Ändern</button><button class="del" data-a="kdel" data-id="'+x.id+'">Löschen</button></div></div>';
+      }
+    });
+    if(!KL.length)h+='<div class="hint">Noch niemand eingetragen. Wer über die Assistentin einen Termin bucht, erscheint hier automatisch.</div>';
+    h+='<div class="add"><h3>Neue Kundin eintragen</h3><label>Name<input id="nkn" placeholder="Vor- und Nachname"></label><label>Telefon<input id="nkt" type="tel" placeholder="+43 …"></label><label>Notiz (optional)<textarea id="nko" rows="2" placeholder="z. B. 4 Sitzungen geplant, empfindliche Haut"></textarea></label><button class="go" data-a="kadd">Kundin speichern</button></div><div class="okm" id="km" role="status">'+E(kmsg)+'</div>';
+    kb.innerHTML=h;
+    var qi=document.getElementById("kq");if(qi){qi.oninput=function(){kq=qi.value;var p=qi.selectionStart;kzeigen();var n=document.getElementById("kq");n.focus();n.setSelectionRange(p,p);};}
+  }
+  function ksend(aktion,d){d.k=K;d.t=T;d.aktion=aktion;return fetch(BASE+"mijo-dashboard-kundin",{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(d)}).then(function(r){if(!r.ok)throw 0;});}
+  function kfertig(t){kmsg=t;kedit=0;window.__edit=false;window.__laden();}
+  document.getElementById("kbody").addEventListener("click",function(e){
+    var b=e.target.closest("button[data-a]");if(!b)return;var a=b.getAttribute("data-a"),id=+b.getAttribute("data-id")||0;
+    var k=KL.filter(function(x){return x.id===id;})[0];
+    if(a==="kedit"){kedit=id;window.__edit=true;kmsg="";kzeigen();}
+    else if(a==="kcancel"){kedit=0;window.__edit=false;kzeigen();}
+    else if(a==="ksave"){ksend("speichern",{id:id,name:document.getElementById("kn").value,telefon:document.getElementById("kt").value,notiz:document.getElementById("ko").value}).then(function(){kfertig("Gespeichert.");}).catch(function(){kmsg="Konnte nicht gespeichert werden.";kzeigen();});}
+    else if(a==="kadd"){var n=document.getElementById("nkn").value.trim();if(!n){kmsg="Bitte einen Namen eingeben.";kzeigen();return;}
+      ksend("speichern",{name:n,telefon:document.getElementById("nkt").value,notiz:document.getElementById("nko").value}).then(function(){kfertig("„"+n+"“ ist eingetragen.");}).catch(function(){kmsg="Konnte nicht gespeichert werden.";kzeigen();});}
+    else if(a==="kdel"){if(b.getAttribute("data-sure")!=="1"){b.setAttribute("data-sure","1");b.textContent="Wirklich löschen?";return;}
+      ksend("loeschen",{id:id}).then(function(){kfertig("Kundin gelöscht (ihre Termine bleiben).");}).catch(function(){kmsg="Konnte nicht gelöscht werden.";kzeigen();});}
+    else if(a==="kterm"&&k){
+      document.getElementById("tn").value=k.name;document.getElementById("tt").value=k.telefon;document.getElementById("tno").value=k.notiz?"":"";
+      var ta2=document.querySelector('nav a[data-v="beratung"]');ta2.click();document.getElementById("tdat").focus();window.scrollTo(0,0);
+    }
+  });
+  var _lv2=window.__live;
+  window.__live=function(j){_lv2(j);if(j.kundinnen){KL=j.kundinnen;var dl=document.getElementById("kl");if(dl)dl.innerHTML=KL.map(function(x){return '<option value="'+E(x.name)+'">';}).join("");if(!window.__edit&&!(document.activeElement&&document.activeElement.id==="kq"))kzeigen();}};
 })();
 
 /* ===== Handy: Detail als Vollbild-Blatt ===== */

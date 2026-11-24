@@ -405,8 +405,8 @@ rows();detail();bind();
     var l=document.querySelectorAll(".stat-card .lbl");
     if(l[0])l[0].textContent="Anfragen insgesamt";if(l[1])l[1].textContent="noch offen (neu)";if(l[2])l[2].textContent="erledigt";
     var c=document.querySelectorAll(".stat-card")[3];
-    if(c&&MIN){c.querySelector(".num").textContent=MIN.rest;c.querySelector(".lbl").textContent="Freiminuten übrig von "+MIN.gesamt;}
-    else if(c){c.querySelector(".num").textContent="–";c.querySelector(".lbl").textContent="Freiminuten (keine Daten)";}
+    if(c&&MIN){c.querySelector(".num").textContent=MIN.rest;c.querySelector(".lbl").textContent="Minuten übrig diesen Monat (von "+MIN.gesamt+")";}
+    else if(c){c.querySelector(".num").textContent="–";c.querySelector(".lbl").textContent="Minuten (keine Daten)";}
   }
   var _d=detail;
   detail=function(){
@@ -443,7 +443,7 @@ rows();detail();bind();
     });
     sel=(!erst&&DATA.some(function(d){return d.id===alt;}))?alt:(DATA.length?DATA[0].id:0);
     erst=false;
-    banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Freiminuten aufgebraucht":""));
+    banner(j.betrieb+" · "+j.kundennr+" · Live-Daten"+(MIN&&MIN.gesperrt?" · Minuten aufgebraucht":""));
     rows();detail();bind();stats();if(window.__live)window.__live(j);
     if(!DATA.length)document.getElementById("detail").innerHTML='<p class="when" style="padding:20px">Noch kein Anruf. Sobald deine Assistentin einen Anruf annimmt, erscheint er hier mit allen Details.</p>';
   }).catch(function(){

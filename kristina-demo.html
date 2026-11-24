@@ -2,7 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kristina Beauty">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#FAF7F0">
 <meta name="color-scheme" content="light only">
 <title>Mijo AI — Studio Dashboard (Live-Demo für Kristina Beauty)</title>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -83,7 +89,72 @@
   .try{background:linear-gradient(135deg,#FFFBEF,#F6EFD9);border:1px solid rgba(212,175,55,.35);}
   .try .big{font-family:'Fraunces',serif;font-size:21px;color:var(--gold);margin:6px 0 4px;}
   .try p{color:var(--muted);font-size:13px;line-height:1.5;margin:6px 0 0;}
-  @media(max-width:1000px){.app{grid-template-columns:minmax(0,1fr);}.grid2{grid-template-columns:minmax(0,1fr);}header.top h1{font-size:22px;}th,td{padding:12px 14px;}.stat-card .num{font-size:24px;}aside.nav{padding:14px 16px;border-right:0;border-bottom:1px solid rgba(0,0,0,.08);position:sticky;top:0;z-index:5;}.studio,.demo-badge{display:none;}.brand{margin-bottom:10px;}nav{display:flex;gap:6px;overflow-x:auto;}nav a{white-space:nowrap;margin-bottom:0;padding:9px 14px;}.grid2{grid-template-columns:1fr;}.stat-row{grid-template-columns:repeat(2,minmax(0,1fr));}main{padding:20px;}.week{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px;}.treat{padding:14px;}.board-head{padding:14px;}th:nth-child(4),td:nth-child(4){display:none;}}
+  @media(max-width:1000px){.app{grid-template-columns:minmax(0,1fr);}.grid2{grid-template-columns:minmax(0,1fr);}header.top h1{font-size:22px;}th,td{padding:12px 14px;}.stat-card .num{font-size:24px;}aside.nav{padding:14px 16px;border-right:0;border-bottom:1px solid rgba(0,0,0,.08);position:sticky;top:0;z-index:5;}.studio,.demo-badge{display:none;}.brand{margin-bottom:10px;}nav{display:flex;gap:6px;overflow-x:auto;}nav a{white-space:nowrap;margin-bottom:0;padding:9px 14px;}.grid2{grid-template-columns:1fr;}.stat-row{grid-template-columns:repeat(2,minmax(0,1fr));}main{padding:20px;}.week{grid-template-columns:repeat(2,minmax(0,1fr));padding:14px;}.treat{padding:14px;}.board-head{padding:14px;}body:not(.live) th:nth-child(4),body:not(.live) td:nth-child(4){display:none;}}
+
+  /* ===== Handy-Ansicht (iPhone): Tab-Leiste unten, Karten statt Tabelle, Termine als Liste ===== */
+  @media(max-width:640px){
+    html{-webkit-text-size-adjust:100%;}
+    body{padding-bottom:calc(76px + env(safe-area-inset-bottom));}
+    body.sheet-open{overflow:hidden;}
+    .app{display:block;}
+    aside.nav{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:15;border:0;border-top:1px solid rgba(0,0,0,.1);padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:rgba(250,247,240,.97);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+    aside.nav .brand,aside.nav .studio,aside.nav .demo-badge{display:none;}
+    nav{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;overflow:visible;}
+    nav a{justify-content:center;text-align:center;min-height:48px;padding:6px 4px;margin:0;font-size:12.5px;line-height:1.25;border-radius:12px;white-space:normal;}
+    main{padding:max(14px,env(safe-area-inset-top)) 16px 16px;}
+    header.top{margin-bottom:14px;gap:8px;}
+    header.top h1{font-size:26px;}
+    header.top .sub{font-size:13px;margin-top:2px;}
+    .live{padding:6px 12px;font-size:12.5px;background:transparent;border-color:transparent;padding-left:0;}
+    #liveNote{margin:0 0 12px !important;padding:9px 12px !important;font-size:12.5px !important;}
+    .stat-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 16px;padding:0;overflow:visible;}
+    .stat-row .stat-card{min-width:0;padding:14px;}
+    .stat-card{scroll-snap-align:start;padding:12px 14px;border-radius:14px;}
+    .stat-card .num{font-size:24px;line-height:1.1;}
+    .stat-card .lbl{font-size:12px;}
+    .board{border-radius:16px;overflow:hidden;}
+    .board-head{padding:14px 14px 10px;border-bottom:0;}
+    .board-head h2{font-size:18px;}
+    .tabs{flex-wrap:nowrap;overflow-x:auto;width:100%;margin:0 -2px;padding:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    .tabs::-webkit-scrollbar{display:none;}
+    .tabs span{white-space:nowrap;padding:11px 12px;font-size:13.5px;min-height:44px;display:flex;align-items:center;}
+    table,tbody{display:block;width:100%;}
+    thead{display:none;}
+    tbody tr{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;padding:14px 16px;border-top:1px solid rgba(0,0,0,.07);min-height:64px;-webkit-tap-highlight-color:rgba(184,144,42,.15);}
+    tbody td{display:block !important;padding:0;border:0;font-size:14.5px;}
+    tbody td:first-child{order:1;flex:1 1 0;min-width:0;font-weight:600;font-size:16px;}
+    tbody td:last-child{order:2;margin-left:auto;}
+    tbody td:nth-child(2){order:3;flex:0 0 100%;color:#3b362d;}
+    tbody td:nth-child(n+3):not(:last-child){order:4;flex:0 0 auto;color:var(--muted);font-size:13px;}
+    .cust{gap:10px;}
+    .av{flex:none;}
+    tbody tr.sel{background:transparent;}
+    /* Detail als Vollbild-Blatt */
+    .side{display:none;position:fixed;inset:0;z-index:30;background:var(--navy);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px calc(24px + env(safe-area-inset-bottom));flex-direction:column;gap:0;}
+    body.sheet-open .side{display:flex;}
+    .sheet-bar{position:sticky;top:0;z-index:2;background:var(--navy);padding:max(12px,env(safe-area-inset-top)) 0 10px;margin:0 -16px 6px;padding-left:16px;padding-right:16px;border-bottom:1px solid rgba(0,0,0,.07);}
+    .sheet-bar button{font:inherit;font-weight:600;font-size:16px;color:var(--gold);background:none;border:0;min-height:44px;padding:0;cursor:pointer;}
+    .side .card{border:0;background:transparent;padding:8px 0 0;}
+    .side .card h3{font-size:24px;}
+    .kv{grid-template-columns:90px 1fr;font-size:15px;gap:10px 12px;}
+    .talk{max-height:none;overflow:visible;}
+    .b{font-size:14.5px;}
+    .btn{display:block;width:100%;min-height:52px;font-size:16px;margin-top:18px;border-radius:14px;}
+    .btn.ghost{margin-left:0;margin-top:10px;}
+    #detail a[href^="tel"]{display:inline-block;background:var(--gold);color:#fff !important;text-decoration:none;padding:9px 16px;border-radius:12px;}
+    /* Termine als Tagesliste */
+    .week{display:flex;flex-direction:column;gap:8px;padding:6px 14px 14px;}
+    .day{display:grid;grid-template-columns:78px minmax(0,1fr);gap:4px 10px;min-height:0;padding:12px 14px;font-size:14px;align-items:start;}
+    .day h4{margin:0;font-size:13.5px;line-height:1.5;color:var(--white);}
+    .day .slot{margin:0 0 8px;font-size:14px;padding:9px 11px;}
+    .day .slot:last-child{margin-bottom:0;}
+    .day > .when{align-self:center;}
+    .day > *:not(h4){grid-column:2;}
+    .treat{grid-template-columns:1fr;padding:6px 14px 14px;}
+    .card.try{border-radius:16px;}
+    .grid2{gap:14px;}
+  }
+  @media(prefers-reduced-motion:reduce){.live i{animation:none;}}
 </style>
 </head>
 <body>
@@ -258,6 +329,7 @@ rows();detail();bind();
 (function(){
   var P=new URLSearchParams(location.search),K=P.get("k"),T=P.get("t");
   if(!K||!T)return;
+  document.body.classList.add("live");
   var BASE="https://2-29-104-111.sslip.io/api/";
   var API2UI={neu:"neu",rueckruf:"rueck",erledigt:"fix"},UI2API={neu:"neu",rueck:"rueckruf",fix:"erledigt"};
   CH.rueck=["Zurückgerufen","rueck"];CH.fix=["Erledigt","fix"];
@@ -340,6 +412,23 @@ rows();detail();bind();
   }
   laden();
   setInterval(function(){if(!document.hidden)laden();},10000);
+})();
+
+/* ===== Handy: Detail als Vollbild-Blatt ===== */
+(function(){
+  var mq=window.matchMedia("(max-width:640px)");
+  var side=document.querySelector(".side");if(!side)return;
+  var bar=document.createElement("div");bar.className="sheet-bar";
+  bar.innerHTML='<button type="button" id="sheetBack">‹ Zurück zur Liste</button>';
+  side.insertBefore(bar,side.firstChild);
+  function zu(){document.body.classList.remove("sheet-open");}
+  document.getElementById("sheetBack").onclick=zu;
+  document.getElementById("rows").addEventListener("click",function(e){
+    if(mq.matches&&e.target.closest("tr[data-id]")){document.body.classList.add("sheet-open");side.scrollTop=0;}
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape")zu();});
+  Array.prototype.forEach.call(document.querySelectorAll("nav a"),function(a){a.addEventListener("click",zu);});
+  if(mq.addEventListener)mq.addEventListener("change",zu);
 })();
 </script>
 </body>
